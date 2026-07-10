@@ -4,11 +4,12 @@ const jwt = require('jsonwebtoken');
 
 // Admin creates mechanic account
 const createMechanic = async (req, res) => {
-  try {
+    try {
     const { email, password, firstName, lastName, phoneNumber, specialization, yearsOfExperience, certifications } = req.body;
 
-    // Check if mechanic exists
-    const existingMechanic = await Mechanic.findOne({ email });
+    // Check if mechanic exists (normalize email to match schema lowercase/trim)
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingMechanic = await Mechanic.findOne({ email: normalizedEmail });
     if (existingMechanic) {
       return res.status(400).json({ message: 'Mechanic email already exists' });
     }
@@ -172,21 +173,22 @@ const listAllMechanics = async (req, res) => {
 // Delete mechanic (admin)
 const deleteMechanic = async (req, res) => {
   try {
-    const { id } = req.params;
-    console.log('[deleteMechanic] id=', id, 'params=', req.params, 'body=', req.body);
-    const mechanic = await Mechanic.findById(id);
-    if (!mechanic) {
-      console.log('[deleteMechanic] not found id=', id);
+    const mechanicId = req.params?.id || req.body?.id || req.query?.id;
+
+    if (!mechanicId) {
+      return res.status(400).json({ message: 'Mechanic id required' });
+    }
+
+    const deletedMechanic = await Mechanic.findByIdAndDelete(mechanicId);
+
+    if (!deletedMechanic) {
       return res.status(404).json({ message: 'Mechanic not found' });
     }
 
-    await Mechanic.findByIdAndDelete(id);
-    console.log('[deleteMechanic] deleted id=', id);
-
-    res.status(200).json({ message: 'Mechanic deleted successfully' });
+    return res.status(200).json({ message: 'Mechanic deleted successfully' });
   } catch (error) {
     console.error('[deleteMechanic] error', error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 

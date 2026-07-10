@@ -141,6 +141,8 @@ const sampleData = {
 // Chart instances
 let quarterlySalesChart, dailySalesChart, projectedRevenueChart;
 
+const apiBase = 'http://localhost:5000';
+
 // Notifications store (empty by default)
 let notifications = [];
 
@@ -598,7 +600,7 @@ function populateMechanicsSection() {
         return;
     }
 
-    fetch('/api/mechanics/all', {
+    fetch(`${apiBase}/api/mechanics/all`, {
         headers: { 'Authorization': 'Bearer ' + adminToken }
     })
         .then(res => {
@@ -732,10 +734,10 @@ function renderMechanicCards(mechanics) {
                     }
 
                     try {
-                        let { res, json } = await doPost('/api/admin/mechanics/delete');
+                        let { res, json } = await doPost(`${apiBase}/api/admin/mechanics/delete`);
                         // If admin-scoped endpoint isn't present on the running server, try the mechanics endpoint fallback
                         if (res.status === 404) {
-                            ({ res, json } = await doPost('/api/mechanics/delete'));
+                            ({ res, json } = await doPost(`${apiBase}/api/mechanics/delete`));
                         }
 
                         if (!res.ok) {
@@ -960,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             if (payload.password) updatePayload.password = payload.password;
 
-            fetch('/api/mechanics/' + editMechanicId, {
+            fetch(`${apiBase}/api/mechanics/${editMechanicId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -996,7 +998,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         } else {
-            fetch('/api/mechanics/create', {
+            fetch(`${apiBase}/api/mechanics/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
