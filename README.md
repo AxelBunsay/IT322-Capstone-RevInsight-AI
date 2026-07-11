@@ -49,9 +49,18 @@ Create a `backend/.env` file with the following values:
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/revinsight-ai
 JWT_SECRET=revinsight-secret-key
-EMAIL_SERVICE=Gmail
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-email-password
+
+# Option 1: Use a built-in mail provider
+EMAIL_SERVICE=gmail
+EMAIL_USER=your.email@gmail.com
+EMAIL_PASSWORD=your-email-app-password
+
+# Option 2: Use explicit SMTP settings instead
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=465
+# EMAIL_SECURE=true
+# EMAIL_USER=your.email@gmail.com
+# EMAIL_PASSWORD=your-email-app-password
 ```
 
 For Gmail, use an app-specific password if two-factor authentication is enabled.

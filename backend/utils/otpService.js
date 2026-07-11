@@ -2,23 +2,47 @@ const nodemailer = require('nodemailer');
 
 const getEmailConfig = () => {
   const emailService = process.env.EMAIL_SERVICE;
+  const emailHost = process.env.EMAIL_HOST;
+  const emailPort = process.env.EMAIL_PORT;
+  const emailSecure = process.env.EMAIL_SECURE === 'true';
   const emailUser = process.env.EMAIL_USER;
   const emailPassword = process.env.EMAIL_PASSWORD;
 
-  if (!emailService || !emailUser || !emailPassword) {
+  const isServiceConfigured = emailService && !emailService.includes('<your');
+  const isHostConfigured = emailHost && emailPort;
+
+  if (!emailUser || !emailPassword) {
     throw new Error(
-      'Email service is not configured. Set EMAIL_SERVICE, EMAIL_USER, and EMAIL_PASSWORD in backend/.env.'
+      'Email credentials are not configured. Set EMAIL_USER and EMAIL_PASSWORD in backend/.env.'
     );
   }
 
-  return { emailService, emailUser, emailPassword };
+  if (!isServiceConfigured && !isHostConfigured) {
+    throw new Error(
+      'Email transport is not configured. Set EMAIL_SERVICE in backend/.env, or set EMAIL_HOST and EMAIL_PORT.'
+    );
+  }
+
+  return { emailService, emailHost, emailPort, emailSecure, emailUser, emailPassword };
 };
 
 const createTransporter = () => {
-  const { emailService, emailUser, emailPassword } = getEmailConfig();
+  const { emailService, emailHost, emailPort, emailSecure, emailUser, emailPassword } = getEmailConfig();
+
+  if (emailService && !emailService.includes('<your')) {
+    return nodemailer.createTransport({
+      service: emailService,
+      auth: {
+        user: emailUser,
+        pass: emailPassword
+      }
+    });
+  }
 
   return nodemailer.createTransport({
-    service: emailService,
+    host: emailHost,
+    port: Number(emailPort),
+    secure: emailSecure,
     auth: {
       user: emailUser,
       pass: emailPassword
