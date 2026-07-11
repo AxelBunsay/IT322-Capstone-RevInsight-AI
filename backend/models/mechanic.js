@@ -57,6 +57,22 @@ const mechanicSchema = new mongoose.Schema({
   },
   certifications: [String],
 
+  // Profile Information
+  photoUrl: {
+    type: String,
+    default: null
+  },
+  bio: {
+    type: String,
+    default: '',
+    maxlength: 500
+  },
+  availabilityStatus: {
+    type: String,
+    enum: ['available', 'busy', 'on-leave'],
+    default: 'available'
+  },
+
   // Work Statistics
   totalRepairs: {
     type: Number,
@@ -67,6 +83,12 @@ const mechanicSchema = new mongoose.Schema({
     default: 0,
     min: 0,
     max: 5
+  },
+  successRate: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
   },
 
   // Admin Assignment

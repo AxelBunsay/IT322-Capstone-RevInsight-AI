@@ -56,7 +56,7 @@ const validateCreateMechanic = (req, res, next) => {
 };
 
 const validateUpdateMechanic = (req, res, next) => {
-  const { firstName, lastName, phoneNumber, specialization, yearsOfExperience } = req.body;
+  const { firstName, lastName, phoneNumber, specialization, yearsOfExperience, availabilityStatus, successRate } = req.body;
 
   if (firstName === '' || lastName === '' || phoneNumber === '') {
     return res.status(400).json({ message: 'Fields cannot be empty' });
@@ -71,6 +71,17 @@ const validateUpdateMechanic = (req, res, next) => {
 
   if (yearsOfExperience !== undefined && yearsOfExperience < 0) {
     return res.status(400).json({ message: 'Years of experience cannot be negative' });
+  }
+
+  if (availabilityStatus) {
+    const validStatuses = ['available', 'busy', 'on-leave'];
+    if (!validStatuses.includes(availabilityStatus)) {
+      return res.status(400).json({ message: 'Invalid availability status' });
+    }
+  }
+
+  if (successRate !== undefined && (successRate < 0 || successRate > 100)) {
+    return res.status(400).json({ message: 'Success rate must be between 0 and 100' });
   }
 
   next();

@@ -2,7 +2,6 @@ const Mechanic = require('../models/mechanic');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Admin creates mechanic account
 const createMechanic = async (req, res) => {
     try {
     const { email, password, firstName, lastName, phoneNumber, specialization, yearsOfExperience, certifications } = req.body;
@@ -14,10 +13,8 @@ const createMechanic = async (req, res) => {
       return res.status(400).json({ message: 'Mechanic email already exists' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create mechanic
     const mechanic = await Mechanic.create({
       email,
       password: hashedPassword,
@@ -38,7 +35,13 @@ const createMechanic = async (req, res) => {
         firstName: mechanic.firstName,
         lastName: mechanic.lastName,
         specialization: mechanic.specialization,
-        yearsOfExperience: mechanic.yearsOfExperience
+        yearsOfExperience: mechanic.yearsOfExperience,
+        certifications: mechanic.certifications,
+        photoUrl: mechanic.photoUrl,
+        bio: mechanic.bio,
+        availabilityStatus: mechanic.availabilityStatus,
+        totalRepairs: mechanic.totalRepairs,
+        successRate: mechanic.successRate
       }
     });
   } catch (error) {
@@ -46,24 +49,16 @@ const createMechanic = async (req, res) => {
   }
 };
 
-// Mechanic login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find mechanic
-    const mechanic = await Mechanic.findOne({ email }).select('+password');
+    const normalizedEmail = email.toLowerCase().trim();
+    const mechanic = await Mechanic.findOne({ email: normalizedEmail }).select('+password');
     if (!mechanic) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, mechanic.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Generate token
     const token = jwt.sign({ userId: mechanic._id, role: 'mechanic' }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
@@ -76,7 +71,9 @@ const login = async (req, res) => {
         email: mechanic.email,
         firstName: mechanic.firstName,
         lastName: mechanic.lastName,
-        specialization: mechanic.specialization
+        specialization: mechanic.specialization,
+        photoUrl: mechanic.photoUrl,
+        availabilityStatus: mechanic.availabilityStatus
       }
     });
   } catch (error) {
@@ -102,8 +99,12 @@ const getProfile = async (req, res) => {
         specialization: mechanic.specialization,
         yearsOfExperience: mechanic.yearsOfExperience,
         certifications: mechanic.certifications,
+        photoUrl: mechanic.photoUrl,
+        bio: mechanic.bio,
+        availabilityStatus: mechanic.availabilityStatus,
         totalRepairs: mechanic.totalRepairs,
         averageRating: mechanic.averageRating,
+        successRate: mechanic.successRate,
         isActive: mechanic.isActive
       }
     });
@@ -112,10 +113,10 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Update mechanic profile
+
 const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, phoneNumber, specialization, yearsOfExperience, certifications } = req.body;
+    const { firstName, lastName, phoneNumber, specialization, yearsOfExperience, certifications, photoUrl, bio, availabilityStatus } = req.body;
 
     const mechanic = await Mechanic.findByIdAndUpdate(
       req.user.userId,
@@ -125,7 +126,10 @@ const updateProfile = async (req, res) => {
         phoneNumber,
         specialization,
         yearsOfExperience,
-        certifications
+        certifications,
+        photoUrl,
+        bio,
+        availabilityStatus
       },
       { new: true, runValidators: true }
     );
@@ -139,7 +143,10 @@ const updateProfile = async (req, res) => {
         lastName: mechanic.lastName,
         specialization: mechanic.specialization,
         yearsOfExperience: mechanic.yearsOfExperience,
-        certifications: mechanic.certifications
+        certifications: mechanic.certifications,
+        photoUrl: mechanic.photoUrl,
+        bio: mechanic.bio,
+        availabilityStatus: mechanic.availabilityStatus
       }
     });
   } catch (error) {
@@ -147,10 +154,9 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// Public: list all mechanics (used by admin dashboard frontend to show persistent mechanics)
 const listAllMechanics = async (req, res) => {
   try {
-    const mechanics = await Mechanic.find().select('firstName lastName email specialization totalRepairs averageRating isActive createdBy');
+    const mechanics = await Mechanic.find().select('firstName lastName email specialization totalRepairs averageRating isActive createdBy photoUrl bio availabilityStatus successRate yearsOfExperience');
 
     const formatted = mechanics.map(m => ({
       id: m._id,
@@ -158,9 +164,14 @@ const listAllMechanics = async (req, res) => {
       lastName: m.lastName,
       email: m.email,
       specialization: m.specialization,
+      yearsOfExperience: m.yearsOfExperience,
       totalRepairs: m.totalRepairs || 0,
       averageRating: m.averageRating || 0,
+      successRate: m.successRate || 0,
       isActive: m.isActive,
+      availabilityStatus: m.availabilityStatus,
+      photoUrl: m.photoUrl,
+      bio: m.bio,
       createdBy: m.createdBy
     }));
 
@@ -170,7 +181,6 @@ const listAllMechanics = async (req, res) => {
   }
 };
 
-// Delete mechanic (admin)
 const deleteMechanic = async (req, res) => {
   try {
     const mechanicId = req.params?.id || req.body?.id || req.query?.id;
@@ -192,28 +202,29 @@ const deleteMechanic = async (req, res) => {
   }
 };
 
-// Admin: update mechanic by id
 const updateMechanic = async (req, res) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, phoneNumber, specialization, yearsOfExperience, certifications, password } = req.body;
+    const { firstName, lastName, phoneNumber, specialization, yearsOfExperience, certifications, password, photoUrl, bio, availabilityStatus, successRate } = req.body;
 
     const mechanic = await Mechanic.findById(id);
     if (!mechanic) {
       return res.status(404).json({ message: 'Mechanic not found' });
     }
 
-    // Prepare update fields
     const update = {
       firstName: firstName !== undefined ? firstName : mechanic.firstName,
       lastName: lastName !== undefined ? lastName : mechanic.lastName,
       phoneNumber: phoneNumber !== undefined ? phoneNumber : mechanic.phoneNumber,
       specialization: specialization !== undefined ? specialization : mechanic.specialization,
       yearsOfExperience: yearsOfExperience !== undefined ? yearsOfExperience : mechanic.yearsOfExperience,
-      certifications: certifications !== undefined ? certifications : mechanic.certifications
+      certifications: certifications !== undefined ? certifications : mechanic.certifications,
+      photoUrl: photoUrl !== undefined ? photoUrl : mechanic.photoUrl,
+      bio: bio !== undefined ? bio : mechanic.bio,
+      availabilityStatus: availabilityStatus !== undefined ? availabilityStatus : mechanic.availabilityStatus,
+      successRate: successRate !== undefined ? successRate : mechanic.successRate
     };
 
-    // If admin supplied a new password, hash it
     if (password) {
       if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
       const hashed = await bcrypt.hash(password, 10);
@@ -229,7 +240,11 @@ const updateMechanic = async (req, res) => {
       email: updated.email,
       specialization: updated.specialization,
       yearsOfExperience: updated.yearsOfExperience,
-      certifications: updated.certifications
+      certifications: updated.certifications,
+      photoUrl: updated.photoUrl,
+      bio: updated.bio,
+      availabilityStatus: updated.availabilityStatus,
+      successRate: updated.successRate
     }});
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -9,17 +9,19 @@ const {
   validateUpdateMechanic
 } = require('../middleware/validate');
 
+// Mechanic login (public)
+router.post('/login', validateLogin, mechanicController.login);
+
 // Admin creates mechanic account
 router.post('/create', adminOnly, validateCreateMechanic, mechanicController.createMechanic);
 
 // Protected list for admin dashboard (frontend) to show persisted mechanics
 router.get('/all', adminOnly, mechanicController.listAllMechanics);
 
-// Admin deletes mechanic
-router.delete('/:id', adminOnly, mechanicController.deleteMechanic);
-
-// Fallback delete route (explicit path) to avoid routing edge-cases
-router.delete('/delete/:id', adminOnly, mechanicController.deleteMechanic);
+// SPECIFIC ROUTES MUST COME BEFORE GENERIC /:id ROUTES
+// Protected routes (mechanic only) - SPECIFIC /profile routes
+router.get('/profile', authorizeRoles('mechanic'), mechanicController.getProfile);
+router.put('/profile', authorizeRoles('mechanic'), validateUpdateMechanic, mechanicController.updateProfile);
 
 // POST fallback delete endpoint for clients that can't send DELETE
 router.post('/delete', adminOnly, async (req, res) => {
@@ -34,14 +36,14 @@ router.post('/delete', adminOnly, async (req, res) => {
   }
 });
 
+// Fallback delete route (explicit path) to avoid routing edge-cases
+router.delete('/delete/:id', adminOnly, mechanicController.deleteMechanic);
+
+// GENERIC ROUTES MUST COME LAST
+// Admin deletes mechanic
+router.delete('/:id', adminOnly, mechanicController.deleteMechanic);
+
 // Admin updates mechanic
 router.put('/:id', adminOnly, validateUpdateMechanic, mechanicController.updateMechanic);
-
-// Mechanic login (public)
-router.post('/login', validateLogin, mechanicController.login);
-
-// Protected routes (mechanic only)
-router.get('/profile', authorizeRoles('mechanic'), mechanicController.getProfile);
-router.put('/profile', authorizeRoles('mechanic'), validateUpdateMechanic, mechanicController.updateProfile);
 
 module.exports = router;
