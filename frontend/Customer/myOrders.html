@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Services - MMPS</title>
+  <title>My Orders - MMPS</title>
   <link rel="stylesheet" href="/Customer/css/userShop.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  </head>
+</head>
 <body>
-
-  <!-- NAV (copied from userShop) -->
   <nav>
     <div class="nav-inner">
       <div class="logo-left">
@@ -42,11 +40,10 @@
         <a href="#logout" class="logout-link">Logout</a>
       </div>
 
-      <!-- center nav buttons -->
       <div class="nav-center" aria-label="primary navigation">
         <a href="/Customer/userShop.html" class="center-btn"><i class="bi bi-shop-window-fill"></i> Shop</a>
-        <a href="/Customer/services.html" class="center-btn active"><i class="bi bi-tools"></i> Services</a>
-        <a href="/Customer/myOrders.html" class="center-btn"><i class="bi bi-card-list"></i> My Orders</a>
+        <a href="/Customer/services.html" class="center-btn"><i class="bi bi-tools"></i> Services</a>
+        <a href="/Customer/myOrders.html" class="center-btn active"><i class="bi bi-card-list"></i> My Orders</a>
       </div>
     </div>
   </nav>
@@ -55,12 +52,12 @@
     <section class="hero-section">
       <div class="hero-content">
         <h4>MANOY'S MOTORCYCLE PARTS, ACCESSORIES & SERVICES</h4>
-        <h1> Mechanic Services <i class="bi bi-tools"></i></h1>
-        <p>Book a service by adding it to your cart. Our skilled mechanics will handle the rest.</p>
+        <h1>My Orders <i class="bi bi-card-checklist"></i></h1>
+        <p>Review your recent purchases, service requests, and order status in one place.</p>
         <ul class="hero-pills">
-          <li><span>29 Services</span></li>
-          <li><span>Expert Mechanics</span></li>
-          <li><span>Quality Guaranteed</span></li>
+          <li><span>Track delivery progress</span></li>
+          <li><span>View order details</span></li>
+          <li><span>Manage service appointments</span></li>
         </ul>
       </div>
     </section>
@@ -68,28 +65,36 @@
     <section class="products-section">
       <div class="search-container" style="width:92.4%; margin-left:30px; margin-top:18px;">
         <i class="bi bi-search"></i>
-        <input id="serviceSearch" class="form-control" type="text" placeholder="Search services...">
+        <input class="form-control" type="text" placeholder="Search your orders...">
       </div>
 
       <div class="browse-controls" style="width:92.4%; margin-left:30px;">
-        <div class="category-pills" id="servicePills">
-          <button class="pill active" data-cat="all">All <span class="pill-count">29</span></button>
-          <button class="pill" data-cat="Seat Works">Seat Works <span class="pill-count">3</span></button>
-          <button class="pill" data-cat="Engine">Engine <span class="pill-count">9</span></button>
-          <button class="pill" data-cat="Brakes">Brakes & Drive <span class="pill-count">3</span></button>
+        <div class="category-pills">
+          <button class="pill active" data-cat="all">All Orders</button>
+          <button class="pill" data-cat="products">Products</button>
+          <button class="pill" data-cat="services">Services</button>
+          <button class="pill" data-cat="completed">Completed</button>
         </div>
       </div>
 
-      <div class="products" id="servicesGrid" style="width:92.4%; margin-left:30px; margin-top:12px;"></div>
-
-      <div class="products-footer" style="width:92.4%; margin-left:30px;">
-        <div class="products-info" id="servicesInfo"></div>
-        <div class="pagination" id="servicesPagination"></div>
+      <div class="products" style="width:92.4%; margin-left:30px; margin-top:12px; padding-bottom: 24px;">
+        <div class="product-card" style="padding:24px; gap:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3 style="margin:0; font-size:1.1rem;">No orders yet</h3>
+              <p style="margin:8px 0 0; color:#6b7280;">Your recent orders will appear here after checkout.</p>
+            </div>
+            <span style="background:#e0f2fe; color:#0369a1; padding:8px 12px; border-radius:999px; font-weight:700; font-size:0.9rem;">Empty</span>
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+            <button class="add-btn" onclick="window.location.href='/Customer/userShop.html'">Shop Parts</button>
+            <button class="add-btn" onclick="window.location.href='/Customer/services.html'" style="background: #4f46e5;">View Services</button>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
   <script src="/Customer/script/userToggle.js"></script>
-  <script src="/Customer/script/services.js"></script>
 </body>
 </html>
