@@ -100,7 +100,7 @@ const verifyOtp = async (req, res) => {
     await user.save();
 
     // Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
 
@@ -112,7 +112,8 @@ const verifyOtp = async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        phoneNumber: user.phoneNumber
+        phoneNumber: user.phoneNumber,
+        role: user.role
       }
     });
   } catch (error) {
@@ -189,7 +190,7 @@ const login = async (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
 
@@ -200,7 +201,9 @@ const login = async (req, res) => {
         id: user._id,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        role: user.role,
+        phoneNumber: user.phoneNumber
       }
     });
   } catch (error) {

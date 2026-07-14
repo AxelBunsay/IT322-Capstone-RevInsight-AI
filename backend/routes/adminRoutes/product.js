@@ -12,10 +12,10 @@ const {
 const { protect } = require('../../middleware/adminAuth');
 const upload = require('../../middleware/upload');
 
-// All routes are protected
+// All admin write routes are protected
 router.post('/', protect, upload.single('image'), createProduct);
-router.get('/', protect, getProducts);
-router.get('/:id', protect, getProduct);
+router.get('/', getProducts);
+router.get('/:id', getProduct);
 router.put('/:id', protect, upload.single('image'), updateProduct);
 router.delete('/:id', protect, deleteProduct);
 

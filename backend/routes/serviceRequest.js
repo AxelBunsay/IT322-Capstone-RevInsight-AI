@@ -4,9 +4,9 @@ const serviceRequestController = require('../controllers/serviceRequestControlle
 const { authorizeRoles } = require('../middleware/authorize');
 
 // User creates a service request
-router.post('/', authorizeRoles('user'), serviceRequestController.createServiceRequest);
+router.post('/', authorizeRoles('customer'), serviceRequestController.createServiceRequest);
 // User gets their own service requests
-router.get('/my', authorizeRoles('user'), serviceRequestController.getUserServiceRequests);
+router.get('/my', authorizeRoles('customer'), serviceRequestController.getUserServiceRequests);
 // Mechanic gets their assigned jobs
 router.get('/mechanic', authorizeRoles('mechanic'), serviceRequestController.getMechanicJobs);
 // Mechanic accepts a job and sets start time

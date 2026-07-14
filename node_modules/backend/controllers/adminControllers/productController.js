@@ -38,10 +38,12 @@ const createProduct = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find();
+    const host = req.get('host');
+    const baseUrl = `${req.protocol}://${host}`;
 
-     const productsWithUrls = products.map(product => ({
+    const productsWithUrls = products.map(product => ({
       ...product.toObject(),
-      image: product.image ? `http://localhost:3000/${product.image}` : null
+      image: product.image ? `${baseUrl}/${product.image}` : null
     }));
 
     res.status(200).json({
@@ -69,8 +71,9 @@ const getProduct = async (req, res) => {
       });
     }
 
-    // Add image URL
-    const imageUrl = product.image ? `http://localhost:3000/${product.image}` : null;
+    const host = req.get('host');
+    const baseUrl = `${req.protocol}://${host}`;
+    const imageUrl = product.image ? `${baseUrl}/${product.image}` : null;
 
     res.status(200).json({
       success: true,

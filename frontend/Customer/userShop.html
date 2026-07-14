@@ -23,7 +23,7 @@
       <div class="nav-right">
         <div class="nav-links">
           <a href="/Customer/userShop.html" class="icon-link"><i class="bi bi-bell"></i></a>
-          <a href="/Customer/userShop.html" class="icon-link"><i class="bi bi-cart"></i></a>
+          <a href="#" id="openCartButton" class="icon-link"><i class="bi bi-cart"></i><span id="cartBadge" class="cart-badge" hidden>0</span></a>
         </div>
 
         <div class="user-menu">
@@ -66,31 +66,32 @@
 
 
     <section class="products-section">
-      <div class="search-container">
-        <i class="bi bi-search"></i>
-        <input class="form-control" type="text" placeholder="Search parts, accessories...">
-
-        <select class="filter-dropdown" name="" id="">
-          <option value="">Select Price Range</option>
-          <option value="0-500">$0 - $500</option>
-          <option value="500-1000">$500 - $1000</option>
-          <option value="1000-5000">$1000 - $5000</option>
-          <option value="5000+">$5000+</option>
+      <div class="search-row">
+        <div class="search-container">
+          <i class="bi bi-search"></i>
+          <input class="form-control" id="productSearch" type="text" placeholder="Search parts, accessories...">
+        </div>
+        <select class="filter-dropdown" id="priceFilter" name="priceFilter">
+          <option value="">Default</option>
+          <option value="0-500">₱0 - ₱500</option>
+          <option value="500-1000">₱500 - ₱1000</option>
+          <option value="1000-5000">₱1000 - ₱5000</option>
+          <option value="5000+">₱5000+</option>
         </select>
-
       </div>
-        <div class="browse-controls">
-          <div class="category-pills">
-            <button class="pill active" data-cat="all">All <span class="pill-count">15</span></button>
-            <button class="pill" data-cat="Brake Parts">Brake Parts <span class="pill-count">3</span></button>
-            <button class="pill" data-cat="Engine Parts">Engine Parts <span class="pill-count">7</span></button>
-            <button class="pill" data-cat="Accessories">Accessories <span class="pill-count">5</span></button>
-          </div>
-        </div>
 
-        <div class="products" id="productsGrid">
-          <!-- Product cards are rendered here by script -->
+      <div class="browse-controls">
+        <div class="category-pills">
+          <button class="pill active" data-cat="all"><i class="bi bi-list-ul"></i> All <span class="pill-count">15</span></button>
+          <button class="pill" data-cat="Brake Parts"><i class="bi bi-brake-parking-fill"></i> Brake Parts <span class="pill-count">3</span></button>
+          <button class="pill" data-cat="Engine Parts"><i class="bi bi-cpu-fill"></i> Engine Parts <span class="pill-count">7</span></button>
+          <button class="pill" data-cat="Accessories"><i class="bi bi-patch-check-fill"></i> Accessories <span class="pill-count">5</span></button>
         </div>
+      </div>
+
+      <div class="products" id="productsGrid">
+        <!-- Product cards are rendered here by script -->
+      </div>
 
         <div class="products-footer">
           <div class="products-info" id="productsInfo"></div>

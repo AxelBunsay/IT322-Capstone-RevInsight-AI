@@ -3,13 +3,13 @@ const router = express.Router();
 
 const {
   checkout,
-  getAllOrders
+  getCustomerOrders
 } = require('../../controllers/userControllers/orderController');
 
 const { authorizeRoles } = require('../../middleware/authorize');
 
-// All routes are protected for users only
-router.post('/checkout', authorizeRoles('user'), checkout);
-router.get('/', authorizeRoles('user'), getAllOrders);
+// All routes are protected for customers only
+router.post('/checkout', authorizeRoles('customer'), checkout);
+router.get('/', authorizeRoles('customer'), getCustomerOrders);
 
 module.exports = router;

@@ -17,13 +17,15 @@ const sampleServices = [
 const pageSize = 8;
 let currentPage = 1;
 let filtered = sampleServices.slice();
+const token = localStorage.getItem('customerToken');
 
 function renderServices() {
   const grid = document.getElementById('servicesGrid');
+  if (!grid) return;
   grid.innerHTML = '';
   const start = (currentPage - 1) * pageSize;
   const pageItems = filtered.slice(start, start + pageSize);
-  pageItems.forEach(svc => {
+  pageItems.forEach((svc) => {
     const card = document.createElement('div');
     card.className = 'product-card';
     card.innerHTML = `
@@ -52,6 +54,7 @@ function renderPagination() {
   const total = filtered.length;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const container = document.getElementById('servicesPagination');
+  if (!container) return;
   container.innerHTML = '';
   for (let i = 1; i <= pages; i++) {
     const btn = document.createElement('button');
@@ -60,36 +63,84 @@ function renderPagination() {
     btn.onclick = () => { currentPage = i; renderServices(); };
     container.appendChild(btn);
   }
-  document.getElementById('servicesInfo').textContent = `Showing ${Math.min((currentPage-1)*pageSize+1, total)}–${Math.min(currentPage*pageSize, total)} of ${total} services`;
+  const info = document.getElementById('servicesInfo');
+  if (info) {
+    info.textContent = `Showing ${Math.min((currentPage - 1) * pageSize + 1, total)}–${Math.min(currentPage * pageSize, total)} of ${total} services`;
+  }
 }
+
+const showBookingMessage = (message, isError = false) => {
+  const element = document.getElementById('bookingMessage');
+  if (!element) return;
+  element.style.display = 'block';
+  element.style.color = isError ? '#b71c1c' : '#166534';
+  element.textContent = message;
+};
+
+const bookService = async (serviceId) => {
+  if (!token) {
+    window.location.href = '/Customer/userLogin.html';
+    return;
+  }
+
+  const service = sampleServices.find((item) => item.id === serviceId);
+  if (!service) return;
+
+  try {
+    const response = await fetch('/api/service-requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        serviceType: service.title,
+        description: `${service.title} - ${service.desc}`
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Booking failed');
+    }
+    showBookingMessage(`Service booked successfully: ${service.title}`, false);
+  } catch (error) {
+    showBookingMessage(error.message || 'Unable to book service.', true);
+  }
+};
 
 // search & filter
 document.addEventListener('DOMContentLoaded', () => {
   renderServices();
   const search = document.getElementById('serviceSearch');
-  search.addEventListener('input', (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    filtered = sampleServices.filter(s => s.title.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
-    currentPage = 1;
-    renderServices();
-  });
+  if (search) {
+    search.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      filtered = sampleServices.filter((s) => s.title.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
+      currentPage = 1;
+      renderServices();
+    });
+  }
 
-  // category pills
-  document.getElementById('servicePills').addEventListener('click', (e) => {
-    const btn = e.target.closest('button.pill');
-    if (!btn) return;
-    document.querySelectorAll('#servicePills .pill').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    const cat = btn.dataset.cat;
-    if (cat === 'all') filtered = sampleServices.slice(); else filtered = sampleServices.filter(s => s.category === cat);
-    currentPage = 1; renderServices();
-  });
+  const servicePills = document.getElementById('servicePills');
+  if (servicePills) {
+    servicePills.addEventListener('click', (e) => {
+      const btn = e.target.closest('button.pill');
+      if (!btn) return;
+      document.querySelectorAll('#servicePills .pill').forEach((p) => p.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      if (cat === 'all') filtered = sampleServices.slice(); else filtered = sampleServices.filter((s) => s.category === cat);
+      currentPage = 1;
+      renderServices();
+    });
+  }
 
-  // book service (delegated)
-  document.getElementById('servicesGrid').addEventListener('click', (e) => {
-    const btn = e.target.closest('button.add-btn');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    alert('Book service: ' + id);
-  });
+  const grid = document.getElementById('servicesGrid');
+  if (grid) {
+    grid.addEventListener('click', (e) => {
+      const btn = e.target.closest('button.add-btn');
+      if (!btn) return;
+      bookService(btn.dataset.id);
+    });
+  }
 });

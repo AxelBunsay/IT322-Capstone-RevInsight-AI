@@ -78,23 +78,20 @@
       </div>
 
       <div class="products" style="width:92.4%; margin-left:30px; margin-top:12px; padding-bottom: 24px;">
-        <div class="product-card" style="padding:24px; gap:18px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <h3 style="margin:0; font-size:1.1rem;">No orders yet</h3>
-              <p style="margin:8px 0 0; color:#6b7280;">Your recent orders will appear here after checkout.</p>
-            </div>
-            <span style="background:#e0f2fe; color:#0369a1; padding:8px 12px; border-radius:999px; font-weight:700; font-size:0.9rem;">Empty</span>
-          </div>
-          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
-            <button class="add-btn" onclick="window.location.href='/Customer/userShop.html'">Shop Parts</button>
-            <button class="add-btn" onclick="window.location.href='/Customer/services.html'" style="background: #4f46e5;">View Services</button>
-          </div>
-        </div>
+        <div id="orderSummary" class="order-summary"></div>
+        <section class="order-section">
+          <h2>Product Orders</h2>
+          <div id="ordersContainer" class="orders-container"></div>
+        </section>
+        <section class="order-section" style="margin-top:24px;">
+          <h2>Service Requests</h2>
+          <div id="serviceRequestsContainer" class="orders-container"></div>
+        </section>
       </div>
     </section>
   </main>
 
   <script src="/Customer/script/userToggle.js"></script>
+  <script src="/Customer/script/myOrders.js"></script>
 </body>
 </html>

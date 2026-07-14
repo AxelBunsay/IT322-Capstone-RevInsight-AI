@@ -1,19 +1,27 @@
 const Cart = require('../../models/orderingModels/cart');
 const Product = require('../../models/product');
+const User = require('../../models/user');
+
+const getCustomerPhone = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+  if (!user.phoneNumber) throw new Error('User phone number is required');
+  return { phoneNumber: user.phoneNumber, customerName: `${user.firstName} ${user.lastName}` };
+};
 
 // Add to cart
 const addToCart = async (req, res) => {
   try {
-    const { customerName, customerPhone, productId, quantity } = req.body;
+    const { productId, quantity = 1 } = req.body;
+    const { phoneNumber, customerName } = await getCustomerPhone(req.user.userId);
 
-    if (!customerName || !customerPhone || !productId || !quantity) {
+    if (!productId || !quantity) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'Product ID and quantity are required'
       });
     }
 
-    // Find product
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({
@@ -22,7 +30,6 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // Check stock
     if (product.quantity < quantity) {
       return res.status(400).json({
         success: false,
@@ -30,20 +37,16 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // Find or create cart
-    let cart = await Cart.findOne({ customerPhone });
-
+    let cart = await Cart.findOne({ customerPhone: phoneNumber });
     if (!cart) {
       cart = new Cart({
         customerName,
-        customerPhone,
+        customerPhone: phoneNumber,
         items: []
       });
     }
 
-    // Check if product already in cart
     const existingItem = cart.items.find(item => item.productId.toString() === productId);
-
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
@@ -56,9 +59,7 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // Calculate total price
     cart.totalPrice = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-
     await cart.save();
 
     res.status(200).json({
@@ -77,14 +78,13 @@ const addToCart = async (req, res) => {
 // Get cart
 const getCart = async (req, res) => {
   try {
-    const { customerPhone } = req.params;
-
-    const cart = await Cart.findOne({ customerPhone });
+    const { phoneNumber } = await getCustomerPhone(req.user.userId);
+    const cart = await Cart.findOne({ customerPhone: phoneNumber });
 
     if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: 'Cart not found'
+      return res.status(200).json({
+        success: true,
+        cart: { items: [], totalPrice: 0 }
       });
     }
 
@@ -103,9 +103,9 @@ const getCart = async (req, res) => {
 // Remove from cart
 const removeFromCart = async (req, res) => {
   try {
-    const { customerPhone, productId } = req.params;
-
-    const cart = await Cart.findOne({ customerPhone });
+    const productId = req.params.productId;
+    const { phoneNumber } = await getCustomerPhone(req.user.userId);
+    const cart = await Cart.findOne({ customerPhone: phoneNumber });
 
     if (!cart) {
       return res.status(404).json({
@@ -115,9 +115,7 @@ const removeFromCart = async (req, res) => {
     }
 
     cart.items = cart.items.filter(item => item.productId.toString() !== productId);
-
     cart.totalPrice = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-
     await cart.save();
 
     res.status(200).json({
@@ -136,8 +134,9 @@ const removeFromCart = async (req, res) => {
 // Update cart quantity
 const updateCartQuantity = async (req, res) => {
   try {
-    const { customerPhone, productId } = req.params;
+    const productId = req.params.productId;
     const { quantity } = req.body;
+    const { phoneNumber } = await getCustomerPhone(req.user.userId);
 
     if (!quantity || quantity < 1) {
       return res.status(400).json({
@@ -146,8 +145,7 @@ const updateCartQuantity = async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ customerPhone });
-
+    const cart = await Cart.findOne({ customerPhone: phoneNumber });
     if (!cart) {
       return res.status(404).json({
         success: false,
@@ -156,7 +154,6 @@ const updateCartQuantity = async (req, res) => {
     }
 
     const item = cart.items.find(item => item.productId.toString() === productId);
-
     if (!item) {
       return res.status(404).json({
         success: false,
@@ -165,9 +162,7 @@ const updateCartQuantity = async (req, res) => {
     }
 
     item.quantity = quantity;
-
     cart.totalPrice = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-
     await cart.save();
 
     res.status(200).json({
@@ -186,9 +181,8 @@ const updateCartQuantity = async (req, res) => {
 // Clear cart
 const clearCart = async (req, res) => {
   try {
-    const { customerPhone } = req.params;
-
-    await Cart.findOneAndDelete({ customerPhone });
+    const { phoneNumber } = await getCustomerPhone(req.user.userId);
+    await Cart.findOneAndDelete({ customerPhone: phoneNumber });
 
     res.status(200).json({
       success: true,
