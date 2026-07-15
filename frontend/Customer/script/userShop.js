@@ -150,14 +150,22 @@ const renderProducts = (page = 1) => {
   const pageItems = filteredProducts.slice(start, start + pageSize);
 
   grid.innerHTML = pageItems.map((p) => {
-    const lowStock = p.quantity <= 5;
+    const quantity = Number(p.quantity ?? p.stock ?? 0);
+    const lowStock = quantity > 0 && quantity <= 5;
+    const outOfStock = quantity <= 0;
     const imageUrl = p.image || 'https://via.placeholder.com/400x250?text=No+Image';
+    const stockLabel = outOfStock ? 'Out of Stock' : (lowStock ? 'Low Stock' : 'In Stock');
+    const stockBadge = outOfStock ? '<span class="low-stock">Out of Stock</span>' : (lowStock ? '<span class="low-stock">Low Stock</span>' : '');
+    const addButton = outOfStock
+      ? '<button class="add-btn" disabled style="opacity:0.6; cursor:not-allowed;">Out of Stock</button>'
+      : `<button class="add-btn" data-id="${p._id}">🛒 Add to Cart</button>`;
+
     return `
       <div class="product-card">
         <div class="product-top">
           <div class="product-id">#${p._id.slice(-4)}</div>
           <span class="product-badge">${p.category}</span>
-          ${lowStock ? '<span class="low-stock">Low Stock</span>' : ''}
+          ${stockBadge}
           <img src="${imageUrl}" alt="${p.name}">
           <div class="card-icon">🛠</div>
         </div>
@@ -168,10 +176,10 @@ const renderProducts = (page = 1) => {
             <div class="product-price">${formatCurrency(p.price)}</div>
           </div>
           <div class="stock-row">
-            <div class="stock-bar"><div class="stock-fill" style="width:${Math.max(6, Math.min(100, (p.quantity / 30) * 100))}%"></div></div>
-            <div class="stock-count">${p.quantity} left</div>
+            <div class="stock-bar"><div class="stock-fill" style="width:${Math.max(6, Math.min(100, (quantity > 0 ? (quantity / 30) * 100 : 0)))}%"></div></div>
+            <div class="stock-count">${stockLabel}</div>
           </div>
-          <button class="add-btn" data-id="${p._id}">🛒 Add to Cart</button>
+          ${addButton}
         </div>
       </div>
     `;

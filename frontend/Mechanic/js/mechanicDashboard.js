@@ -13,7 +13,7 @@ function checkAuth() {
 
 // Logout function
 function logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem('mechanicToken');
     localStorage.removeItem('mechanic');
     window.location.href = 'mechanicLogin.html';
 }
@@ -32,8 +32,10 @@ async function loadDashboardData() {
     document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
     
     try {
+        const mechanicId = mechanic.id || mechanic._id;
+
         // Fetch mechanic statistics
-        const response = await fetch(`http://localhost:5000/api/mechanic/${mechanic._id}/stats`, {
+        const response = await fetch(`http://localhost:5000/api/mechanic/${mechanicId}/stats`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -52,7 +54,7 @@ async function loadDashboardData() {
         }
         
         // Fetch recent jobs
-        const jobsResponse = await fetch(`http://localhost:5000/api/mechanic/${mechanic._id}/jobs`, {
+        const jobsResponse = await fetch(`http://localhost:5000/api/mechanic/${mechanicId}/jobs`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -94,21 +96,26 @@ function displayRecentJobs(jobs) {
         return;
     }
     
-    container.innerHTML = jobs.map(job => `
-        <div class="job-item">
-            <div class="job-item-left">
-                <div class="job-item-icon">🔧</div>
-                <div class="job-item-info">
-                    <h4>${job.customerName || 'Customer'}</h4>
-                    <p>${job.serviceType || 'Service'}</p>
+    container.innerHTML = jobs.map(job => {
+        const completedDate = job.completedDate || job.updatedAt || job.createdAt;
+        const displayDate = completedDate ? new Date(completedDate).toLocaleDateString() : '—';
+
+        return `
+            <div class="job-item">
+                <div class="job-item-left">
+                    <div class="job-item-icon">🔧</div>
+                    <div class="job-item-info">
+                        <h4>${job.customerName || 'Customer'}</h4>
+                        <p>${job.serviceType || 'Service'}</p>
+                    </div>
+                </div>
+                <div class="job-item-right">
+                    <div class="job-status status-paid">Paid</div>
+                    <div class="job-date">${displayDate}</div>
                 </div>
             </div>
-            <div class="job-item-right">
-                <div class="job-status status-paid">Paid</div>
-                <div class="job-date">${new Date(job.completedDate).toLocaleDateString()}</div>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Display service requests
@@ -154,7 +161,7 @@ async function acceptServiceRequest(requestId) {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ mechanicId: mechanic._id })
+            body: JSON.stringify({ mechanicId: mechanic.id || mechanic._id })
         });
         
         if (response.ok) {

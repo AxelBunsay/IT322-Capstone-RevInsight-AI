@@ -13,7 +13,7 @@ function checkAuth() {
 
 // Logout function
 function logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem('mechanicToken');
     localStorage.removeItem('mechanic');
     window.location.href = 'mechanicLogin.html';
 }
@@ -66,7 +66,8 @@ async function loadMyJobs() {
     if (!mechanic) return;
     
     try {
-        const response = await fetch(`http://localhost:5000/api/mechanic/${mechanic._id}/jobs`, {
+        const mechanicId = mechanic.id || mechanic._id;
+        const response = await fetch(`http://localhost:5000/api/mechanic/${mechanicId}/jobs`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -172,7 +173,7 @@ async function acceptJob(jobId) {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ mechanicId: mechanic._id })
+            body: JSON.stringify({ mechanicId: mechanic.id || mechanic._id })
         });
         
         if (response.ok) {

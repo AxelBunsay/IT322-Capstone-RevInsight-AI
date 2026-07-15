@@ -13,7 +13,7 @@ function checkAuth() {
 
 // Logout function
 function logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem('mechanicToken');
     localStorage.removeItem('mechanic');
     window.location.href = 'mechanicLogin.html';
 }
@@ -59,9 +59,9 @@ async function loadParts() {
 
 // Update inventory statistics
 function updateStats() {
-    const available = allParts.filter(p => p.stock > 5).length;
-    const lowStock = allParts.filter(p => p.stock > 0 && p.stock <= 5).length;
-    const outOfStock = allParts.filter(p => p.stock === 0).length;
+    const available = allParts.filter(p => Number(p.stock) > 0 && Number(p.stock) > 5).length;
+    const lowStock = allParts.filter(p => Number(p.stock) > 0 && Number(p.stock) <= 5).length;
+    const outOfStock = allParts.filter(p => Number(p.stock) <= 0 || p.isOutOfStock).length;
     
     document.getElementById('availableCount').textContent = available;
     document.getElementById('lowStockCount').textContent = lowStock;
@@ -117,6 +117,9 @@ function displayParts(parts) {
     
     tbody.innerHTML = parts.map(part => {
         const imageUrl = part.image ? part.image : '';
+        const isOutOfStock = Number(part.stock) <= 0 || part.isOutOfStock;
+        const stockText = isOutOfStock ? 'Out of Stock' : `${part.stock}`;
+        const stockClass = isOutOfStock ? 'out-of-stock-badge' : '';
         return `
             <tr>
                 <td><span class="part-id">${part.itemId}</span></td>
@@ -125,7 +128,7 @@ function displayParts(parts) {
                 <td><span class="part-category">${part.category || '-'}</span></td>
                 <td><span class="part-price">${part.price ? '₱' + part.price : '-'}</span></td>
                 <td>
-                    <span class="quantity">${part.stock}</span>
+                    <span class="quantity ${stockClass}">${stockText}</span>
                 </td>
             </tr>
         `;

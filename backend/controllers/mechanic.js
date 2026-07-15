@@ -73,6 +73,7 @@ const login = async (req, res) => {
       token,
       mechanic: {
         id: mechanic._id,
+        _id: mechanic._id,
         email: mechanic.email,
         firstName: mechanic.firstName,
         lastName: mechanic.lastName,
