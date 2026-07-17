@@ -13,6 +13,7 @@ const buildOrderCard = (order) => `
       <ul>
         ${(order.items || []).map((item) => `<li>${item.productName} × ${item.quantity}</li>`).join('')}
       </ul>
+      <button class="reorder-btn" onclick="reorderOrder('${order._id}')">Reorder</button>
     </div>
   </article>
 `;
@@ -69,6 +70,39 @@ const loadOrders = async () => {
     servicesContainer.innerHTML = (servicesData.requests || []).length > 0
       ? (servicesData.requests || []).map(buildServiceCard).join('')
       : '<p>No service requests yet.</p>';
+  }
+};
+
+const reorderOrder = async (orderId) => {
+  if (!token) {
+    window.location.href = '/Customer/userLogin.html';
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}/reorder`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      alert(data.message || 'Unable to reorder this order');
+      return;
+    }
+
+    let message = 'Items added to your cart.';
+    if (data.warnings && data.warnings.length) {
+      message += '\n\n' + data.warnings.join('\n');
+    }
+
+    alert(message);
+  } catch (error) {
+    console.error('Reorder error:', error);
+    alert('An error occurred while reordering.');
   }
 };
 
