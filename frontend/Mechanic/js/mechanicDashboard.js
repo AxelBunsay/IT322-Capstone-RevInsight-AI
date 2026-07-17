@@ -60,8 +60,9 @@ async function loadDashboardData() {
             }
         });
         
+        let jobs = [];
         if (jobsResponse.ok) {
-            const jobs = await jobsResponse.json();
+            jobs = await jobsResponse.json();
             displayRecentJobs(jobs.slice(0, 4));
         }
         
@@ -72,10 +73,13 @@ async function loadDashboardData() {
             }
         });
         
+        let requests = [];
         if (requestsResponse.ok) {
-            const requests = await requestsResponse.json();
+            requests = await requestsResponse.json();
             displayServiceRequests(requests);
         }
+
+        displayPriorityBoard(jobs, requests);
     } catch (error) {
         console.error('Error loading dashboard data:', error);
     }
@@ -116,6 +120,63 @@ function displayRecentJobs(jobs) {
             </div>
         `;
     }).join('');
+}
+
+// Display priority board from jobs and pending requests
+function displayPriorityBoard(jobs = [], requests = []) {
+    const urgentList = document.getElementById('urgentPriorityList');
+    const readyList = document.getElementById('readyPriorityList');
+    const wrapList = document.getElementById('wrapPriorityList');
+
+    const serviceRequests = Array.isArray(requests) ? requests : (requests.requests || []);
+    const jobList = Array.isArray(jobs) ? jobs : [];
+
+    const urgentItems = [];
+    const readyItems = [];
+    const wrapItems = [];
+
+    serviceRequests.forEach((req) => {
+        urgentItems.push({
+            title: req.customerName || 'Customer request',
+            subtitle: req.serviceDescription || req.serviceType || 'Needs review'
+        });
+    });
+
+    jobList.forEach((job) => {
+        const status = (job.status || '').toLowerCase();
+        const item = {
+            title: job.customerName || 'Customer',
+            subtitle: job.serviceType || job.jobType || 'Service job'
+        };
+
+        if (['pending', 'scheduled', 'awaiting', 'new', 'requested'].some(value => status.includes(value))) {
+            urgentItems.push(item);
+        } else if (['in progress', 'assigned', 'active', 'working'].some(value => status.includes(value))) {
+            readyItems.push(item);
+        } else if (['completed', 'paid', 'finished', 'done'].some(value => status.includes(value))) {
+            wrapItems.push(item);
+        }
+    });
+
+    renderPriorityList(urgentList, urgentItems, 'No urgent tasks right now.');
+    renderPriorityList(readyList, readyItems, 'Nothing is waiting to start.');
+    renderPriorityList(wrapList, wrapItems, 'No items need wrapping up yet.');
+}
+
+function renderPriorityList(container, items, emptyText) {
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `<div class="priority-empty">${emptyText}</div>`;
+        return;
+    }
+
+    container.innerHTML = items.slice(0, 3).map((item) => `
+        <div class="priority-item">
+            <strong>${item.title}</strong>
+            <span>${item.subtitle}</span>
+        </div>
+    `).join('');
 }
 
 // Display service requests

@@ -57,6 +57,42 @@
             
             <!-- Dashboard Content -->
             <div class="dashboard-content">
+                <!-- Priority Board -->
+                <div class="priority-board">
+                    <div class="priority-card priority-urgent">
+                        <div class="priority-heading">
+                            <span class="priority-badge">1</span>
+                            <div>
+                                <h3>Urgent attention</h3>
+                                <p>New requests and jobs that need a fast response.</p>
+                            </div>
+                        </div>
+                        <div id="urgentPriorityList" class="priority-list"></div>
+                    </div>
+
+                    <div class="priority-card priority-ready">
+                        <div class="priority-heading">
+                            <span class="priority-badge">2</span>
+                            <div>
+                                <h3>Ready to start</h3>
+                                <p>Assigned work that is waiting to move forward.</p>
+                            </div>
+                        </div>
+                        <div id="readyPriorityList" class="priority-list"></div>
+                    </div>
+
+                    <div class="priority-card priority-wrap">
+                        <div class="priority-heading">
+                            <span class="priority-badge">3</span>
+                            <div>
+                                <h3>Wrap up</h3>
+                                <p>Completed jobs that should be closed out cleanly.</p>
+                            </div>
+                        </div>
+                        <div id="wrapPriorityList" class="priority-list"></div>
+                    </div>
+                </div>
+
                 <!-- Stats Cards -->
                 <div class="stats-grid">
                     <div class="stat-card">

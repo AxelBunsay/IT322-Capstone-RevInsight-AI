@@ -39,6 +39,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
+let availableJobsCache = [];
+let myJobsCache = [];
+
 // Load available jobs
 async function loadAvailableJobs() {
     const mechanic = checkAuth();
@@ -53,7 +56,9 @@ async function loadAvailableJobs() {
         
         if (response.ok) {
             const jobs = await response.json();
-            displayAvailableJobs(jobs);
+            availableJobsCache = jobs || [];
+            displayAvailableJobs(availableJobsCache);
+            displayJobsOverview(availableJobsCache, myJobsCache);
         }
     } catch (error) {
         console.error('Error loading available jobs:', error);
@@ -75,10 +80,12 @@ async function loadMyJobs() {
         
         if (response.ok) {
             const jobs = await response.json();
-            displayMyJobs(jobs);
+            myJobsCache = jobs || [];
+            displayMyJobs(myJobsCache);
             
             // Update badge count
-            document.getElementById('myJobsCount').textContent = jobs.length;
+            document.getElementById('myJobsCount').textContent = myJobsCache.length;
+            displayJobsOverview(availableJobsCache, myJobsCache);
         }
     } catch (error) {
         console.error('Error loading my jobs:', error);
@@ -116,6 +123,44 @@ function displayAvailableJobs(jobs) {
                 <span class="job-badge badge-available">Available</span>
                 <button class="btn-action" onclick="acceptJob('${job._id}')">Accept</button>
             </div>
+        </div>
+    `).join('');
+}
+
+function displayJobsOverview(availableJobs = [], myJobs = []) {
+    const claimList = document.getElementById('claimList');
+    const progressList = document.getElementById('progressList');
+    const wrapList = document.getElementById('wrapList');
+
+    const scheduledJobs = (myJobs || []).filter(job => (job.status || '').toLowerCase() === 'scheduled');
+    const inProgressJobs = (myJobs || []).filter(job => (job.status || '').toLowerCase() === 'in-progress' || (job.status || '').toLowerCase() === 'in progress');
+    const completedJobs = (myJobs || []).filter(job => ['completed', 'complete', 'done', 'paid'].includes((job.status || '').toLowerCase()));
+
+    const claimItems = [
+        ...(availableJobs || []).slice(0, 2),
+        ...scheduledJobs.slice(0, 1)
+    ].slice(0, 3);
+
+    renderOverviewList(claimList, claimItems, 'No open jobs right now.');
+    renderOverviewList(progressList, inProgressJobs.slice(0, 3), 'No jobs are in progress.');
+    renderOverviewList(wrapList, completedJobs.slice(0, 3), 'Nothing needs wrapping up yet.');
+
+    const scheduledCount = scheduledJobs.length;
+    document.getElementById('jobCount').textContent = `${(availableJobs || []).length} available services - ${scheduledCount} scheduled`;
+}
+
+function renderOverviewList(container, items, emptyText) {
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `<div class="overview-empty">${emptyText}</div>`;
+        return;
+    }
+
+    container.innerHTML = items.map((item) => `
+        <div class="overview-item">
+            <strong>${item.customerName || 'Customer'}</strong>
+            <span>${item.serviceType || item.serviceDescription || item.jobType || 'Service task'}</span>
         </div>
     `).join('');
 }
@@ -237,4 +282,5 @@ async function completeJob(jobId) {
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     loadAvailableJobs();
+    loadMyJobs();
 });
