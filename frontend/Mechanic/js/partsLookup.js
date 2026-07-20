@@ -35,6 +35,24 @@ document.querySelectorAll('.category-tab').forEach(tab => {
 document.getElementById('partsSearch').addEventListener('input', filterAndDisplayParts);
 document.getElementById('sortSelect').addEventListener('change', filterAndDisplayParts);
 
+function showToast(message, type = 'success') {
+    const container = document.createElement('div');
+    container.className = `toast ${type}`;
+    container.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : type === 'warning' ? '⚠' : '✕'}</span><span>${message}</span>`;
+    document.body.appendChild(container);
+    const toastContainer = document.body.querySelector('.toast-container') || (() => {
+        const wrap = document.createElement('div');
+        wrap.className = 'toast-container';
+        document.body.appendChild(wrap);
+        return wrap;
+    })();
+    toastContainer.appendChild(container);
+    setTimeout(() => {
+        container.style.animation = 'slideOutRight 0.25s ease';
+        setTimeout(() => container.remove(), 250);
+    }, 2800);
+}
+
 // Load parts from backend
 async function loadParts() {
     const mechanic = checkAuth();
@@ -54,6 +72,7 @@ async function loadParts() {
         }
     } catch (error) {
         console.error('Error loading parts:', error);
+        showToast('Could not load parts inventory.', 'error');
     }
 }
 

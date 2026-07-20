@@ -506,6 +506,83 @@ body {
     margin-top: 8px;
 }
 
+/* Breadcrumb */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 14px 0;
+    font-size: 13px;
+    color: #64748b;
+}
+.breadcrumb a {
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 600;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* Toasts */
+.toast-container {
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    min-width: 260px;
+    animation: slideInRight 0.25s ease;
+}
+.toast.success { border-left: 4px solid #22c55e; }
+.toast.error { border-left: 4px solid #ef4444; }
+.toast.warning { border-left: 4px solid #f59e0b; }
+.toast-icon { font-weight: 700; }
+.toast.success .toast-icon { color: #22c55e; }
+.toast.error .toast-icon { color: #ef4444; }
+.toast.warning .toast-icon { color: #f59e0b; }
+@keyframes slideInRight { from { transform: translateX(320px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(320px); opacity: 0; } }
+
+/* Empty / loading */
+.loading-card, .skeleton-line {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.empty-state {
+    text-align: center;
+    padding: 28px 16px;
+    border: 1px dashed #dbe4ee;
+    border-radius: 12px;
+    background: #fafbff;
+}
+.empty-icon { font-size: 38px; margin-bottom: 10px; }
+.empty-state h3 { font-size: 16px; color: #334155; margin-bottom: 6px; }
+.empty-state p { font-size: 13px; color: #64748b; line-height: 1.5; }
+
+/* Action buttons */
+.btn-accept, .btn-action {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    color: white;
+}
+.btn-accept:hover, .btn-action:hover { opacity: 0.95; }
+
 /* Scrollbar */
 .dashboard-content::-webkit-scrollbar {
     width: 8px;

@@ -42,6 +42,24 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 let availableJobsCache = [];
 let myJobsCache = [];
 
+function showToast(message, type = 'success') {
+    const container = document.createElement('div');
+    container.className = `toast ${type}`;
+    container.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : type === 'warning' ? '⚠' : '✕'}</span><span>${message}</span>`;
+    document.body.appendChild(container);
+    const toastContainer = document.body.querySelector('.toast-container') || (() => {
+        const wrap = document.createElement('div');
+        wrap.className = 'toast-container';
+        document.body.appendChild(wrap);
+        return wrap;
+    })();
+    toastContainer.appendChild(container);
+    setTimeout(() => {
+        container.style.animation = 'slideOutRight 0.25s ease';
+        setTimeout(() => container.remove(), 250);
+    }, 2800);
+}
+
 // Load available jobs
 async function loadAvailableJobs() {
     const mechanic = checkAuth();
@@ -62,6 +80,7 @@ async function loadAvailableJobs() {
         }
     } catch (error) {
         console.error('Error loading available jobs:', error);
+        showToast('Unable to load jobs right now.', 'error');
     }
 }
 
@@ -222,15 +241,15 @@ async function acceptJob(jobId) {
         });
         
         if (response.ok) {
-            alert('Job accepted!');
+            showToast('Job accepted!', 'success');
             loadAvailableJobs();
             loadMyJobs();
         } else {
-            alert('Failed to accept job');
+            showToast('Failed to accept job', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred');
+        showToast('An error occurred', 'error');
     }
 }
 
@@ -245,14 +264,14 @@ async function startJob(jobId) {
         });
         
         if (response.ok) {
-            alert('Job started!');
+            showToast('Job started!', 'success');
             loadMyJobs();
         } else {
-            alert('Failed to start job');
+            showToast('Failed to start job', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred');
+        showToast('An error occurred', 'error');
     }
 }
 
@@ -267,14 +286,14 @@ async function completeJob(jobId) {
         });
         
         if (response.ok) {
-            alert('Job completed!');
+            showToast('Job completed!', 'success');
             loadMyJobs();
         } else {
-            alert('Failed to complete job');
+            showToast('Failed to complete job', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred');
+        showToast('An error occurred', 'error');
     }
 }
 

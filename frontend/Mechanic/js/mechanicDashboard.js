@@ -18,6 +18,36 @@ function logout() {
     window.location.href = 'mechanicLogin.html';
 }
 
+function showToast(message, type = 'success') {
+    const container = document.createElement('div');
+    container.className = `toast ${type}`;
+    container.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : type === 'warning' ? '⚠' : '✕'}</span><span>${message}</span>`;
+    document.body.appendChild(container);
+    const toastContainer = document.body.querySelector('.toast-container') || (() => {
+        const wrap = document.createElement('div');
+        wrap.className = 'toast-container';
+        document.body.appendChild(wrap);
+        return wrap;
+    })();
+    toastContainer.appendChild(container);
+    setTimeout(() => {
+        container.style.animation = 'slideOutRight 0.25s ease';
+        setTimeout(() => container.remove(), 250);
+    }, 2800);
+}
+
+function showSkeleton(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">⏳</div>
+            <h3>Loading...</h3>
+            <p>Gathering your latest jobs and requests.</p>
+        </div>
+    `;
+}
+
 // Load dashboard data
 async function loadDashboardData() {
     const mechanic = checkAuth();
@@ -32,6 +62,8 @@ async function loadDashboardData() {
     document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
     
     try {
+        showSkeleton('serviceRequestsContainer');
+        showSkeleton('recentJobsContainer');
         const mechanicId = mechanic.id || mechanic._id;
 
         // Fetch mechanic statistics
@@ -82,6 +114,7 @@ async function loadDashboardData() {
         displayPriorityBoard(jobs, requests);
     } catch (error) {
         console.error('Error loading dashboard data:', error);
+        showToast('Could not load dashboard data.', 'error');
     }
 }
 
@@ -226,14 +259,14 @@ async function acceptServiceRequest(requestId) {
         });
         
         if (response.ok) {
-            alert('Service request accepted!');
+            showToast('Service request accepted!', 'success');
             loadDashboardData();
         } else {
-            alert('Failed to accept service request');
+            showToast('Failed to accept service request', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred');
+        showToast('An error occurred', 'error');
     }
 }
 
