@@ -49,6 +49,12 @@
   </nav>
 
   <main>
+    <section class="breadcrumb">
+      <a onclick="window.location.href='/Customer/userShop.html'">Shop</a>
+      <span class="breadcrumb-sep">/</span>
+      <span>My Orders</span>
+    </section>
+
     <section class="hero-section">
       <div class="hero-content">
         <h4>MANOY'S MOTORCYCLE PARTS, ACCESSORIES & SERVICES</h4>
@@ -91,7 +97,51 @@
     </section>
   </main>
 
-  <script src="/Customer/script/userToggle.js"></script>
-  <script src="/Customer/script/myOrders.js"></script>
-</body>
-</html>
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>About MMPS</h4>
+        <p>Manoy's Motorcycle Parts & Services - Your trusted partner for quality motorcycle accessories and expert maintenance services.</p>
+        <div class="social-links">
+          <a href="#" title="Facebook"><i class="bi bi-facebook"></i></a>
+          <a href="#" title="Instagram"><i class="bi bi-instagram"></i></a>
+          <a href="#" title="Twitter"><i class="bi bi-twitter"></i></a>
+        </div>
+      </div>
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <a href="/Customer/userShop.html">Shop</a>
+        <a href="/Customer/services.html">Services</a>
+        <a href="/Customer/myOrders.html">My Orders</a>
+        <a href="#">Track Order</a>
+      </div>
+      <div class="footer-section">
+        <h4>Customer Support</h4>
+        <a href="#">Contact Us</a>
+        <a href="#">FAQ</a>
+        <a href="#">Return Policy</a>
+        <a href="#">Shipping Info</a>
+      </div>
+      <div class="footer-section">
+        <h4>Payment Methods</h4>
+        <div class="payment-methods">
+          <span class="payment-badge">💳 Credit Card</span>
+          <span class="payment-badge">🏦 Debit Card</span>
+          <span class="payment-badge">📱 GCash</span>
+          <span class="payment-badge">💰 Cash on Delivery</span>
+        </div>
+      </div>
+      <div class="footer-section">
+        <h4>Contact Info</h4>
+        <p>📍 Makati, Metro Manila, PH</p>
+        <p>📧 support@mmps.com</p>
+        <p>📞 +63 (2) 1234-5678</p>
+      </div>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Manoy's Motorcycle Parts & Services. All rights reserved. | <a href="#" style="color: #ff6a00; text-decoration: none;">Privacy Policy</a> | <a href="#" style="color: #ff6a00; text-decoration: none;">Terms of Service</a></p>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>

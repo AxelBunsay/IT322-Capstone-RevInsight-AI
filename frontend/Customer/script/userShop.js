@@ -355,11 +355,368 @@ const adjustCartItem = async (productId, op) => {
   await updateCartQuantity(productId, newQuantity);
 };
 
+/* ===== TOAST NOTIFICATIONS ===== */
+const showToast = (message, type = 'success', duration = 3000) => {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+  toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.success}</span><span class="toast-message">${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+};
+
+/* ===== SKELETON LOADERS ===== */
+const showSkeletonLoaders = (count = 6) => {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+  grid.innerHTML = Array(count).fill(0).map(() => `
+    <div class="product-card skeleton-product-card">
+      <div class="product-top" style="border-radius: 20px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite;"></div>
+      <div class="product-body">
+        <div class="product-title" style="height: 16px; border-radius: 4px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; width: 80%;"></div>
+        <div class="product-desc" style="height: 12px; border-radius: 4px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; width: 100%; margin: 8px 0;"></div>
+        <div class="product-price" style="height: 18px; border-radius: 4px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; width: 40%; margin: 8px 0;"></div>
+        <div class="add-btn" style="height: 44px; border-radius: 16px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; margin-top: 8px;"></div>
+      </div>
+    </div>
+  `).join('');
+};
+
+/* ===== EMPTY STATE ===== */
+const showEmptyState = (message, icon = '📦') => {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+  grid.innerHTML = `
+    <div style="grid-column: 1 / -1;">
+      <div class="empty-state">
+        <div class="empty-state-icon">${icon}</div>
+        <h3>No Products Found</h3>
+        <p>${message}</p>
+        <button class="empty-state-btn" onclick="window.location.reload()">Browse All Products</button>
+      </div>
+    </div>
+  `;
+};
+
+/* ===== BREADCRUMB NAVIGATION ===== */
+const updateBreadcrumb = (category) => {
+  const breadcrumbEl = document.getElementById('breadcrumbCategory');
+  if (breadcrumbEl) breadcrumbEl.textContent = category === 'all' ? 'All Products' : category;
+};
+
+/* ===== WISHLIST / FAVORITES ===== */
+let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+
+const toggleWishlist = (productId) => {
+  if (wishlist.includes(productId)) {
+    wishlist = wishlist.filter(id => id !== productId);
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    showToast('Removed from wishlist', 'info');
+  } else {
+    wishlist.push(productId);
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    showToast('Added to wishlist ❤️', 'success');
+  }
+  updateWishlistHearts();
+};
+
+const isInWishlist = (productId) => wishlist.includes(productId);
+
+const updateWishlistHearts = () => {
+  document.querySelectorAll('.wishlist-heart').forEach(heart => {
+    const productId = heart.dataset.id;
+    if (isInWishlist(productId)) {
+      heart.classList.add('active');
+      heart.textContent = '❤️';
+    } else {
+      heart.classList.remove('active');
+      heart.textContent = '🤍';
+    }
+  });
+};
+
+/* ===== ADVANCED FILTERS & SORTING ===== */
+let currentSort = 'default';
+let priceMinFilter = 0;
+let priceMaxFilter = Infinity;
+
+const sortProducts = (sortType) => {
+  currentSort = sortType;
+  const sorted = [...filteredProducts];
+  
+  switch(sortType) {
+    case 'price-low':
+      sorted.sort((a, b) => a.price - b.price);
+      break;
+    case 'price-high':
+      sorted.sort((a, b) => b.price - a.price);
+      break;
+    case 'popularity':
+      sorted.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+      break;
+    default:
+      break;
+  }
+  
+  filteredProducts = sorted;
+  renderProducts(1);
+};
+
+const applyPriceFilter = () => {
+  const minInput = document.getElementById('priceMin');
+  const maxInput = document.getElementById('priceMax');
+  
+  priceMinFilter = minInput.value ? Number(minInput.value) : 0;
+  priceMaxFilter = maxInput.value ? Number(maxInput.value) : Infinity;
+  
+  filterProducts();
+  showToast('Filters applied', 'success');
+};
+
+/* ===== UPDATED RENDER PRODUCTS ===== */
+const renderProductsWithWishlist = (page = 1) => {
+  const grid = document.getElementById('productsGrid');
+  const info = document.getElementById('productsInfo');
+  if (!grid) return;
+
+  const total = filteredProducts.length;
+  
+  if (total === 0) {
+    showEmptyState('Try adjusting your filters or search terms', '🔍');
+    if (info) info.textContent = '0 items found';
+    document.getElementById('productsPagination').innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  currentPage = Math.min(Math.max(1, page), totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const pageItems = filteredProducts.slice(start, start + pageSize);
+
+  grid.innerHTML = pageItems.map((p) => {
+    const quantity = Number(p.quantity ?? p.stock ?? 0);
+    const lowStock = quantity > 0 && quantity <= 5;
+    const outOfStock = quantity <= 0;
+    const imageUrl = p.image || 'https://via.placeholder.com/400x250?text=No+Image';
+    const stockLabel = outOfStock ? 'Out of Stock' : (lowStock ? 'Low Stock' : 'In Stock');
+    const stockBadge = outOfStock ? '<span class="low-stock">Out of Stock</span>' : (lowStock ? '<span class="low-stock">Low Stock</span>' : '');
+    const addButton = outOfStock
+      ? '<button class="add-btn" disabled style="opacity:0.6; cursor:not-allowed;">Out of Stock</button>'
+      : `<button class="add-btn" data-id="${p._id}">🛒 Add to Cart</button>`;
+    const isWishlisted = isInWishlist(p._id);
+
+    return `
+      <div class="product-card">
+        <div class="product-top">
+          <button class="wishlist-heart ${isWishlisted ? 'active' : ''}" data-id="${p._id}" onclick="toggleWishlist('${p._id}')">
+            ${isWishlisted ? '❤️' : '🤍'}
+          </button>
+          <div class="product-id">#${p._id.slice(-4)}</div>
+          <span class="product-badge">${p.category}</span>
+          ${stockBadge}
+          <img src="${imageUrl}" alt="${p.name}">
+          <div class="card-icon">🛠</div>
+        </div>
+        <div class="product-body">
+          <div class="product-title">${p.name}</div>
+          <div class="product-desc">${p.desc || ''}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="product-price">${formatCurrency(p.price)}</div>
+          </div>
+          <div class="stock-row">
+            <div class="stock-bar"><div class="stock-fill" style="width:${Math.max(6, Math.min(100, (quantity > 0 ? (quantity / 30) * 100 : 0)))}%"></div></div>
+            <div class="stock-count">${stockLabel}</div>
+          </div>
+          ${addButton}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (info) info.textContent = `${total} item${total === 1 ? '' : 's'} · page ${currentPage} of ${totalPages}`;
+  renderPagination(totalPages);
+  updateWishlistHearts();
+};
+
+/* ===== UPDATED FILTER PRODUCTS ===== */
+const filterProductsAdvanced = () => {
+  const searchTerm = document.querySelector('.search-container .form-control').value.trim().toLowerCase();
+  const activeCategory = Array.from(document.querySelectorAll('.pill')).find((p) => p.classList.contains('active'))?.dataset.cat || 'all';
+  const filterValue = document.querySelector('.filter-dropdown').value;
+
+  filteredProducts = products.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm) || (item.desc || '').toLowerCase().includes(searchTerm);
+    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+    let matchesPrice = true;
+    
+    if (filterValue) {
+      const [min, max] = filterValue.includes('+') ? [Number(filterValue.replace('+', '')), Infinity] : filterValue.split('-').map(Number);
+      matchesPrice = item.price >= min && (max === Infinity || item.price <= max);
+    }
+    
+    if (priceMinFilter !== 0 || priceMaxFilter !== Infinity) {
+      matchesPrice = matchesPrice && item.price >= priceMinFilter && item.price <= priceMaxFilter;
+    }
+    
+    return matchesSearch && matchesCategory && matchesPrice;
+  });
+  
+  updateBreadcrumb(activeCategory);
+  renderProductsWithWishlist(1);
+};
+
+/* ===== UPDATED SETUP PAGE ===== */
+const setupPageAdvanced = () => {
+  // Category pills
+  document.querySelectorAll('.pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.pill').forEach((other) => other.classList.remove('active'));
+      pill.classList.add('active');
+      filterProductsAdvanced();
+    });
+  });
+
+  // Search input
+  document.querySelector('.search-container .form-control').addEventListener('input', () => filterProductsAdvanced());
+  
+  // Filter dropdown
+  document.querySelector('.filter-dropdown').addEventListener('change', () => filterProductsAdvanced());
+
+  // Advanced filters toggle
+  const filtersToggle = document.getElementById('filtersToggle');
+  const filtersSection = document.getElementById('filtersSection');
+  const filtersClose = document.getElementById('filtersClose');
+  
+  if (filtersToggle) {
+    filtersToggle.addEventListener('click', () => {
+      filtersSection.classList.toggle('open');
+    });
+  }
+  
+  if (filtersClose) {
+    filtersClose.addEventListener('click', () => {
+      filtersSection.classList.remove('open');
+    });
+  }
+
+  // Sort buttons
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sortProducts(btn.dataset.sort);
+    });
+  });
+
+  // Price range apply
+  const priceApplyBtn = document.querySelector('.filter-group:has(#priceMin) button');
+  if (priceApplyBtn) {
+    priceApplyBtn.addEventListener('click', applyPriceFilter);
+  }
+
+  // Add to cart
+  document.getElementById('productsGrid').addEventListener('click', async (event) => {
+    const button = event.target.closest('.add-btn');
+    if (!button) return;
+    try {
+      await addToCart(button.dataset.id);
+      showToast('Added to cart!', 'success');
+    } catch (error) {
+      showToast('Failed to add item', 'error');
+    }
+  });
+
+  const openCartButton = document.getElementById('openCartButton');
+  const closeCartButton = document.getElementById('closeCartButton');
+  const checkoutButton = document.getElementById('checkoutButton');
+  const cartItemsContainer = document.getElementById('cartItems');
+
+  if (openCartButton) {
+    openCartButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!token) return showLoginPrompt();
+      openCart();
+    });
+  }
+
+  if (closeCartButton) {
+    closeCartButton.addEventListener('click', closeCart);
+  }
+
+  if (checkoutButton) {
+    checkoutButton.addEventListener('click', async () => {
+      await checkoutCart();
+      await loadCart();
+    });
+  }
+
+  if (cartItemsContainer) {
+    cartItemsContainer.addEventListener('click', async (event) => {
+      const qtyButton = event.target.closest('.cart-qty');
+      if (qtyButton) {
+        const productId = qtyButton.dataset.id;
+        const op = qtyButton.dataset.op;
+        await adjustCartItem(productId, op);
+        return;
+      }
+      const removeButton = event.target.closest('.cart-remove');
+      if (removeButton) {
+        await removeFromCart(removeButton.dataset.id);
+      }
+    });
+  }
+};
+
+/* ===== UPDATED FETCH PRODUCTS WITH LOADING STATE ===== */
+const fetchProductsWithLoader = async () => {
+  showSkeletonLoaders(6);
+  try {
+    const response = await fetch(`${API_BASE}/products`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to load products');
+    }
+
+    if (Array.isArray(data.products) && data.products.length > 0) {
+      products = data.products.map((item) => ({
+        ...item,
+        quantity: item.quantity ?? item.stock ?? 0,
+        image: item.image ?? item.img,
+        _id: item._id || item.id
+      }));
+    } else {
+      products = sampleProducts.map((item) => ({
+        ...item,
+        _id: item.id,
+        quantity: item.quantity,
+        image: item.image
+      }));
+    }
+
+    filteredProducts = [...products];
+    renderCategoryPills();
+    renderProductsWithWishlist(1);
+    showToast('Products loaded successfully!', 'success');
+  } catch (error) {
+    console.error(error);
+    showToast('Failed to load products, showing default items', 'error');
+    products = sampleProducts.map((item) => ({ ...item, _id: item.id, quantity: item.quantity, image: item.image }));
+    filteredProducts = [...products];
+    renderCategoryPills();
+    renderProductsWithWishlist(1);
+  }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   if (!token) {
     document.getElementById('cartBadge').hidden = true;
   }
-  setupPage();
-  await fetchProducts();
+  setupPageAdvanced();
+  await fetchProductsWithLoader();
   await loadCart();
+  updateWishlistHearts();
 });
