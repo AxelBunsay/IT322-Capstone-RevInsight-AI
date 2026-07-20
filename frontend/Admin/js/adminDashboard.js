@@ -149,6 +149,25 @@ let notifications = [];
 // Edit mode state: when set to mechanic id, form submits update instead of create
 let editMechanicId = null;
 
+function showToast(message, type = 'success') {
+    const existing = document.body.querySelector('.toast-container');
+    const container = existing || document.createElement('div');
+    if (!existing) {
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : type === 'warning' ? '⚠' : '✕'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+    }, 2800);
+}
+
 // Ensure the correct sidebar item is marked active based on the page
 function markActiveNavFromBody() {
     const page = document.body.dataset.page;
@@ -470,6 +489,11 @@ function populateTransactionsTable() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
+    if (!sampleData.transactions || !sampleData.transactions.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="table-empty-cell"><div class="empty-state"><div class="empty-icon">📋</div><h3>No transactions found</h3><p>New purchases will appear here once they are recorded.</p></div></td></tr>`;
+        return;
+    }
+
     sampleData.transactions.forEach(transaction => {
         const statusClass = `status-${transaction.status.toLowerCase()}`;
         const row = document.createElement('tr');
@@ -520,6 +544,12 @@ function populateInventoryTable(page = 1) {
 
     const pageItems = items.slice((currentInventoryPage - 1) * inventoryPageSize, currentInventoryPage * inventoryPageSize);
     tbody.innerHTML = '';
+
+    if (!pageItems.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="table-empty-cell"><div class="empty-state"><div class="empty-icon">📦</div><h3>No inventory items match your search</h3><p>Try a different keyword or clear the filter.</p></div></td></tr>`;
+        if (info) info.textContent = 'No matching items';
+        return;
+    }
 
     pageItems.forEach(item => {
         const stockClass = item.stock <= 5 ? 'low' : '';
@@ -617,7 +647,7 @@ function populateMechanicsSection() {
             const renderList = mechanics.length ? mechanics : sampleData.mechanics;
 
             if (!renderList.length) {
-                container.innerHTML = '<p>No mechanics found.</p>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><h3>No mechanics found</h3><p>New mechanic accounts will show up here once they are added.</p></div>';
                 return;
             }
 
@@ -717,7 +747,7 @@ function renderMechanicCards(mechanics) {
                 }
 
                 if (!mechId) {
-                    alert('Mechanic id is missing; cannot delete.');
+                    showToast('Mechanic id is missing; cannot delete.', 'error');
                     return;
                 }
 
@@ -745,11 +775,11 @@ function renderMechanicCards(mechanics) {
                             throw new Error((json && json.message) ? json.message + ' (status ' + res.status + ')' : 'Failed to delete mechanic (status ' + res.status + ')');
                         }
 
-                        alert(json.message || 'Mechanic deleted');
+                        showToast(json.message || 'Mechanic deleted', 'success');
                         populateMechanicsSection();
                     } catch (err) {
                         console.error('Delete error:', err);
-                        alert(err.message || 'Failed to delete mechanic');
+                        showToast(err.message || 'Failed to delete mechanic', 'error');
                     }
                 })();
             });
@@ -819,10 +849,11 @@ function setupNavigation() {
 // Event listeners for buttons
 document.addEventListener('click', function (e) {
     if (e.target.classList.contains('btn-edit')) {
-        alert('Edit functionality would be implemented here');
+        showToast('Edit flow is ready for the next step.', 'warning');
     } else if (e.target.classList.contains('btn-delete')) {
         if (confirm('Are you sure you want to delete this item?')) {
             e.target.closest('tr') && e.target.closest('tr').remove();
+            showToast('Item removed from the current view.', 'success');
         }
     } else if (e.target.classList.contains('btn-primary')) {
         const section = e.target.closest('.section-content');
