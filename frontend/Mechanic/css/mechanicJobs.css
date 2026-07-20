@@ -567,3 +567,156 @@ body {
         margin-top: 15px;
     }
 }
+
+@media (max-width: 640px) {
+    .sidebar {
+        width: 60px;
+        padding: 12px 0;
+    }
+    
+    .main-content {
+        margin-left: 60px;
+    }
+    
+    .top-header {
+        padding: 16px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .top-header h1 {
+        font-size: 20px;
+        margin-top: 4px;
+    }
+    
+    .jobs-content {
+        padding: 12px;
+    }
+    
+    .overview-board {
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .overview-card {
+        padding: 14px;
+        border-radius: 12px;
+    }
+    
+    .overview-heading {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .overview-badge {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+    
+    .overview-heading h3 {
+        font-size: 13px;
+    }
+    
+    .overview-heading p {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+    
+    .overview-item {
+        padding: 8px 0;
+    }
+    
+    .overview-item strong {
+        font-size: 12px;
+    }
+    
+    .overview-item span {
+        font-size: 11px;
+    }
+    
+    .jobs-tabs {
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        gap: 4px;
+    }
+    
+    .tab-icon {
+        font-size: 14px;
+    }
+    
+    .tab-badge {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+    
+    .filter-section {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .search-input {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .sort-select {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+    
+    .job-card {
+        padding: 12px;
+        gap: 8px;
+    }
+    
+    .job-card-left {
+        gap: 12px;
+    }
+    
+    .job-card-icon {
+        font-size: 24px;
+        width: 44px;
+        height: 44px;
+    }
+    
+    .job-card-info h3 {
+        font-size: 13px;
+    }
+    
+    .job-card-info p {
+        font-size: 12px;
+    }
+    
+    .job-card-meta {
+        font-size: 11px;
+        gap: 8px;
+    }
+    
+    .logo {
+        font-size: 24px;
+        width: 48px;
+        height: 48px;
+    }
+    
+    .nav-item {
+        width: 50px;
+        height: 50px;
+        gap: 2px;
+    }
+    
+    .nav-icon {
+        font-size: 20px;
+    }
+    
+    .nav-label {
+        font-size: 8px;
+    }
+}

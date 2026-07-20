@@ -465,3 +465,109 @@ body {
         padding: 10px;
     }
 }
+
+@media (max-width: 640px) {
+    .sidebar {
+        width: 60px;
+        padding: 12px 0;
+    }
+    
+    .main-content {
+        margin-left: 60px;
+    }
+    
+    .top-header {
+        padding: 16px 20px;
+    }
+    
+    .top-header h1 {
+        font-size: 20px;
+        margin-top: 4px;
+    }
+    
+    .header-subtitle {
+        font-size: 11px;
+    }
+    
+    .parts-content {
+        padding: 12px;
+    }
+    
+    .inventory-stats {
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-item {
+        padding: 16px 12px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+    }
+    
+    .filter-section {
+        padding: 12px;
+        gap: 8px;
+        flex-direction: column;
+    }
+    
+    .search-input {
+        padding: 10px 32px 10px 12px;
+        font-size: 13px;
+    }
+    
+    .sort-select {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+    
+    .category-tabs {
+        gap: 8px;
+    }
+    
+    .category-tab {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .parts-table {
+        font-size: 11px;
+    }
+    
+    .parts-table th,
+    .parts-table td {
+        padding: 8px 6px;
+    }
+    
+    .part-name {
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .logo {
+        font-size: 24px;
+        width: 48px;
+        height: 48px;
+    }
+    
+    .nav-item {
+        width: 50px;
+        height: 50px;
+        gap: 2px;
+    }
+    
+    .nav-icon {
+        font-size: 20px;
+    }
+    
+    .nav-label {
+        font-size: 8px;
+    }
+}

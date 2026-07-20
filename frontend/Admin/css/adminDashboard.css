@@ -990,3 +990,84 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
 }
+
+@media (max-width: 640px) {
+    .sidebar {
+        width: 60px;
+        padding: 12px 8px;
+    }
+
+    .nav-label {
+        font-size: 10px;
+    }
+
+    .main-content {
+        margin-left: 60px;
+    }
+
+    .admin-header {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .admin-header h1 {
+        font-size: 20px;
+    }
+
+    .section-content {
+        padding: 12px 16px;
+    }
+
+    .stats-container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .stats-card {
+        padding: 16px 12px;
+    }
+
+    .stats-value {
+        font-size: 20px;
+    }
+
+    .charts-container {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .chart-card {
+        padding: 16px;
+    }
+
+    .mechanic-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .mechanic-card {
+        padding: 12px;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+    }
+
+    .product-card {
+        padding: 10px;
+    }
+
+    .search-filter {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .search-filter input,
+    .search-filter button {
+        width: 100%;
+        padding: 10px;
+        font-size: 13px;
+    }
+}
