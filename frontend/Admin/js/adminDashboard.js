@@ -141,7 +141,7 @@ const sampleData = {
 // Chart instances
 let quarterlySalesChart, dailySalesChart, projectedRevenueChart;
 
-const apiBase = 'http://localhost:5000';
+const apiBase = 'https://it322-capstone-revinsight-ai.onrender.com';
 
 // Notifications store (empty by default)
 let notifications = [];

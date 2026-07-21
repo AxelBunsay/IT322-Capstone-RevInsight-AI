@@ -21,7 +21,7 @@ async function loadProfile() {
     if (!mechanic) return;
 
     try {
-        const response = await fetch(`http://localhost:5000/api/mechanics/profile`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanics/profile`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -120,7 +120,7 @@ async function saveProfile() {
     }
 
     try {
-        const response = await fetch(`http://localhost:5000/api/mechanics/profile`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanics/profile`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

@@ -67,7 +67,7 @@ async function loadDashboardData() {
         const mechanicId = mechanic.id || mechanic._id;
 
         // Fetch mechanic statistics
-        const response = await fetch(`http://localhost:5000/api/mechanic/${mechanicId}/stats`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/${mechanicId}/stats`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -86,7 +86,7 @@ async function loadDashboardData() {
         }
         
         // Fetch recent jobs
-        const jobsResponse = await fetch(`http://localhost:5000/api/mechanic/${mechanicId}/jobs`, {
+        const jobsResponse = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/${mechanicId}/jobs`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -99,7 +99,7 @@ async function loadDashboardData() {
         }
         
         // Fetch service requests
-        const requestsResponse = await fetch('http://localhost:5000/api/mechanic/service-requests/pending', {
+        const requestsResponse = await fetch('https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/service-requests/pending', {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -249,7 +249,7 @@ async function acceptServiceRequest(requestId) {
     if (!mechanic) return;
     
     try {
-        const response = await fetch(`http://localhost:5000/api/mechanic/service-requests/${requestId}/accept`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/service-requests/${requestId}/accept`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`,

@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
         submitBtn.textContent = 'Logging in...';
 
         // Call backend API via explicit backend origin so Live Server or other hosts still work
-        const apiBase = 'http://localhost:5000';
+        const apiBase = 'https://it322-capstone-revinsight-ai.onrender.com';
         fetch(`${apiBase}/api/admin/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

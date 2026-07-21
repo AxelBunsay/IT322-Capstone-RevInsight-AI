@@ -66,7 +66,7 @@ async function loadAvailableJobs() {
     if (!mechanic) return;
     
     try {
-        const response = await fetch('http://localhost:5000/api/mechanic/jobs/available', {
+        const response = await fetch('https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/jobs/available', {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -91,7 +91,7 @@ async function loadMyJobs() {
     
     try {
         const mechanicId = mechanic.id || mechanic._id;
-        const response = await fetch(`http://localhost:5000/api/mechanic/${mechanicId}/jobs`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/${mechanicId}/jobs`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }
@@ -231,7 +231,7 @@ async function acceptJob(jobId) {
     if (!mechanic) return;
     
     try {
-        const response = await fetch(`http://localhost:5000/api/mechanic/jobs/${jobId}/accept`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/jobs/${jobId}/accept`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`,
@@ -256,7 +256,7 @@ async function acceptJob(jobId) {
 // Start a job
 async function startJob(jobId) {
     try {
-        const response = await fetch(`http://localhost:5000/api/mechanic/jobs/${jobId}/start`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/jobs/${jobId}/start`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
@@ -278,7 +278,7 @@ async function startJob(jobId) {
 // Complete a job
 async function completeJob(jobId) {
     try {
-        const response = await fetch(`http://localhost:5000/api/mechanic/jobs/${jobId}/complete`, {
+        const response = await fetch(`https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/jobs/${jobId}/complete`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
