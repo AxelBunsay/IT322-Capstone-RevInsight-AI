@@ -4,6 +4,10 @@
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "^/(.*)$", "dest": "/frontend/$1" }
+    { "src": "/", "dest": "/frontend/Admin/adminLogin.html" },
+    { "src": "/Admin/(.*)", "dest": "/frontend/Admin/$1" },
+    { "src": "/Customer/(.*)", "dest": "/frontend/Customer/$1" },
+    { "src": "/Mechanic/(.*)", "dest": "/frontend/Mechanic/$1" },
+    { "src": "/(.*)", "dest": "/frontend/$1" }
   ]
 }
