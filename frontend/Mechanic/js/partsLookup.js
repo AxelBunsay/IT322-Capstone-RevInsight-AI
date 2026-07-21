@@ -59,7 +59,7 @@ async function loadParts() {
     if (!mechanic) return;
     
     try {
-        const response = await fetch('http://localhost:5000/api/mechanic/parts', {
+        const response = await fetch('https://it322-capstone-revinsight-ai.onrender.com/api/mechanic/parts', {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('mechanicToken')}`
             }

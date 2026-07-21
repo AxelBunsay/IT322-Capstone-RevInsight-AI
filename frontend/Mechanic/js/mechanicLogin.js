@@ -96,7 +96,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Signing in...';
     
     try {
-        const apiBase = 'http://localhost:5000';
+        const apiBase = 'https://it322-capstone-revinsight-ai.onrender.com';
         const response = await fetch(`${apiBase}/api/mechanics/login`, {
             method: 'POST',
             headers: {

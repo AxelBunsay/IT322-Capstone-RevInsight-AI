@@ -1,4 +1,4 @@
-const apiBase = 'http://localhost:5000/api/users';
+const apiBase = 'https://it322-capstone-revinsight-ai.onrender.com';
 
 const signInForm = document.getElementById('signInForm');
 const registerForm = document.getElementById('registerForm');
@@ -43,7 +43,7 @@ if (signInForm) {
     }
 
     try {
-      const backendBase = 'http://localhost:5000';
+      const backendBase = 'https://it322-capstone-revinsight-ai.onrender.com';
       const response = await fetch(`${backendBase}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
