@@ -110,6 +110,26 @@ nav .nav-inner{ display:flex; align-items:center; justify-content:space-between;
 .form-control:focus{ outline:none; border-color:#ff7a1c; box-shadow:0 0 0 4px rgba(255,134,43,0.12); }
 .filter-dropdown{ width:200px; min-width:180px; height:48px; border-radius:14px; border:1px solid #efe7e2; padding:0 14px; background:#fff; font-size:15px; color:#333; }
 
+.filter-toggle{ padding: 10px 14px; background: #fff; border: 1px solid #efe7e2; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 13px; color:#222; }
+.filter-toggle:hover{ background:#f9f6f3; }
+.filter-header{ display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.filter-heading{ margin: 0; font-size: 14px; color: #333; font-weight: 700; }
+.filter-close{ background: none; border: none; cursor: pointer; font-size: 18px; color: #444; }
+.filter-apply{ padding: 8px 14px; background: #ff6a00; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 12px; }
+
+.page-content-row{ width:92.4%; margin-left:30px; margin-top:18px; }
+.page-content-row.full-width{ width:100%; margin-left:0; }
+.booking-message{ display:none; padding:14px 18px; border-radius:14px; background:#fff7d6; border:1px solid #ffdf9d; color:#6b3d00; margin-top:12px; }
+.order-section{ background:#fff; border-radius:24px; padding:24px; box-shadow:0 12px 32px rgba(17,24,39,0.08); margin-top:20px; }
+.order-section + .order-section{ margin-top:24px; }
+.order-section h2{ margin:0 0 18px; font-size:20px; color:#141414; }
+.orders-container{ display:grid; gap:18px; }
+.order-summary{ background:#fff; border-radius:24px; padding:20px; box-shadow:0 12px 30px rgba(17,24,39,0.08); margin-bottom:20px; }
+.filter-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.filter-title{ margin:0; font-size:14px; color:#333; font-weight:700; }
+.filter-close{ background:none; border:none; cursor:pointer; font-size:18px; color:#444; }
+.filter-apply{ padding:8px 14px; background:#ff6a00; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:12px; }
+
 .browse-controls{ margin-left:30px; width:92.4%; margin-top:22px; }
 .category-pills{ display:flex; gap:12px; flex-wrap:wrap; }
 .pill{ border:none; background:#fff; padding:10px 16px; border-radius:28px; box-shadow:0 10px 30px rgba(17,24,39,0.06); font-weight:700; cursor:pointer; display:flex; gap:8px; align-items:center; color:#475569; }
@@ -222,4 +242,64 @@ footer { background: #1a1a1a; color: #fff; padding: 40px 30px; margin-top: 40px;
 @media (max-width:900px){
   .hero-content{ padding:24px; }
   .products{ grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
+}
+
+@media (max-width:768px) {
+  nav { padding: 16px 18px; }
+  nav .nav-inner { flex-wrap: wrap; gap: 10px; }
+  .nav-right { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .nav-links { justify-content: flex-start; width: 100%; }
+  .nav-center { position: static; transform: none; margin: 12px auto 0; width: 100%; justify-content: center; }
+  .center-btn { flex: 1 1 45%; min-width: 130px; }
+  .hero-content { width: 100%; margin-left: 0; padding: 24px 20px; }
+  .hero-pills { flex-direction: column; align-items: stretch; }
+  .search-row { width: 100%; margin-left: 0; flex-direction: column; align-items: stretch; }
+  .filter-dropdown { width: 100%; min-width: 0; }
+  .browse-controls { width: 100%; margin-left: 0; }
+  .filters-section { width: 100%; margin-left: 0; }
+  .products { width: 100%; margin-left: 0; gap: 18px; }
+  .breadcrumb { padding: 14px 16px; }
+}
+
+@media (max-width:640px) {
+  nav { padding: 12px 16px; }
+  nav .nav-inner { flex-wrap: wrap; justify-content: center; }
+  .logo-left { min-width: auto; }
+  .nav-center { position: static; transform: none; margin: 12px auto 0; width: 100%; justify-content: center; }
+  .center-btn { flex: 1 1 100%; min-width: auto; text-align: center; }
+  .hero-section { padding: 8px 0; }
+  .hero-content { width: 100%; margin-left: 0; padding: 20px 16px; border-radius: 12px; }
+  .hero-content h1 { font-size: 18px; }
+  .hero-content p { font-size: 12px; }
+  .hero-pills { gap: 8px; }
+  .search-row { width: 100%; margin-left: 0; flex-direction: column; gap: 10px; }
+  .browse-controls { width: 100%; margin-left: 0; }
+  .filters-section { width: 100%; margin-left: 0; }
+  .products { width: 100%; margin-left: 0; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .product-body { padding: 14px; }
+  .product-title { font-size: 13px; }
+  .product-price { font-size: 15px; }
+  .add-btn { padding: 12px; font-size: 13px; }
+  .products-footer { width: 100%; margin-left: 0; flex-direction: column; gap: 12px; align-items: stretch; }
+  .price-range-container { flex-direction: column; gap: 10px; }
+  .price-input { width: 100%; }
+  .sort-buttons { justify-content: flex-start; }
+  footer { padding: 24px 16px; }
+}
+
+@media (max-width:520px) {
+  .nav-right { flex-direction: column; align-items: stretch; }
+  .nav-links { width: 100%; justify-content: flex-start; }
+  .user-pill { width: 100%; justify-content: center; }
+  .logout-link { width: 100%; text-align: center; margin-left: 0; }
+  .nav-center { gap: 10px; }
+  .center-btn { padding: 10px 12px; }
+  .hero-content { padding: 18px 14px; }
+  .search-row { gap: 12px; }
+  .filter-dropdown { width: 100%; }
+  .filters-section { padding: 16px 14px; }
+  .product-card { min-height: auto; }
+  .products { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .breadcrumb { padding: 10px 12px; font-size: 12px; }
+  .toast-container { right: 8px; top: 90px; }
 }
