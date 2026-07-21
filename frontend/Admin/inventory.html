@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - Admin</title>
+    <link rel="stylesheet" href="css/adminDashboard.css">
+</head>
+<body data-page="inventory">
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="logo"><div class="logo-circle">M</div></div>
+            <nav class="nav-menu">
+                <a href="adminDashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+                <a href="revenue.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Revenue</span></a>
+                <a href="transactions.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">Transactions</span></a>
+                <a href="inventory.html" class="nav-item active"><span class="nav-icon">📦</span><span class="nav-label">Inventory</span></a>
+                <a href="mechanics.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-label">Mechanics</span></a>
+                <a href="adminLogin.html" class="nav-item logout" title="Logout"><span class="nav-icon">🚪</span><span class="nav-label">Logout</span></a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <section class="breadcrumb">
+                <a href="adminDashboard.html">Dashboard</a>
+                <span>/</span>
+                <span>Inventory</span>
+            </section>
+
+            <header class="admin-header">
+                <div class="header-brand">
+                    <h1>INVENTORY</h1>
+                    <p>Mancy's Motorcycle Parts, Accessories & Services</p>
+                </div>
+                <div class="header-right">
+                    <div class="timestamp" id="timestamp">06/22/2026 06:33 PM</div>
+                    <div class="notification-icon">🔔</div>
+                </div>
+            </header>
+            <section class="section-content active">
+                <div class="inventory-container">
+                    <div class="inventory-header">
+                        <input type="text" placeholder="Search items...">
+                        <button class="btn-primary">+ ADD</button>
+                    </div>
+                    <div class="inventory-info">Loading inventory...</div>
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>ITEM ID</th>
+                                <th>ITEM</th>
+                                <th>PRICE</th>
+                                <th>STOCK</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                    <div id="inventoryPagination" class="pagination-container"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="js/adminDashboard.js"></script>
+</body>
+</html>

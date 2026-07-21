@@ -1,12 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Mancy's Motorcycle Parts</title>
+    <link rel="stylesheet" href="css/adminLogin.css">
 </head>
 <body>
-  
-  
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-circle">M</div>
+            </div>
+            <h1>Admin Login</h1>
+            <p class="subtitle">Mancy's Motorcycle Parts, Accessories & Services</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Username</label>
+                    <input type="text" id="email" name="email" placeholder="Enter your username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-login">Login</button>
+            </form>
+
+            <div class="login-footer">
+                <p><a href="#" class="signup-link"></a></p>
+            </div>
+        </div>
+
+        <div class="login-background">
+            <div class="bg-circle circle-1"></div>
+            <div class="bg-circle circle-2"></div>
+            <div class="bg-circle circle-3"></div>
+        </div>
+    </div>
+
+    <script src="js/adminLogin.js"></script>
 </body>
 </html>

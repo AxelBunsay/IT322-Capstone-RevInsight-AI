@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mechanics - Admin</title>
+    <link rel="stylesheet" href="css/adminDashboard.css">
+</head>
+<body data-page="mechanics">
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="logo"><div class="logo-circle">M</div></div>
+            <nav class="nav-menu">
+                <a href="adminDashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+                <a href="revenue.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Revenue</span></a>
+                <a href="transactions.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">Transactions</span></a>
+                <a href="inventory.html" class="nav-item active"><span class="nav-icon">📦</span><span class="nav-label">Inventory</span></a>
+                <a href="mechanics.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-label">Mechanics</span></a>
+                <a href="adminLogin.html" class="nav-item logout" title="Logout"><span class="nav-icon">🚪</span><span class="nav-label">Logout</span></a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <section class="breadcrumb">
+                <a href="adminDashboard.html">Dashboard</a>
+                <span>/</span>
+                <span>Mechanics</span>
+            </section>
+
+            <header class="admin-header">
+                <div class="header-brand">
+                    <h1>MECHANICS</h1>
+                    <p>Mancy's Motorcycle Parts, Accessories & Services</p>
+                </div>
+                <div class="header-right">
+                    <div class="timestamp" id="timestamp">06/22/2026 06:33 PM</div>
+                    <div class="notification-icon">🔔</div>
+                </div>
+            </header>
+            <section class="section-content active">
+                <div class="mechanics-container">
+                    <div class="mechanics-header">
+                        <h2>MECHANICS</h2>
+                        <button id="addMechanicBtn" class="btn-primary" onclick="(function(){var m=document.getElementById('addMechanicModal'); if(m){m.style.display='flex'; var i=m.querySelector('input[name\u003d\'firstName\']'); i && i.focus();}})()">+ Add Mechanic</button>
+                    </div>
+                    <div class="mechanics-stats">
+                        <div class="stat-box">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">Total Mechanics</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">8</div>
+                            <div class="stat-label">Total Jobs</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">8</div>
+                            <div class="stat-label">Completed Jobs</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">₱0</div>
+                            <div class="stat-label">Total Labor Today</div>
+                        </div>
+                    </div>
+                    <div class="mechanics-list" id="mechanicsList"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <!-- Add Mechanic Modal -->
+    <div id="addMechanicModal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:9999;">
+        <div style="background:#fff; width:420px; border-radius:10px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,0.15);">
+            <h3 style="margin-top:0;margin-bottom:8px;">Add Mechanic</h3>
+            <div id="addMechanicError" style="color:#b71c1c; font-size:13px; display:none; margin-bottom:8px;"></div>
+            <form id="addMechanicForm">
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <input name="firstName" placeholder="First name" required style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px;" />
+                    <input name="lastName" placeholder="Last name" required style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px;" />
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <input name="email" type="email" placeholder="Email" required style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px;" />
+                    <input name="phoneNumber" placeholder="Phone" required style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px;" />
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <select name="specialization" required style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                        <option value="">Select specialization</option>
+                        <option value="general">General</option>
+                        <option value="engine">Engine</option>
+                        <option value="transmission">Transmission</option>
+                        <option value="electrical">Electrical</option>
+                        <option value="suspension">Suspension</option>
+                        <option value="brakes">Brakes</option>
+                    </select>
+                    <input name="yearsOfExperience" type="number" min="0" placeholder="Years" required style="width:96px; padding:8px; border:1px solid #ddd; border-radius:6px;" />
+                </div>
+                <div style="margin-bottom:8px;">
+                    <input name="password" type="password" placeholder="Password (min 6)" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;" />
+                </div>
+                <div style="margin-bottom:12px;">
+                    <input name="certifications" placeholder="Certifications (comma separated)" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;" />
+                </div>
+                <div style="text-align:right; display:flex; gap:8px; justify-content:flex-end;">
+                    <button type="button" id="cancelAddMechanic" class="btn-secondary" style="padding:8px 12px; border-radius:6px;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding:8px 12px; border-radius:6px;">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="js/adminDashboard.js"></script>
+</body>
+</html>

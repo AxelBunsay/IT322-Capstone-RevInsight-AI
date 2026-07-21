@@ -15,47 +15,48 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        if (!isValidEmail(email)) {
-            showError('Please enter a valid email address');
-            return;
-        }
-
         // Disable button during submission
         const submitBtn = loginForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.textContent = 'Logging in...';
 
-        // Simulate API call (in real app, send to backend)
-        setTimeout(() => {
-            // Demo credentials
-            const validEmails = ['admin@mmps.com', 'admin@email.com'];
-            const validPassword = 'admin123';
-
-            if (validEmails.includes(email.toLowerCase()) && password === validPassword) {
-                // Store credentials if remember me is checked
-                if (rememberMe) {
-                    localStorage.setItem('rememberEmail', email);
-                } else {
-                    localStorage.removeItem('rememberEmail');
-                }
-
-                // Set authentication token
-                localStorage.setItem('adminToken', 'token_' + Date.now());
-                localStorage.setItem('adminEmail', email);
-
-                showSuccess('Login successful! Redirecting...');
-
-                // Redirect to dashboard
-                setTimeout(() => {
-                    window.location.href = 'adminDashboard.html';
-                }, 1500);
-            } else {
-                showError('Invalid email or password');
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+        // Call backend API via explicit backend origin so Live Server or other hosts still work
+        const apiBase = 'http://localhost:5000';
+        fetch(`${apiBase}/api/admin/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: email, password })
+        })
+        .then(async res => {
+            const text = await res.text();
+            let body = {};
+            try {
+                body = text ? JSON.parse(text) : {};
+            } catch (parseError) {
+                throw new Error(`Login response is not valid JSON: ${text}`);
             }
-        }, 1500);
+
+            if (!res.ok) throw new Error(body.message || `Login failed (${res.status})`);
+
+            // Save admin token and email
+            if (rememberMe) {
+                localStorage.setItem('rememberEmail', email);
+            } else {
+                localStorage.removeItem('rememberEmail');
+            }
+
+            localStorage.setItem('adminToken', body.token);
+            localStorage.setItem('adminEmail', body.admin?.username || email);
+
+            showSuccess('Login successful! Redirecting...');
+            setTimeout(() => { window.location.href = 'adminDashboard.html'; }, 800);
+        })
+        .catch(err => {
+            showError(err.message || 'Invalid email or password');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
     });
 
     // Load remembered email
@@ -72,9 +73,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// Admin username can be a simple string, not necessarily an email address.
 function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return true;
 }
 
 function showError(message) {

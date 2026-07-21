@@ -1,0 +1,245 @@
+/* Clean revenue page styles — fixed sizes to prevent clipping and match screenshot */
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 420px;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+        "stat risk ai"
+        "chart chart ai";
+    gap: 22px;
+    align-items: start;
+}
+
+/* Stat card */
+.stat-card {
+  padding: 22px 24px;
+  background: linear-gradient(180deg,#ffffff 0%, #fffaf7 100%);
+  border-radius: 14px;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.06);
+  border-top: 6px solid #ff6b35;
+  min-height: 120px;
+}
+.stat-card { grid-area: stat; }
+.stat-header h3 { font-size: 13px; color:#8f7d76; font-weight:700; }
+.stat-value { font-size:40px; font-weight:800; color:#ff6b35; margin-top:6px; }
+.stat-subtitle { font-size:13px; color:#b7a7a0; margin-top:6px; }
+
+/* Risk card */
+.risk-card {
+  background: linear-gradient(180deg,#fff1f1 0%, #fdebee 100%);
+  padding: 18px 20px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+  border: 1px solid rgba(230,160,160,0.22);
+  min-height: 120px;
+}
+.risk-card { grid-area: risk; }
+.risk-header h3 { font-size:12px; color:#b77a73; font-weight:700; }
+.risk-indicator { font-size:22px; color:#b73b2f; font-weight:800; margin:8px 0; }
+.risk-description { color:#bf6a66; font-size:13px; }
+.risk-link { font-size:12px; color:#c24a39; display:inline-block; margin-top:10px; }
+
+/* AI card (right column) */
+.ai-card {
+    grid-area: ai;
+  min-height: 240px;
+  padding: 18px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+}
+.ai-header h3 { font-size:16px; color:#6b3a2a; margin:0; }
+.btn-clear { font-size:12px; color:#c49b90; background:none; border:none; }
+.ai-intro { background:#f6f6f6; padding:12px 14px; border-radius:10px; color:#666; }
+.ai-input-row { position:relative; margin-top:14px; }
+.ai-input { width:100%; padding:12px 16px; border-radius:24px; border:1px solid #eee; }
+.ai-input-row .btn-send { position:absolute; right:10px; top:8px; width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#ff9a3b,#f0491e); border:none; color:white; cursor:pointer; box-shadow:0 6px 12px rgba(240,80,30,0.12); }
+
+/* Chart card — large but limited to avoid overflow */
+.chart-card.full-width {
+  grid-column: 1 / 3;
+  height: 320px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.chart-card.full-width h3 { color:#6b3a2a; letter-spacing:1px; font-weight:700; margin:0 0 10px 0; }
+.chart-card.full-width canvas { width:100% !important; height:260px !important; }
+
+/* smaller adjustments */
+.ai-card .ai-header { display:flex; justify-content:space-between; align-items:center; }
+
+/* responsive fallback */
+@media (max-width: 1000px) {
+  .analytics-grid { grid-template-columns: 1fr; }
+  .ai-card { grid-column: 1 / -1; }
+  .chart-card.full-width { grid-column: 1 / -1; height:320px; }
+}
+/* Overrides and styles specific to revenue page */
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 420px;
+    gap: 20px;
+    align-items: start;
+    grid-auto-rows: minmax(120px, auto);
+}
+
+.chart-card.full-width {
+    grid-area: chart;
+    height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+        gap: 22px;
+    width: 100% !important;
+    height: 240px !important;
+}
+
+.stat-card {
+    padding: 28px;
+}
+
+.stat-card {
+        border-radius: 14px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+        min-height: 120px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    border-top: 6px solid #ff6b35;
+}
+
+        font-size: 40px;
+        line-height: 1;
+    font-size: 44px;
+    font-weight: 800;
+    color: #ff6b35;
+}
+
+.stat-subtitle {
+    color: #b7a7a0;
+        background: linear-gradient(180deg,#fff1f1 0%, #fdebee 100%);
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(230,160,160,0.25);
+
+.risk-card {
+    background: #fdebee;
+    padding: 22px;
+    border-radius: 12px;
+        min-height: 420px;
+    border-left: 4px solid rgba(231,76,60,0.15);
+}
+
+        padding: 20px;
+        justify-content: flex-start;
+.risk-header h3 { color: #b77a73; }
+.risk-link { color: #c24a39; }
+
+.risk-indicator { font-size: 20px; color: #a83b2f; }
+
+        height: 360px;
+    font-size: 20px;
+    color: #c0392b;
+    font-weight: 700;
+        padding: 22px;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    margin-bottom: 8px;
+}
+
+        height: 300px !important;
+    grid-column: 3 / 4;
+    min-height: 340px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-card .ai-header h3 { color: #ff6b35; }
+
+.ai-card .btn-clear { color: #c49b90; }
+
+.ai-input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 22px;
+    border: 1px solid #eee;
+    background: #fafafa;
+    margin-top: 12px;
+    outline: none;
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+}
+
+.btn-send {
+    margin-top: 12px;
+    align-self: flex-end;
+    background: linear-gradient(135deg,#ff6b35,#f0491e);
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(240,80,30,0.12);
+}
+
+.chart-card h3 { color: #a44a2a; letter-spacing: 1px; }
+
+.ai-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    position: relative;
+}
+
+.ai-intro {
+    background: #f6f6f6;
+    padding: 12px 14px;
+    border-radius: 10px;
+}
+
+.ai-input {
+    flex: 1;
+    border-radius: 24px;
+    padding: 12px 16px;
+    border: 1px solid #eee;
+    background: #fff;
+}
+
+.ai-input-row .btn-send {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+/* Responsive fallback */
+@media (max-width: 1000px) {
+    .analytics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+    .chart-card.full-width {
+        grid-column: 1 / -1;
+    }
+    .ai-card { grid-column: 1 / -1; }
+}
+
+/* Ensure active section fits inside fixed main content without scroll */
+.section-content.active {
+    height: 100%;
+    overflow: hidden;
+}

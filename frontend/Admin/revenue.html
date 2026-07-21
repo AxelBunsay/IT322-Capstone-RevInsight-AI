@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Concentration Risk - Admin</title>
+    <link rel="stylesheet" href="css/adminDashboard.css">
+    <link rel="stylesheet" href="css/revenue.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</head>
+<body data-page="revenue">
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="logo"><div class="logo-circle">M</div></div>
+            <nav class="nav-menu">
+                <a href="adminDashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+                <a href="revenue.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Revenue</span></a>
+                <a href="transactions.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">Transactions</span></a>
+                <a href="inventory.html" class="nav-item active"><span class="nav-icon">📦</span><span class="nav-label">Inventory</span></a>
+                <a href="mechanics.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-label">Mechanics</span></a>
+                <a href="adminLogin.html" class="nav-item logout" title="Logout"><span class="nav-icon">🚪</span><span class="nav-label">Logout</span></a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <section class="breadcrumb">
+                <a href="adminDashboard.html">Dashboard</a>
+                <span>/</span>
+                <span>Revenue</span>
+            </section>
+
+            <header class="admin-header">
+                <div class="header-brand">
+                    <h1>REVENUE CONCENTRATION RISK</h1>
+                    <p>Mancy's Motorcycle Parts, Accessories & Services</p>
+                </div>
+                <div class="header-right">
+                    <div class="timestamp" id="timestamp">06/22/2026 06:33 PM</div>
+                    <div class="notification-icon">🔔</div>
+                </div>
+            </header>
+            <section class="section-content active">
+                <div class="analytics-grid">
+                    <div class="stat-card">
+                        <div class="stat-header"><h3>Total Revenue</h3></div>
+                        <div class="stat-value">₱5,500</div>
+                        <div class="stat-subtitle">From all completed (Paid) transactions</div>
+                    </div>
+                    <div class="risk-card high-risk">
+                        <div class="risk-header"><h3>Revenue Concentration Risk</h3></div>
+                        <div class="risk-indicator">⚠️ High Risk</div>
+                        <p class="risk-description">All detected top category holds 100% of revenue</p>
+                        <a href="#" class="risk-link">Tap for AI analysis →</a>
+                    </div>
+                    <div class="ai-card">
+                        <div class="ai-header">
+                            <h3>🤖 Ask AI for Revenue Insights</h3>
+                            <button class="btn-clear">Clear</button>
+                        </div>
+                        <p class="ai-intro">Hello! I'm your AI revenue analyst. Ask me about your revenue trends, risk levels, or category performance.</p>
+                        <div class="ai-input-row">
+                            <input type="text" class="ai-input" placeholder="Ask about revenue...">
+                            <button class="btn-send">📤</button>
+                        </div>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h3>PROJECTED REVENUE TREND</h3>
+                        <canvas id="projectedRevenueChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="js/adminDashboard.js"></script>
+</body>
+</html>

@@ -3,47 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Mancy's Motorcycle Parts</title>
+    <title>Admin Dashboard - Manoy's Motorcycle Parts, Accessories and Services</title>
     <link rel="stylesheet" href="css/adminDashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
-<body>
+<body data-page="dashboard">
     <div class="admin-container">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-circle">M</div>
-            </div>
+            <div class="logo"><div class="logo-circle">M</div></div>
             <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-section="dashboard">
-                    <i class="icon-dashboard">📊</i>
-                </a>
-                <a href="#" class="nav-item" data-section="analytics">
-                    <i class="icon-analytics">📈</i>
-                </a>
-                <a href="#" class="nav-item" data-section="transactions">
-                    <i class="icon-transactions">📋</i>
-                </a>
-                <a href="#" class="nav-item" data-section="inventory">
-                    <i class="icon-inventory">📦</i>
-                </a>
-                <a href="#" class="nav-item" data-section="mechanics">
-                    <i class="icon-mechanics">🔧</i>
-                </a>
-                <a href="#" class="nav-item" data-section="products">
-                    <i class="icon-products">🛒</i>
-                </a>
-                <a href="#" class="nav-item" data-section="users">
-                    <i class="icon-users">👥</i>
-                </a>
-                <a href="adminLogin.html" class="nav-item logout" title="Logout">
-                    <i class="icon-logout">🚪</i>
-                </a>
+                <a href="adminDashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+                <a href="revenue.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Revenue</span></a>
+                <a href="transactions.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">Transactions</span></a>
+                <a href="inventory.html" class="nav-item active"><span class="nav-icon">📦</span><span class="nav-label">Inventory</span></a>
+                <a href="mechanics.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-label">Mechanics</span></a>
+                <a href="adminLogin.html" class="nav-item logout" title="Logout"><span class="nav-icon">🚪</span><span class="nav-label">Logout</span></a>
             </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
+            <section class="breadcrumb">
+                <a href="adminDashboard.html">Dashboard</a>
+                <span>/</span>
+                <span>Overview</span>
+            </section>
+
             <!-- Header -->
             <header class="admin-header">
                 <div class="header-brand">
@@ -110,179 +96,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            <!-- Analytics Section (Revenue Concentration Risk) -->
-            <section id="analytics" class="section-content">
-                <div class="analytics-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <h3>Total Revenue</h3>
-                        </div>
-                        <div class="stat-value">₱5,500</div>
-                        <div class="stat-subtitle">From all completed (Paid) transactions</div>
-                    </div>
-
-                    <div class="risk-card high-risk">
-                        <div class="risk-header">
-                            <h3>Revenue Concentration Risk</h3>
-                        </div>
-                        <div class="risk-indicator">⚠️ High Risk</div>
-                        <p class="risk-description">All detected top category holds 100% of revenue</p>
-                        <a href="#" class="risk-link">Tap for AI analysis →</a>
-                    </div>
-
-                    <div class="ai-card">
-                        <div class="ai-header">
-                            <h3>🤖 Ask AI for Revenue Insights</h3>
-                            <button class="btn-clear">Clear</button>
-                        </div>
-                        <p class="ai-intro">Hello! I'm your AI revenue analyst. Ask me about your revenue trends, risk levels, or category performance.</p>
-                        <input type="text" class="ai-input" placeholder="Ask about revenue...">
-                        <button class="btn-send">📤</button>
-                    </div>
-
-                    <div class="chart-card full-width">
-                        <h3>PROJECTED REVENUE TREND</h3>
-                        <canvas id="projectedRevenueChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Transactions Section -->
-            <section id="transactions" class="section-content">
-                <div class="transactions-container">
-                    <div class="transactions-header">
-                        <button class="btn-primary">View Revenue</button>
-                        <div class="transactions-info">Total: <span id="transactionTotal">₱5,500</span></div>
-                    </div>
-
-                    <div class="search-filter">
-                        <input type="text" placeholder="Search by customer, item, mechanic...">
-                        <select id="filterDropdown">
-                            <option>All</option>
-                            <option>Paid</option>
-                            <option>Pending</option>
-                            <option>Cancelled</option>
-                        </select>
-                    </div>
-
-                    <table class="transactions-table">
-                        <thead>
-                            <tr>
-                                <th>ITEM ID</th>
-                                <th>PURCHASE DATE</th>
-                                <th>CUSTOMER NAME</th>
-                                <th>ITEMS</th>
-                                <th>TOTAL AMOUNT</th>
-                                <th>STATUS</th>
-                                <th>MECHANIC</th>
-                                <th>ACTION</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionsTableBody">
-                            <!-- Populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Inventory Section -->
-            <section id="inventory" class="section-content">
-                <div class="inventory-container">
-                    <div class="inventory-header">
-                        <input type="text" placeholder="Search items...">
-                        <button class="btn-primary">+ ADD</button>
-                    </div>
-
-                    <div class="inventory-info">15 items</div>
-
-                    <table class="inventory-table">
-                        <thead>
-                            <tr>
-                                <th>ITEM ID</th>
-                                <th>ITEM</th>
-                                <th>PRICE</th>
-                                <th>STOCK</th>
-                                <th>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventoryTableBody">
-                            <!-- Populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Mechanics Section -->
-            <section id="mechanics" class="section-content">
-                <div class="mechanics-container">
-                    <div class="mechanics-header">
-                        <h2>MECHANICS</h2>
-                        <button class="btn-primary">+ Add Mechanic</button>
-                    </div>
-
-                    <div class="mechanics-stats">
-                        <div class="stat-box">
-                            <div class="stat-number">2</div>
-                            <div class="stat-label">Total Mechanics</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-number">8</div>
-                            <div class="stat-label">Total Jobs</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-number">8</div>
-                            <div class="stat-label">Completed Jobs</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-number">₱0</div>
-                            <div class="stat-label">Total Labor Today</div>
-                        </div>
-                    </div>
-
-                    <div class="mechanics-list" id="mechanicsList">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Products Section -->
-            <section id="products" class="section-content">
-                <div class="products-container">
-                    <div class="products-header">
-                        <h2>Products</h2>
-                        <button class="btn-primary">+ Add Product</button>
-                    </div>
-                    <div class="products-grid" id="productsGrid">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Users Section -->
-            <section id="users" class="section-content">
-                <div class="users-container">
-                    <div class="users-header">
-                        <h2>Users</h2>
-                        <input type="text" placeholder="Search users...">
-                    </div>
-                    <table class="users-table">
-                        <thead>
-                            <tr>
-                                <th>USER ID</th>
-                                <th>NAME</th>
-                                <th>EMAIL</th>
-                                <th>PHONE</th>
-                                <th>JOINED DATE</th>
-                                <th>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <!-- Populated by JavaScript -->
-                        </tbody>
-                    </table>
                 </div>
             </section>
         </main>
