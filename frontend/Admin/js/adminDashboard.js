@@ -168,6 +168,37 @@ function showToast(message, type = 'success') {
     }, 2800);
 }
 
+// Sidebar toggle for mobile
+function initSidebarToggle() {
+    const toggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    if (!toggle) return;
+
+    toggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        toggle.classList.toggle('active');
+    });
+
+    // Close sidebar when clicking overlay
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+        toggle.classList.remove('active');
+    });
+
+    // Close sidebar when clicking a nav item
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            toggle.classList.remove('active');
+        });
+    });
+}
+
 // Ensure the correct sidebar item is marked active based on the page
 function markActiveNavFromBody() {
     const page = document.body.dataset.page;
@@ -194,6 +225,8 @@ let inventorySearchTerm = '';
 // Initialize dashboard or section page
 document.addEventListener('DOMContentLoaded', function () {
     const page = document.body.dataset.page || 'dashboard';
+    // Initialize sidebar toggle for mobile
+    initSidebarToggle();
     // Ensure sidebar reflects current page
     markActiveNavFromBody();
     // Setup notification dropdown behavior

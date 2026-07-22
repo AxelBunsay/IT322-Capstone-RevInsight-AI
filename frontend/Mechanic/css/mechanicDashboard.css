@@ -601,6 +601,55 @@ body {
     background: #94a3b8;
 }
 
+/* Hamburger Menu */
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    gap: 6px;
+    position: relative;
+    z-index: 1100;
+}
+
+.hamburger-menu span {
+    width: 26px;
+    height: 3px;
+    background: #333;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translate(10px, 10px);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Sidebar Overlay for Mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
 @media (max-width: 900px) {
     .priority-board {
         grid-template-columns: 1fr;
@@ -626,15 +675,77 @@ body {
 }
 
 @media (max-width: 640px) {
+    .hamburger-menu {
+        display: flex;
+    }
+
     .sidebar {
-        width: 60px;
-        padding: 12px 0;
+        width: 80px;
+        position: fixed;
+        top: 0;
+        left: -80px;
+        height: 100vh;
+        padding: 70px 0 20px 0;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        flex-direction: column;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        align-items: center;
+        overflow-y: auto;
     }
-    
+
+    .sidebar.open {
+        left: 0;
+    }
+
+    .sidebar-header {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .sidebar-nav {
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .nav-item {
+        width: 100%;
+        padding: 12px 14px;
+        justify-content: flex-start;
+    }
+
+    .nav-label {
+        display: inline;
+        font-size: 14px;
+    }
+
+    .nav-icon {
+        margin-right: 12px;
+    }
+
     .main-content {
-        margin-left: 60px;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        font-size: 13px;
+        color: #666;
+        background: white;
+        border-bottom: 1px solid #eee;
     }
     
+    .breadcrumb .hamburger-menu {
+        margin-right: 8px;
+    }
+
     .top-header {
         padding: 16px 20px;
         flex-direction: column;

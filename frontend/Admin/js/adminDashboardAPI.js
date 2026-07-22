@@ -2,7 +2,7 @@
 // This file provides helper functions to connect the frontend dashboard to the backend API
 
 class AdminDashboardAPI {
-    constructor(baseURL = 'http://localhost:3000/api') {
+    constructor(baseURL = 'https://it322-capstone-revinsight-ai.onrender.com/api') {
         this.baseURL = baseURL;
         this.token = localStorage.getItem('adminToken');
     }

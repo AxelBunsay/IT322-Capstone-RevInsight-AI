@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/partsLookup.css">
 </head>
 <body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -43,8 +44,11 @@
         
         <!-- Main Content -->
         <main class="main-content">
-            <section class="breadcrumb">
-                <a href="mechanicDashboard.html">Dashboard</a>
+            <section class="breadcrumb">                <button class="hamburger-menu" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>                <a href="mechanicDashboard.html">Dashboard</a>
                 <span>/</span>
                 <span>Parts Lookup</span>
             </section>
