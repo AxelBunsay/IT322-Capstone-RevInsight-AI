@@ -151,10 +151,17 @@ body {
     margin-top: 2px;
 }
 
-.header-right {
+..header-right {
     display: flex;
     align-items: center;
     gap: 30px;
+    margin-left: auto;
+    justify-content: flex-end;
+}
+
+.hamburger-menu {
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .timestamp {
