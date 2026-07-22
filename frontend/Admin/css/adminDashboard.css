@@ -12,7 +12,8 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f5e6d3;
     color: #333;
-    overflow: hidden; /* prevent body scrolling to match fixed layout */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .admin-container {
@@ -1105,6 +1106,11 @@ body {
         display: flex;
         gap: 10px;
         align-items: center;
+        justify-content: flex-end;
+    }
+
+    .header-right .hamburger-menu {
+        margin-right: 0;
     }
 
     .section-content {

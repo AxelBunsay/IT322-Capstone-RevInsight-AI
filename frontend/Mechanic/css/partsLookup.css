@@ -633,9 +633,24 @@ body {
         background: white;
         border-bottom: 1px solid #eee;
     }
-    
-    .breadcrumb .hamburger-menu {
-        margin-right: 8px;
+
+    .top-header {
+        padding: 16px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .top-header .header-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .header-info .hamburger-menu {
+        margin: 0;
     }
     
     .top-header {
