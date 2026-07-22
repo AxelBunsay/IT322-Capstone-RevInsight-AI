@@ -138,29 +138,38 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-    .top-header .header-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+.top-header .header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-    .top-header .hamburger-menu {
-        margin: 0;
-    }
+.top-header .hamburger-menu {
+    margin: 0;
+}
 
-    .top-header .user-avatar {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: #eef2ff;
-        border-radius: 50%;
-        color: #4338ca;
-    }
+.top-header .user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #eef2ff;
+    border-radius: 50%;
+    color: #4338ca;
+}
+
+.header-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.section-label {
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
+    font-size: 12px;
+    color: #94a3b8;
 }
 
 .top-header h1 {
@@ -767,7 +776,7 @@ body {
         align-items: center;
         gap: 12px;
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-end;
     }
 
     .header-info .hamburger-menu {
