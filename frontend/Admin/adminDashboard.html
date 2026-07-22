@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
 <body data-page="dashboard">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="admin-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -32,6 +33,11 @@
 
             <!-- Header -->
             <header class="admin-header">
+                <button class="hamburger-menu" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
                 <div class="header-brand">
                     <h1>DASHBOARD</h1>
                     <p>Mancy's Motorcycle Parts, Accessories & Services</p>
