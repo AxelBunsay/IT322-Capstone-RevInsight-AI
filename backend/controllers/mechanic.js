@@ -45,7 +45,8 @@ const createMechanic = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[createMechanic] error', error);
+    res.status(500).json({ message: 'Failed to create mechanic. Please try again.' });
   }
 };
 
@@ -57,6 +58,9 @@ const login = async (req, res) => {
     const mechanic = await Mechanic.findOne({ email: normalizedEmail }).select('+password');
     if (!mechanic) {
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    if (!mechanic.isActive) {
+      return res.status(403).json({ message: 'Mechanic account is inactive' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, mechanic.password);
@@ -83,7 +87,8 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[login] error', error);
+    res.status(500).json({ message: 'Failed to login. Please try again.' });
   }
 };
 
@@ -115,7 +120,8 @@ const getProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[getProfile] error', error);
+    res.status(500).json({ message: 'Failed to load profile. Please try again.' });
   }
 };
 
@@ -156,7 +162,8 @@ const updateProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[updateProfile] error', error);
+    res.status(500).json({ message: 'Failed to update profile. Please try again.' });
   }
 };
 
@@ -183,7 +190,18 @@ const listAllMechanics = async (req, res) => {
 
     res.status(200).json({ mechanics: formatted });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[listAllMechanics] error', error);
+    res.status(500).json({ message: 'Failed to load mechanics. Please try again.' });
+  }
+};
+
+const listAvailableMechanics = async (req, res) => {
+  try {
+    const mechanics = await Mechanic.find({ isActive: true }).select('firstName lastName specialization isActive availabilityStatus');
+    res.status(200).json({ mechanics });
+  } catch (error) {
+    console.error('[listAvailableMechanics] error', error);
+    res.status(500).json({ message: 'Failed to load available mechanics. Please try again.' });
   }
 };
 
@@ -204,7 +222,7 @@ const deleteMechanic = async (req, res) => {
     return res.status(200).json({ message: 'Mechanic deleted successfully' });
   } catch (error) {
     console.error('[deleteMechanic] error', error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Failed to delete mechanic. Please try again.' });
   }
 };
 
@@ -253,7 +271,8 @@ const updateMechanic = async (req, res) => {
       successRate: updated.successRate
     }});
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[updateMechanic] error', error);
+    res.status(500).json({ message: 'Failed to update mechanic. Please try again.' });
   }
 };
 

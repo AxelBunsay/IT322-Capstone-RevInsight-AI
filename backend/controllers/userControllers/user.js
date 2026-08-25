@@ -62,8 +62,8 @@ const registerRequest = async (req, res) => {
       email: email
     });
   } catch (error) {
-    console.error('Register request error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('[registerRequest] error', error);
+    res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
   }
 };
 
@@ -117,8 +117,8 @@ const verifyOtp = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Verify OTP error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('[verifyOtp] error', error);
+    res.status(500).json({ message: 'Failed to verify OTP. Please try again.' });
   }
 };
 
@@ -162,8 +162,8 @@ const resendOtp = async (req, res) => {
       email: email
     });
   } catch (error) {
-    console.error('Resend OTP error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('[resendOtp] error', error);
+    res.status(500).json({ message: 'Failed to resend OTP. Please try again.' });
   }
 };
 
@@ -207,7 +207,8 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[login] error', error);
+    res.status(500).json({ message: 'Failed to login. Please try again.' });
   }
 };
 
@@ -235,7 +236,8 @@ const getProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[getProfile] error', error);
+    res.status(500).json({ message: 'Failed to load profile. Please try again.' });
   }
 };
 
@@ -271,7 +273,8 @@ const updateProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[updateProfile] error', error);
+    res.status(500).json({ message: 'Failed to update profile. Please try again.' });
   }
 };
 
@@ -290,11 +293,11 @@ const getPurchaseHistory = async (req, res) => {
       lastPurchaseDate: user.lastPurchaseDate
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[getPurchaseHistory] error', error);
+    res.status(500).json({ message: 'Failed to load purchase history. Please try again.' });
   }
 };
 
-// Get receipts
 const getReceipts = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -307,7 +310,8 @@ const getReceipts = async (req, res) => {
       lastReceiptDate: user.lastReceiptDate
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[getReceipts] error', error);
+    res.status(500).json({ message: 'Failed to load receipts. Please try again.' });
   }
 };
 
