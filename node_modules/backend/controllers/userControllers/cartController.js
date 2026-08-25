@@ -15,10 +15,10 @@ const addToCart = async (req, res) => {
     const { productId, quantity = 1 } = req.body;
     const { phoneNumber, customerName } = await getCustomerPhone(req.user.userId);
 
-    if (!productId || !quantity) {
+    if (!productId || !Number.isInteger(Number(quantity)) || Number(quantity) < 1) {
       return res.status(400).json({
         success: false,
-        message: 'Product ID and quantity are required'
+        message: 'Product ID and a positive whole-number quantity are required'
       });
     }
 
@@ -27,13 +27,6 @@ const addToCart = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Product not found'
-      });
-    }
-
-    if (product.quantity < quantity) {
-      return res.status(400).json({
-        success: false,
-        message: 'Not enough stock'
       });
     }
 
@@ -47,14 +40,22 @@ const addToCart = async (req, res) => {
     }
 
     const existingItem = cart.items.find(item => item.productId.toString() === productId);
+    const requestedQuantity = (existingItem?.quantity || 0) + Number(quantity);
+    if (product.quantity < requestedQuantity) {
+      return res.status(400).json({
+        success: false,
+        message: `Not enough stock for ${product.name}. Only ${product.quantity} available.`
+      });
+    }
+
     if (existingItem) {
-      existingItem.quantity += quantity;
+      existingItem.quantity = requestedQuantity;
     } else {
       cart.items.push({
         productId,
         productName: product.name,
         price: product.price,
-        quantity,
+        quantity: Number(quantity),
         image: product.image
       });
     }
@@ -138,10 +139,10 @@ const updateCartQuantity = async (req, res) => {
     const { quantity } = req.body;
     const { phoneNumber } = await getCustomerPhone(req.user.userId);
 
-    if (!quantity || quantity < 1) {
+    if (!Number.isInteger(Number(quantity)) || Number(quantity) < 1) {
       return res.status(400).json({
         success: false,
-        message: 'Quantity must be at least 1'
+        message: 'Quantity must be a positive whole number'
       });
     }
 
@@ -161,7 +162,22 @@ const updateCartQuantity = async (req, res) => {
       });
     }
 
-    item.quantity = quantity;
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product is no longer available'
+      });
+    }
+
+    if (product.quantity < Number(quantity)) {
+      return res.status(400).json({
+        success: false,
+        message: `Not enough stock for ${product.name}. Only ${product.quantity} available.`
+      });
+    }
+
+    item.quantity = Number(quantity);
     cart.totalPrice = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
     await cart.save();
 

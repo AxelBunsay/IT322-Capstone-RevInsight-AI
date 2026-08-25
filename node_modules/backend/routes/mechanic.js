@@ -17,6 +17,7 @@ router.post('/create', adminOnly, validateCreateMechanic, mechanicController.cre
 
 // Protected list for admin dashboard (frontend) to show persisted mechanics
 router.get('/all', adminOnly, mechanicController.listAllMechanics);
+router.get('/available', authorizeRoles('customer'), mechanicController.listAvailableMechanics);
 
 // SPECIFIC ROUTES MUST COME BEFORE GENERIC /:id ROUTES
 // Protected routes (mechanic only) - SPECIFIC /profile routes

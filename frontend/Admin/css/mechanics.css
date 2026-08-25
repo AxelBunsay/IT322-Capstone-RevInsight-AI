@@ -1,0 +1,181 @@
+.mechanics-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mechanics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.mechanics-header h2 {
+    font-size: 18px;
+}
+
+.mechanics-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat-box {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: bold;
+    color: #ff6b35;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+}
+
+.mechanic-card {
+    background: white;
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.mechanic-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.mechanic-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.mechanic-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.mechanic-avatar.orange {
+    background-color: #ff6b35;
+}
+
+.mechanic-avatar.purple {
+    background-color: #9b6dd0;
+}
+
+.mechanic-name {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.mechanic-specialty {
+    font-size: 12px;
+    color: #999;
+    margin-top: 3px;
+}
+
+.mechanic-email {
+    font-size: 11px;
+    color: #999;
+}
+
+.mechanic-stat {
+    text-align: center;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+}
+
+.mechanic-stat-number {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.mechanic-stat-label {
+    font-size: 11px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.mechanic-card .mechanic-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+    margin-bottom: 0;
+}
+
+.mechanic-labor {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    text-align: right;
+    font-weight: 600;
+    color: #ff6b35;
+}
+
+.mechanic-actions {
+    display: flex;
+    gap: 15px;
+    margin-left: auto;
+}
+
+@media (max-width: 768px) {
+    .mechanics-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .mechanics-container {
+        padding: 12px;
+    }
+
+    .mechanics-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .mechanic-header-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .mechanic-actions {
+        margin-left: 0;
+    }
+
+    .mechanics-stats,
+    .mechanic-card .mechanic-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .mechanic-card {
+        padding: 12px;
+    }
+}

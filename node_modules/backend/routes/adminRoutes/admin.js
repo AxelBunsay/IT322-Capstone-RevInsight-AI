@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, getAdmin } = require('../../controllers/adminControllers/adminController');
+const { login, getAdmin } = require('../../controllers/adminControllers/adminController');
 const mechanicController = require('../../controllers/mechanic');
 const { protect } = require('../../middleware/adminAuth');
 
 
-// Public routes
-router.post('/signup', signup);
+// Public login route; administrator accounts are provisioned out of band.
 router.post('/login', login);
 
 // Protected routes

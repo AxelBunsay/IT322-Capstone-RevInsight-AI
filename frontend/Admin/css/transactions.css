@@ -1,0 +1,159 @@
+.transactions-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.transactions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.transactions-info {
+    font-size: 14px;
+    color: #ff6b35;
+    font-weight: 600;
+}
+
+.search-filter {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.search-filter input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.search-filter select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    background: white;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.transactions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transactions-table thead {
+    background-color: #f9f9f9;
+}
+
+.transactions-table th {
+    padding: 15px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+    border-bottom: 1px solid #eee;
+}
+
+.transactions-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.transactions-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-paid {
+    background-color: #d4edda;
+    color: #52c77a;
+}
+
+.status-completed {
+    background-color: #d4edda;
+    color: #52c77a;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #ffc107;
+}
+
+.status-cancelled {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.price-text {
+    color: #ff6b35;
+    font-weight: 600;
+}
+
+.pagination-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.pagination-button {
+    padding: 8px 12px;
+    color: #333;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.pagination-button.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.pagination-page {
+    padding: 8px 4px;
+    color: #777;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .search-filter {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 640px) {
+    .transactions-container {
+        padding: 16px;
+        overflow-x: auto;
+    }
+
+    .transactions-table { min-width: 900px; }
+
+    .search-filter {
+        gap: 8px;
+    }
+
+    .search-filter input,
+    .search-filter select {
+        width: 100%;
+        padding: 10px;
+        font-size: 13px;
+    }
+}

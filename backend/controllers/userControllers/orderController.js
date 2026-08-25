@@ -10,7 +10,7 @@ const getCustomerPhone = async (userId) => {
   return { phoneNumber: user.phoneNumber, customerName: `${user.firstName} ${user.lastName}` };
 };
 
-// Checkout (create order)
+// Checkout - validate cart and return info for payment
 const checkout = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -25,43 +25,28 @@ const checkout = async (req, res) => {
 
     for (const item of cart.items) {
       const product = await Product.findById(item.productId);
-      if (product) {
-        if (product.quantity < item.quantity) {
-          return res.status(400).json({
-            success: false,
-            message: `Not enough stock for ${product.name}`
-          });
-        }
-        product.quantity -= item.quantity;
-        await product.save();
+      if (!product) {
+        return res.status(400).json({
+          success: false,
+          message: `${item.productName || 'An item'} is no longer available`
+        });
+      }
+
+      if (product.quantity < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Not enough stock for ${product.name}. Only ${product.quantity} available.`
+        });
       }
     }
 
-    const order = new Order({
-      customerName: `${user.firstName} ${user.lastName}`,
-      customerPhone: user.phoneNumber,
-      items: cart.items,
-      totalPrice: cart.totalPrice,
-      status: 'completed'
-    });
-
-    await order.save();
-
-    user.totalPurchases += 1;
-    user.totalSpent += cart.totalPrice;
-    if (!user.firstPurchaseDate) {
-      user.firstPurchaseDate = Date.now();
-    }
-    user.lastPurchaseDate = Date.now();
-    user.lastReceiptDate = Date.now();
-    await user.save();
-
-    await Cart.findOneAndDelete({ customerPhone: user.phoneNumber });
-
-    res.status(201).json({
+    res.json({
       success: true,
-      message: 'Order created successfully',
-      order
+      cart: {
+        items: cart.items,
+        totalPrice: cart.totalPrice,
+        itemCount: cart.items.reduce((sum, item) => sum + item.quantity, 0)
+      }
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

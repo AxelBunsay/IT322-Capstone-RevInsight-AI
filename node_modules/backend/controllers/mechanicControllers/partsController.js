@@ -65,13 +65,13 @@ const getPendingServiceRequests = async (req, res) => {
 const acceptServiceRequest = async (req, res) => {
   try {
     const requestId = req.params.requestId;
-    const mechanicId = req.body.mechanicId || req.user?.userId;
+    const mechanicId = req.user?.userId;
 
     if (!mechanicId) return res.status(400).json({ message: 'Mechanic id required' });
 
     const request = await ServiceRequest.findById(requestId).populate('user');
     if (!request) return res.status(404).json({ message: 'Service request not found' });
-    if (request.status !== 'pending' || request.mechanic) {
+    if (request.status !== 'confirmed' || request.mechanic?.toString() !== mechanicId) {
       return res.status(400).json({ message: 'Service request is not available for acceptance.' });
     }
 
@@ -88,7 +88,7 @@ const acceptServiceRequest = async (req, res) => {
 
 const getAvailableJobs = async (req, res) => {
   try {
-    const jobs = await ServiceRequest.find({ status: 'pending', mechanic: null })
+    const jobs = await ServiceRequest.find({ status: 'confirmed', mechanic: req.user.userId })
       .populate('user')
       .sort({ createdAt: -1 });
 
@@ -146,16 +146,15 @@ const getMechanicStats = async (req, res) => {
 const acceptMechanicJob = async (req, res) => {
   try {
     const jobId = req.params.jobId;
-    const mechanicId = req.body.mechanicId || req.user?.userId;
+    const mechanicId = req.user?.userId;
 
-    const job = await ServiceRequest.findById(jobId);
+    const job = await ServiceRequest.findOne({ _id: jobId, mechanic: mechanicId });
     if (!job) return res.status(404).json({ message: 'Job not found' });
-    if (job.status !== 'pending' || job.mechanic) {
+    if (job.status !== 'confirmed') {
       return res.status(400).json({ message: 'Job is not available for acceptance.' });
     }
 
-    job.mechanic = mechanicId;
-    job.status = 'in-progress';
+    job.status = 'accepted';
     await job.save();
 
     res.status(200).json({ message: 'Job accepted', job: serializeServiceRequest(job) });
@@ -166,9 +165,9 @@ const acceptMechanicJob = async (req, res) => {
 
 const startMechanicJob = async (req, res) => {
   try {
-    const job = await ServiceRequest.findById(req.params.jobId);
+    const job = await ServiceRequest.findOne({ _id: req.params.jobId, mechanic: req.user.userId });
     if (!job) return res.status(404).json({ message: 'Job not found' });
-    if (job.status === 'completed') return res.status(400).json({ message: 'Job already completed.' });
+    if (job.status !== 'accepted') return res.status(400).json({ message: 'Only accepted jobs can be started.' });
 
     job.status = 'in-progress';
     await job.save();
@@ -181,8 +180,9 @@ const startMechanicJob = async (req, res) => {
 
 const completeMechanicJob = async (req, res) => {
   try {
-    const job = await ServiceRequest.findById(req.params.jobId);
+    const job = await ServiceRequest.findOne({ _id: req.params.jobId, mechanic: req.user.userId });
     if (!job) return res.status(404).json({ message: 'Job not found' });
+    if (job.status !== 'in-progress') return res.status(400).json({ message: 'Only in-progress jobs can be completed.' });
 
     job.status = 'completed';
     await job.save();

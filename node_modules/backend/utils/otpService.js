@@ -1,4 +1,8 @@
 const nodemailer = require('nodemailer');
+const { randomInt } = require('crypto');
+
+// Check if development mode is enabled (for testing without email)
+const DEVELOPMENT_MODE = process.env.DEVELOPMENT_MODE === 'true';
 
 const getEmailConfig = () => {
   const emailService = process.env.EMAIL_SERVICE;
@@ -52,7 +56,7 @@ const createTransporter = () => {
 
 // Generate random 6-digit OTP
 const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 };
 
 // Calculate expiry time (2 minutes from now)
@@ -62,6 +66,13 @@ const getOTPExpiry = () => {
 
 // Send OTP via email
 const sendOTPEmail = async (email, otp) => {
+  if (DEVELOPMENT_MODE) {
+    console.log(`\n=== DEVELOPMENT OTP ===`);
+    console.log(`OTP for ${email}: ${otp}`);
+    console.log(`=== End Development OTP ===\n`);
+    return true;
+  }
+
   try {
     const transporter = createTransporter();
     const { emailUser } = getEmailConfig();
