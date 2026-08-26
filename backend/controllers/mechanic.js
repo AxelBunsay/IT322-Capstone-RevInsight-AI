@@ -282,6 +282,7 @@ module.exports = {
   getProfile,
   updateProfile,
   listAllMechanics,
+  listAvailableMechanics,
   deleteMechanic,
   updateMechanic
 };
