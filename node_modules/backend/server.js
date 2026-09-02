@@ -10,6 +10,7 @@ const mechanicRoutes = require('./routes/mechanic');
 const adminRoutes = require('./routes/adminRoutes/admin');
 const productRoutes = require('./routes/adminRoutes/product');
 const dashboardRoutes = require('./routes/adminRoutes/dashboard');
+const chatRoutes = require('./routes/chat');
 
 const cartRoutes = require('./routes/orderingRoutes/cart');
 const orderRoutes = require('./routes/orderingRoutes/order');
@@ -96,7 +97,7 @@ app.use('/api/mechanics', mechanicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-
+app.use('/api/chat', chatRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
