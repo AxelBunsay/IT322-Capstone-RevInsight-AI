@@ -5,6 +5,7 @@ const { generateOTP, getOTPExpiry, sendOTPEmail, verifyOTP } = require('../../ut
 
 // Step 1: Register Request - Send OTP to email
 const registerRequest = async (req, res) => {
+  
   try {
     const { email, password, firstName, lastName, phoneNumber } = req.body;
 
