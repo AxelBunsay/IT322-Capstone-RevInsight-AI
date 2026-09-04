@@ -169,11 +169,11 @@ nav .nav-inner{ display:flex; align-items:center; justify-content:space-between;
 @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 .skeleton-product-card { display: flex; flex-direction: column; gap: 12px; }
-.skeleton-product-card .product-top { min-height: 220px; border-radius: 20px; skeleton-loader; }
-.skeleton-product-card .product-title { height: 16px; border-radius: 4px; skeleton-loader; width: 80%; }
-.skeleton-product-card .product-desc { height: 12px; border-radius: 4px; skeleton-loader; width: 100%; margin: 4px 0; }
-.skeleton-product-card .product-price { height: 18px; border-radius: 4px; skeleton-loader; width: 40%; margin: 8px 0; }
-.skeleton-product-card .add-btn { height: 44px; border-radius: 16px; skeleton-loader; }
+.skeleton-product-card .product-top { min-height: 220px; border-radius: 20px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+.skeleton-product-card .product-title { height: 16px; border-radius: 4px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; width: 80%; }
+.skeleton-product-card .product-desc { height: 12px; border-radius: 4px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; width: 100%; margin: 4px 0; }
+.skeleton-product-card .product-price { height: 18px; border-radius: 4px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; width: 40%; margin: 8px 0; }
+.skeleton-product-card .add-btn { height: 44px; border-radius: 16px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
 
 /* ===== EMPTY STATES ===== */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; }
