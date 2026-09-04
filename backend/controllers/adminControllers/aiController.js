@@ -8,7 +8,7 @@ async function askRevenueAI(req, res) {
       return res.status(400).json({ success: false, message: 'Question is required' });
     }
 
-    // Fetch current revenue data using existing dashboard controller methods
+    // Fetch current revenue data
     const mockReq = { ...req, query: {} };
     const mockRes = {
       json: (data) => data,

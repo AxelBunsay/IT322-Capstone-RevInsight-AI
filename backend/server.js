@@ -1,6 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+const aiRoutes = require('./routes/adminRoutes/ai');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -16,7 +17,6 @@ const orderRoutes = require('./routes/orderingRoutes/order');
 const serviceRequestRoutes = require('./routes/serviceRequest');
 const mechanicPartsRoutes = require('./routes/mechanicParts');
 const paymentRoutes = require('./routes/payment');
-const aiRoutes = require('./routes/adminRoutes/ai');
 
 
 const mongoose = require('mongoose');
@@ -33,6 +33,9 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5175'
 ].filter(Boolean);
+
+
+app.use('/api/admin', aiRoutes);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -103,7 +106,6 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/mechanic', mechanicPartsRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/admin', aiRoutes);
 
 // Catch-all for frontend routes (serve admin login for non-API requests)
 app.use((req, res, next) => {
