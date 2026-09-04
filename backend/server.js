@@ -1,47 +1,60 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config();
 
+const aiRoutes = require('./routes/adminRoutes/ai');
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 const userRoutes = require('./routes/user');
 const mechanicRoutes = require('./routes/mechanic');
 const adminRoutes = require('./routes/adminRoutes/admin');
 const productRoutes = require('./routes/adminRoutes/product');
 const dashboardRoutes = require('./routes/adminRoutes/dashboard');
+const chatRoutes = require('./routes/chat');
 
 const cartRoutes = require('./routes/orderingRoutes/cart');
 const orderRoutes = require('./routes/orderingRoutes/order');
 const serviceRequestRoutes = require('./routes/serviceRequest');
 const mechanicPartsRoutes = require('./routes/mechanicParts');
+const paymentRoutes = require('./routes/payment');
 
 
 const mongoose = require('mongoose');
 const Admin = require('./models/adminModels/admin');
 const app = express();
 
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)) {
+  throw new Error('JWT_SECRET must be configured with at least 32 characters in production');
+}
+
 // Middleware
-app.use(cors());
-// simple request logger for debugging
-app.use((req, res, next) => {
-  console.log(new Date().toISOString(), req.method, req.path);
-  next();
-});
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-// additional API request logger (prints headers + body for POST/PUT/DELETE)
-app.use((req, res, next) => {
-  try {
-    if (req.path.startsWith('/api/')) {
-      console.log('-> API Request:', req.method, req.path);
-      console.log('   Host:', req.headers.host);
-      // avoid noisy output for GETs
-      if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-        console.log('   Body:', JSON.stringify(req.body));
-      }
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:5175'
+].filter(Boolean);
+
+
+app.use('/api/admin', aiRoutes);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
-  } catch (e) { /* ignore logging errors */ }
-  next();
-});
+    return callback(new Error('Origin is not allowed by CORS'));
+  }
+}));
+app.use(helmet());
+app.use('/api', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false
+}));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 // serve uploaded files
 app.use(express.static('uploads'));
 
@@ -54,8 +67,13 @@ const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/revinsigh
 const port = process.env.PORT || 5000;
 
 const ensureAdminUser = async () => {
-  const username = process.env.ADMIN_USERNAME || 'Admin';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!username || !password) {
+    console.warn('Admin bootstrap skipped: ADMIN_USERNAME and ADMIN_PASSWORD are not configured');
+    return;
+  }
 
   try {
     const existingAdmin = await Admin.findOne({ username });
@@ -83,35 +101,12 @@ app.use('/api/mechanics', mechanicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-
+app.use('/api/chat', chatRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/mechanic', mechanicPartsRoutes);
-
-// Diagnostic: list registered routes (temporary)
-app.get('/api/_routes', (req, res) => {
-  try {
-    const routes = [];
-    app._router.stack.forEach(m => {
-      if (m.route && m.route.path) {
-        const methods = Object.keys(m.route.methods).join(',').toUpperCase();
-        routes.push({ path: m.route.path, methods });
-      } else if (m.name === 'router' && m.handle && m.handle.stack) {
-        m.handle.stack.forEach(r => {
-          if (r.route && r.route.path) {
-            const methods = Object.keys(r.route.methods).join(',').toUpperCase();
-            // If route was mounted with a path, include parent mount if available
-            routes.push({ path: r.route.path, methods });
-          }
-        });
-      }
-    });
-    res.json({ routes });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+app.use('/api/payments', paymentRoutes);
 
 // Catch-all for frontend routes (serve admin login for non-API requests)
 app.use((req, res, next) => {

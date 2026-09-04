@@ -1,0 +1,124 @@
+.inventory-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.inventory-header input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-right: 15px;
+    font-size: 13px;
+}
+
+.inventory-info {
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #999;
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventory-table thead {
+    background-color: #f9f9f9;
+}
+
+.inventory-table th {
+    padding: 15px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+    border-bottom: 1px solid #eee;
+}
+
+.inventory-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.inventory-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.stock-text {
+    color: #52c77a;
+    font-weight: 600;
+}
+
+.stock-text.low {
+    color: #ff6b35;
+}
+
+.pagination-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.pagination-button {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    color: #333;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.pagination-page {
+    align-self: center;
+    padding: 8px 4px;
+    color: #777;
+    font-size: 13px;
+}
+
+.pagination-button:hover:not(.disabled) {
+    background-color: #f7f7f7;
+}
+
+.pagination-button.active {
+    background-color: #ff6b35;
+    border-color: #ff6b35;
+    color: #fff;
+}
+
+.pagination-button.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .inventory-container {
+        padding: 16px;
+        overflow-x: auto;
+    }
+
+    .inventory-table { min-width: 560px; }
+
+    .inventory-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .inventory-header input {
+        margin-right: 0;
+    }
+}
