@@ -1,10 +1,15 @@
 const Product = require('../../models/product');
+const cloudinary = require('../../config/cloudinary');
 
 //Create 
 const createProduct = async (req, res) => {
   try {
     const { name, price, quantity, category } = req.body;
-    const image = req.file ? req.file.filename : null;
+    const uploadResult = req.file
+      ? await uploadToCloudinary(req.file)
+      : null;
+
+    const image = uploadResult?.secure_url || null;
 
     if (!name || !price || !quantity || !category) {
       return res.status(400).json({
@@ -34,16 +39,27 @@ const createProduct = async (req, res) => {
   }
 };
 
+const uploadToCloudinary = (file) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'revinsight/products' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+
 //Get products
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find();
-    const host = req.get('host');
-    const baseUrl = `${req.protocol}://${host}`;
 
     const productsWithUrls = products.map(product => ({
       ...product.toObject(),
-      image: product.image ? `${baseUrl}/${product.image}` : null
+      image: product.image || null
     }));
 
     res.status(200).json({
@@ -71,9 +87,7 @@ const getProduct = async (req, res) => {
       });
     }
 
-    const host = req.get('host');
-    const baseUrl = `${req.protocol}://${host}`;
-    const imageUrl = product.image ? `${baseUrl}/${product.image}` : null;
+    const imageUrl = product.image || null;
 
     res.status(200).json({
       success: true,

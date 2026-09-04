@@ -8,7 +8,7 @@ const revenueStatuses = ['completed', 'Paid'];
 const revenueAmount = { $ifNull: ['$totalPrice', '$totalAmount'] };
 
 // Get Dashboard Stats
-exports.getDashboardStats = async (req, res) => {
+const getDashboardStats = async (req, res) => {
   try {
     const totalRevenue = await Order.aggregate([
       { $match: { status: { $in: revenueStatuses } } },
@@ -38,7 +38,7 @@ exports.getDashboardStats = async (req, res) => {
 };
 
 // Get Revenue Data
-exports.getRevenueData = async (req, res) => {
+const getRevenueData = async (req, res) => {
   try {
     const revenueByMonth = await Order.aggregate([
       { $match: { status: { $in: revenueStatuses } } },
@@ -66,7 +66,7 @@ exports.getRevenueData = async (req, res) => {
 };
 
 // Get Quarterly Data
-exports.getQuarterlyData = async (req, res) => {
+const getQuarterlyData = async (req, res) => {
   try {
     const currentYear = new Date().getFullYear();
     const previousYear = currentYear - 1;
@@ -97,7 +97,7 @@ exports.getQuarterlyData = async (req, res) => {
 };
 
 // Get Daily Data
-exports.getDailyData = async (req, res) => {
+const getDailyData = async (req, res) => {
   try {
     const lastSevenDays = new Date();
     lastSevenDays.setDate(lastSevenDays.getDate() - 7);
@@ -130,7 +130,7 @@ exports.getDailyData = async (req, res) => {
 };
 
 // Get Revenue Risk
-exports.getRevenueRisk = async (req, res) => {
+const getRevenueRisk = async (req, res) => {
   try {
     const revenueByCategory = await Order.aggregate([
       { $match: { status: { $in: revenueStatuses } } },
@@ -166,7 +166,7 @@ exports.getRevenueRisk = async (req, res) => {
 };
 
 // Get Projected Revenue
-exports.getProjectedRevenue = async (req, res) => {
+const getProjectedRevenue = async (req, res) => {
   try {
     const projectedData = await Order.aggregate([
       { $match: { status: { $in: revenueStatuses } } },
@@ -194,7 +194,7 @@ exports.getProjectedRevenue = async (req, res) => {
 };
 
 // Get All Transactions
-exports.getAllTransactions = async (req, res) => {
+const getAllTransactions = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = null } = req.query;
     const query = status ? { status } : {};
@@ -224,7 +224,7 @@ exports.getAllTransactions = async (req, res) => {
 };
 
 // Get Transaction by ID
-exports.getTransactionById = async (req, res) => {
+const getTransactionById = async (req, res) => {
   try {
     const transaction = await Order.findById(req.params.id)
       .populate('userId')
@@ -246,7 +246,7 @@ exports.getTransactionById = async (req, res) => {
 };
 
 // Create Transaction
-exports.createTransaction = async (req, res) => {
+const createTransaction = async (req, res) => {
   try {
     const transaction = new Order(req.body);
     await transaction.save();
@@ -263,7 +263,7 @@ exports.createTransaction = async (req, res) => {
 };
 
 // Update Transaction
-exports.updateTransaction = async (req, res) => {
+const updateTransaction = async (req, res) => {
   try {
     const transaction = await Order.findByIdAndUpdate(
       req.params.id,
@@ -287,7 +287,7 @@ exports.updateTransaction = async (req, res) => {
 };
 
 // Delete Transaction
-exports.deleteTransaction = async (req, res) => {
+const deleteTransaction = async (req, res) => {
   try {
     const transaction = await Order.findByIdAndDelete(req.params.id);
 
@@ -306,7 +306,7 @@ exports.deleteTransaction = async (req, res) => {
 };
 
 // Get All Inventory
-exports.getAllInventory = async (req, res) => {
+const getAllInventory = async (req, res) => {
   try {
     const { page = 1, limit = 15 } = req.query;
 
@@ -333,7 +333,7 @@ exports.getAllInventory = async (req, res) => {
 };
 
 // Get Inventory Item
-exports.getInventoryItem = async (req, res) => {
+const getInventoryItem = async (req, res) => {
   try {
     const item = await Product.findById(req.params.id);
 
@@ -352,7 +352,7 @@ exports.getInventoryItem = async (req, res) => {
 };
 
 // Add Inventory Item
-exports.addInventoryItem = async (req, res) => {
+const addInventoryItem = async (req, res) => {
   try {
     const item = new Product(req.body);
     await item.save();
@@ -369,7 +369,7 @@ exports.addInventoryItem = async (req, res) => {
 };
 
 // Update Inventory Item
-exports.updateInventoryItem = async (req, res) => {
+const updateInventoryItem = async (req, res) => {
   try {
     const item = await Product.findByIdAndUpdate(
       req.params.id,
@@ -393,7 +393,7 @@ exports.updateInventoryItem = async (req, res) => {
 };
 
 // Delete Inventory Item
-exports.deleteInventoryItem = async (req, res) => {
+const deleteInventoryItem = async (req, res) => {
   try {
     const item = await Product.findByIdAndDelete(req.params.id);
 
@@ -412,7 +412,7 @@ exports.deleteInventoryItem = async (req, res) => {
 };
 
 // Get Sales Report
-exports.getSalesReport = async (req, res) => {
+const getSalesReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const query = { status: { $in: revenueStatuses } };
@@ -446,7 +446,7 @@ exports.getSalesReport = async (req, res) => {
 };
 
 // Get Inventory Report
-exports.getInventoryReport = async (req, res) => {
+const getInventoryReport = async (req, res) => {
   try {
     const lowStockItems = await Product.find({ quantity: { $lt: 5 } });
     const totalInventoryValue = await Product.aggregate([
@@ -468,7 +468,7 @@ exports.getInventoryReport = async (req, res) => {
 };
 
 // Get Mechanics Report
-exports.getMechanicsReport = async (req, res) => {
+const getMechanicsReport = async (req, res) => {
   try {
     const mechanicsReport = await Mechanic.aggregate([
       {
@@ -502,4 +502,28 @@ exports.getMechanicsReport = async (req, res) => {
     console.error('[getMechanicsReport] error', error);
     res.status(500).json({ success: false, message: 'Failed to load mechanics report. Please try again.' });
   }
+};
+
+
+
+module.exports = {
+  getDashboardStats,
+  getRevenueData,
+  getQuarterlyData,
+  getDailyData,
+  getRevenueRisk,
+  getProjectedRevenue,
+  getAllTransactions,
+  getTransactionById,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+  getAllInventory,
+  getInventoryItem,
+  addInventoryItem,
+  updateInventoryItem,
+  deleteInventoryItem,
+  getSalesReport,
+  getInventoryReport,
+  getMechanicsReport
 };
