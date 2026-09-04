@@ -8,17 +8,6 @@ import '../../../Admin/css/transactions.css';
 import '../../../Admin/css/mechanics.css';
 import '../../../Admin/css/revenue.css';
 
-const fallbackInventory = [
-  { _id: 'P-001', name: 'Brake Pad Set', price: 850, quantity: 12 },
-  { _id: 'P-002', name: 'Motorcycle Chain', price: 1250, quantity: 5 },
-  { _id: 'P-003', name: 'Engine Oil 1L', price: 420, quantity: 24 }
-];
-
-const fallbackTransactions = [
-  { _id: 'T-001', createdAt: '2026-06-20', userId: { name: 'Juan Dela Cruz' }, totalAmount: 850, status: 'Paid', mechanic: 'Edison' },
-  { _id: 'T-002', createdAt: '2026-06-21', userId: { name: 'Maria Santos' }, totalAmount: 1250, status: 'Pending', mechanic: 'Dhie Jhay' }
-];
-
 function AdminDialog({ title, children, onClose }) {
   return (
     <div className="admin-dialog-backdrop" role="presentation" onMouseDown={onClose}>
@@ -359,16 +348,6 @@ function Mechanics() {
     const statuses = { available: 'Available', busy: 'Busy', 'on-leave': 'On leave' };
     return statuses[status] || status;
   };
-
-  const handleAskAI = async () => {
-  if (!aiQuestion.trim()) return;
-  try {
-    const response = await api.askRevenueAI(aiQuestion);
-    setAiAnswer(response.answer);
-  } catch (error) {
-    setError('Failed to get AI response');
-  }
-};
 
   return (
     <AdminLayout title="MECHANICS" activePath="/admin/mechanics">

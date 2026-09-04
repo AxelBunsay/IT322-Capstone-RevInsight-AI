@@ -4,11 +4,40 @@ import { api } from '../../services/api';
 import './customer.css';
 
 function CustomerPage({ title, description, children }) {
+  const location = useLocation();
+  const isSignedIn = Boolean(localStorage.getItem('customerToken'));
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  const logout = () => {
+    localStorage.removeItem('customerToken');
+    localStorage.removeItem('customerUser');
+    window.location.href = '/customer/login';
+  };
+
+  const navigation = [
+    { label: 'Shop', path: '/customer/shop' },
+    { label: 'Services', path: '/customer/services' },
+    { label: 'My Orders', path: '/customer/orders' }
+  ];
+
   return (
     <main className="customer-page">
-      <nav aria-label="Customer navigation"><Link to="/customer/shop">Shop</Link><Link to="/customer/services">Services</Link><Link to="/customer/orders">My Orders</Link></nav>
-      <h1>{title}</h1>
-      <p>{description}</p>
+      <header className="customer-header">
+        <Link className="customer-brand" to="/customer/shop">REVINSIGHT <span>AI</span></Link>
+        <nav aria-label="Customer navigation" className="customer-nav">
+          {navigation.map((item) => <Link className={location.pathname === item.path ? 'active' : ''} key={item.path} to={item.path}>{item.label}</Link>)}
+          <Link className="customer-cart-link" to="/customer/cart">Cart</Link>
+          {isSignedIn ? <button type="button" className="customer-logout" onClick={logout}>Sign out</button> : <Link to="/customer/login">Sign in</Link>}
+        </nav>
+      </header>
+      <section className="customer-heading">
+        <p className="customer-eyebrow">MOTORCYCLE PARTS, ACCESSORIES & SERVICES</p>
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </section>
       {children}
     </main>
   );
