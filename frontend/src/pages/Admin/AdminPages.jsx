@@ -471,6 +471,22 @@ function Revenue() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [aiQuestion, setAiQuestion] = useState('');
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [isAsking, setIsAsking] = useState(false);
+
+  const handleAskAI = async () => {
+    if (!aiQuestion.trim() || isAsking) return;
+    setIsAsking(true);
+    setError('');
+    try {
+      const response = await api.askRevenueAI(aiQuestion);
+      setAiAnswer(response.answer);
+    } catch (err) {
+      setError(err.message || 'Failed to get AI response');
+    } finally {
+      setIsAsking(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -530,13 +546,14 @@ function Revenue() {
           <div className="ai-card">
             <div className="ai-header">
               <h3>Ask AI for Revenue Insights</h3>
-              <button className="btn-clear" type="button" onClick={() => setAiQuestion('')}>Clear</button>
+              <button className="btn-clear" type="button" onClick={() => { setAiQuestion(''); setAiAnswer(''); }}>Clear</button>
             </div>
             <p className="ai-intro">Hello! I&apos;m your AI revenue analyst. Ask me about your revenue trends, risk levels, or category performance.</p>
             <div className="ai-input-row">
-              <input className="ai-input" value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} placeholder="Ask about revenue..." aria-label="Ask about revenue" />
-              <button className="btn-send" type="button" aria-label="Send revenue question">Send</button>
+              <input className="ai-input" value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} placeholder="Ask about revenue..." aria-label="Ask about revenue" disabled={isAsking} />
+              <button className="btn-send" type="button" onClick={handleAskAI} disabled={isAsking || !aiQuestion.trim()} aria-label="Send revenue question">{isAsking ? 'Thinking...' : 'Send'}</button>
             </div>
+            {aiAnswer && <div className="ai-answer"><pre>{aiAnswer}</pre></div>}
           </div>
           <div className="revenue-charts">
             <div className="chart-card full-width">

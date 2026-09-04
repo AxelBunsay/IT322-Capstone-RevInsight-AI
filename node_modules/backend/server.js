@@ -16,6 +16,7 @@ const orderRoutes = require('./routes/orderingRoutes/order');
 const serviceRequestRoutes = require('./routes/serviceRequest');
 const mechanicPartsRoutes = require('./routes/mechanicParts');
 const paymentRoutes = require('./routes/payment');
+const aiRoutes = require('./routes/adminRoutes/ai');
 
 
 const mongoose = require('mongoose');
@@ -102,6 +103,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/mechanic', mechanicPartsRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', aiRoutes);
 
 // Catch-all for frontend routes (serve admin login for non-API requests)
 app.use((req, res, next) => {

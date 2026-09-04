@@ -85,4 +85,5 @@ export const api = {
   ,getMechanicJobs: () => request('/api/service-requests/mechanic', { tokenKey: 'mechanicToken' })
   ,acceptMechanicJob: (requestId, startTime) => request('/api/service-requests/accept', { method: 'PUT', body: JSON.stringify({ requestId, startTime }), tokenKey: 'mechanicToken' })
   ,updateMechanicJobStatus: (requestId, status) => request('/api/service-requests/status', { method: 'PUT', body: JSON.stringify({ requestId, status }), tokenKey: 'mechanicToken' })
+  ,askRevenueAI: (question) => request('/api/admin/revenue/ask-ai', { method: 'POST', body: JSON.stringify({ question }) })
 };
