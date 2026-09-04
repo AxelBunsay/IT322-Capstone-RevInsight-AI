@@ -360,6 +360,16 @@ function Mechanics() {
     return statuses[status] || status;
   };
 
+  const handleAskAI = async () => {
+  if (!aiQuestion.trim()) return;
+  try {
+    const response = await api.askRevenueAI(aiQuestion);
+    setAiAnswer(response.answer);
+  } catch (error) {
+    setError('Failed to get AI response');
+  }
+};
+
   return (
     <AdminLayout title="MECHANICS" activePath="/admin/mechanics">
       <section className="section-content active">

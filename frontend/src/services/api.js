@@ -26,6 +26,10 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  askRevenueAI: (question) => request('/api/admin/revenue/ask-ai', {
+  method: 'POST',
+  body: JSON.stringify({ question })
+}),
   loginAdmin: (credentials) => request('/api/admin/login', {
     method: 'POST',
     body: JSON.stringify(credentials)

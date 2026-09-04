@@ -1,6 +1,7 @@
 const path = require('path');
 require('dotenv').config();
 
+const aiRoutes = require('./routes/adminRoutes/ai');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -33,6 +34,9 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5175'
 ].filter(Boolean);
+
+
+app.use('/api/admin', aiRoutes);
 
 app.use(cors({
   origin: (origin, callback) => {

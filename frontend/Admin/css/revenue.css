@@ -177,6 +177,29 @@
   font-size: 12px;
 }
 
+.btn-send:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+.ai-answer {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.ai-answer pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #333;
+}
+
 .analytics-grid .chart-card h3 {
   margin: 0 0 12px;
   color: #a44a2a;
