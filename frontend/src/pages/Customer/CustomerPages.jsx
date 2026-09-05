@@ -4,11 +4,40 @@ import { api } from '../../services/api';
 import './customer.css';
 
 function CustomerPage({ title, description, children }) {
+  const location = useLocation();
+  const isSignedIn = Boolean(localStorage.getItem('customerToken'));
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  const logout = () => {
+    localStorage.removeItem('customerToken');
+    localStorage.removeItem('customerUser');
+    window.location.href = '/customer/login';
+  };
+
+  const navigation = [
+    { label: 'Shop', path: '/customer/shop' },
+    { label: 'Services', path: '/customer/services' },
+    { label: 'My Orders', path: '/customer/orders' }
+  ];
+
   return (
     <main className="customer-page">
-      <nav aria-label="Customer navigation"><Link to="/customer/shop">Shop</Link><Link to="/customer/services">Services</Link><Link to="/customer/orders">My Orders</Link></nav>
-      <h1>{title}</h1>
-      <p>{description}</p>
+      <header className="customer-header">
+        <Link className="customer-brand" to="/customer/shop">REVINSIGHT <span>AI</span></Link>
+        <nav aria-label="Customer navigation" className="customer-nav">
+          {navigation.map((item) => <Link className={location.pathname === item.path ? 'active' : ''} key={item.path} to={item.path}>{item.label}</Link>)}
+          <Link className="customer-cart-link" to="/customer/cart">Cart</Link>
+          {isSignedIn ? <button type="button" className="customer-logout" onClick={logout}>Sign out</button> : <Link to="/customer/login">Sign in</Link>}
+        </nav>
+      </header>
+      <section className="customer-heading">
+        <p className="customer-eyebrow">MOTORCYCLE PARTS, ACCESSORIES & SERVICES</p>
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </section>
       {children}
     </main>
   );
@@ -237,14 +266,42 @@ function Cart() {
   </CustomerPage>;
 }
 
+const serviceCatalog = [
+  { id: 'SVC-01', title: 'Foam Seat Repair', description: 'Professional foam seat repair for worn-out or damaged motorcycle seats. Restores comfort and shape.', price: 250, duration: '1-2 hrs', category: 'Seat Works' },
+  { id: 'SVC-02', title: 'Flat/Semi Seat Customization', description: 'Custom flat or semi-flat seat fabrication tailored to your motorcycle.', price: 500, duration: '2-4 hrs', category: 'Seat Works' },
+  { id: 'SVC-03', title: 'Indo Seat Customization', description: 'Full indo-style seat customization with premium leatherette and foam.', price: 750, duration: '3-6 hrs', category: 'Seat Works' },
+  { id: 'SVC-04', title: 'Change Oil', description: 'Complete oil change service covering front shock oil, engine oil, and gear oil.', price: 150, duration: '30-45 min', category: 'Engine' },
+  { id: 'SVC-05', title: 'Chain and Sprocket Replacement', description: 'Full chain and sprocket set replacement with proper tensioning and alignment.', price: 350, duration: '1-2 hrs', category: 'Drive' },
+  { id: 'SVC-06', title: 'Tune-up Service', description: 'Comprehensive tune-up including spark plug change, air filter cleaning, and idle adjustment.', price: 300, duration: '1-2 hrs', category: 'Engine' },
+  { id: 'SVC-07', title: 'Knuckle Bearing Replacement', description: 'Replacement of worn knuckle bearings for smooth steering and handling.', price: 420, duration: '1-3 hrs', category: 'Drive' },
+  { id: 'SVC-08', title: 'Brake Repair/Replacement', description: 'Full brake system inspection, repair, or replacement including pads, shoes, and discs.', price: 280, duration: '45-90 min', category: 'Brakes' },
+  { id: 'SVC-09', title: 'Engine Check-up', description: 'Comprehensive engine diagnostic and inspection covering compression, timing, and injector performance.', price: 200, duration: '45-60 min', category: 'Engine' },
+  { id: 'SVC-10', title: 'Engine Troubleshooting', description: 'In-depth engine troubleshooting to identify and resolve starting issues and power loss.', price: 380, duration: '1-4 hrs', category: 'Engine' },
+  { id: 'SVC-11', title: 'General Check-up', description: 'Full motorcycle general check-up covering engine, brakes, tires, lights, and belts.', price: 180, duration: '45-60 min', category: 'Inspection' },
+  { id: 'SVC-12', title: 'Battery Services', description: 'Battery inspection, terminal cleaning, load testing, and replacement service.', price: 150, duration: '30-45 min', category: 'Electrical' }
+];
+
 function Services() {
-  const [form, setForm] = useState({ serviceType: 'general-service', description: '', mechanicId: '' });
+  const [form, setForm] = useState({ serviceType: '', description: '', mechanicId: '' });
+  const [selectedService, setSelectedService] = useState(null);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
   const [requests, setRequests] = useState([]);
   const [mechanics, setMechanics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const pageSize = 8;
+  const categories = ['All', ...new Set(serviceCatalog.map((service) => service.category))];
+  const filteredServices = serviceCatalog.filter((service) => {
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query || [service.title, service.description, service.category].some((value) => value.toLowerCase().includes(query));
+    return matchesSearch && (category === 'All' || service.category === category);
+  });
+  const pageCount = Math.max(1, Math.ceil(filteredServices.length / pageSize));
+  const visibleServices = filteredServices.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const loadRequests = () => api.getCustomerServiceRequests().then((response) => setRequests(response.requests || []));
 
@@ -273,10 +330,20 @@ function Services() {
     }
   };
 
+  const chooseService = (service) => {
+    setSelectedService(service);
+    setForm((currentForm) => ({ ...currentForm, serviceType: service.title, description: `${service.title} - ${service.description}` }));
+  };
+
   return <CustomerPage title="Motorcycle Services" description="Request a service from our mechanics.">
     {error && <p className="customer-error" role="alert">{error}</p>}
     {message && <p className="customer-success" role="status">{message}</p>}
-    <form className="service-form" onSubmit={submitRequest}><label>Preferred mechanic<select required value={form.mechanicId} onChange={(event) => setForm({ ...form, mechanicId: event.target.value })}><option value="">Choose a mechanic</option>{mechanics.filter((mechanic) => mechanic.isActive !== false).map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName} · {mechanic.specialization || 'General service'}</option>)}</select></label><label>Service type<select value={form.serviceType} onChange={(event) => setForm({ ...form, serviceType: event.target.value })}><option value="general-service">General Service</option><option value="oil-change">Oil Change</option><option value="engine-repair">Engine Repair</option><option value="brake-service">Brake Service</option><option value="electrical-repair">Electrical Repair</option></select></label><label>Description<textarea required minLength="10" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Describe the issue or service needed..." /></label><button type="submit" disabled={isSubmitting || !mechanics.length}>{isSubmitting ? 'Submitting...' : 'Request Service'}</button></form>
+    <div className="shop-toolbar"><input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="Search services..." aria-label="Search services" /><select value={category} onChange={(event) => { setCategory(event.target.value); setCurrentPage(1); }} aria-label="Filter services by category">{categories.map((item) => <option key={item}>{item}</option>)}</select><span>{filteredServices.length} services</span></div>
+    <div className="category-pills">{categories.map((item) => <button type="button" className={item === category ? 'active' : ''} key={item} onClick={() => { setCategory(item); setCurrentPage(1); }}>{item}</button>)}</div>
+    <div className="product-grid">{visibleServices.map((service) => <article className="product-card" key={service.id}><div className="product-image"><span>{service.category}</span></div><div className="product-card-body"><h2>{service.title}</h2><p>{service.description}</p><p className="product-price">₱{service.price.toLocaleString('en-PH')}</p><p className="product-category">Estimated time: {service.duration}</p><button type="button" onClick={() => chooseService(service)}>Book Service</button></div></article>)}</div>
+    <div className="service-pagination" aria-label="Service pages">{Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => <button type="button" className={page === currentPage ? 'active' : ''} key={page} onClick={() => setCurrentPage(page)}>{page}</button>)}</div>
+    {selectedService && <p className="customer-success" role="status">Selected: {selectedService.title}. Choose a mechanic below to submit your request.</p>}
+    <form className="service-form" onSubmit={submitRequest}><label>Preferred mechanic<select required value={form.mechanicId} onChange={(event) => setForm({ ...form, mechanicId: event.target.value })}><option value="">Choose a mechanic</option>{mechanics.filter((mechanic) => mechanic.isActive !== false).map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName} · {mechanic.specialization || 'General service'}</option>)}</select></label><label>Selected service<input readOnly required value={form.serviceType} placeholder="Choose Book Service above" /></label><label>Description<textarea required minLength="10" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Add details about the service needed..." /></label><button type="submit" disabled={isSubmitting || !mechanics.length || !form.serviceType}>{isSubmitting ? 'Submitting...' : 'Request Service'}</button></form>
     <h2 className="customer-section-title">Your Requests</h2>
     {isLoading ? <p>Loading service requests...</p> : !requests.length ? <p className="customer-empty">You have no service requests yet.</p> : <div className="service-request-list">{requests.map((request) => <article className="service-request-card" key={request._id}><div><h3>{request.serviceType.replaceAll('-', ' ')}</h3><p>{request.description}</p><small>{request.mechanic ? `Mechanic: ${request.mechanic.firstName || ''} ${request.mechanic.lastName || ''}` : 'Awaiting mechanic confirmation'} · {new Date(request.createdAt).toLocaleString('en-PH')}</small></div><span className={`order-status status-${request.status}`}>{request.status.replaceAll('-', ' ')}</span></article>)}</div>}
   </CustomerPage>;

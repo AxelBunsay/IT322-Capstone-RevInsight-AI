@@ -1,0 +1,26 @@
+const express = require('express');
+const router = express.Router();
+const {
+  getPartsForMechanic,
+  acceptServiceRequest,
+  getAvailableJobs,
+  getMechanicJobsById,
+  getMechanicStats,
+  acceptMechanicJob,
+  startMechanicJob,
+  completeMechanicJob
+} = require('../controllers/mechanicControllers/partsController');
+const { authorizeRoles } = require('../middleware/authorize');
+
+router.get('/parts', authorizeRoles('mechanic'), getPartsForMechanic);
+
+// Mechanics can work only on customer-selected and admin-confirmed jobs.
+router.post('/service-requests/:requestId/accept', authorizeRoles('mechanic'), acceptServiceRequest);
+router.get('/jobs/available', authorizeRoles('mechanic'), getAvailableJobs);
+router.get('/:mechanicId/jobs', authorizeRoles('mechanic'), getMechanicJobsById);
+router.get('/:mechanicId/stats', authorizeRoles('mechanic'), getMechanicStats);
+router.post('/jobs/:jobId/accept', authorizeRoles('mechanic'), acceptMechanicJob);
+router.post('/jobs/:jobId/start', authorizeRoles('mechanic'), startMechanicJob);
+router.post('/jobs/:jobId/complete', authorizeRoles('mechanic'), completeMechanicJob);
+
+module.exports = router;
