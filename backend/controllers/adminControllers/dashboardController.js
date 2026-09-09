@@ -7,6 +7,53 @@ const ServiceRequest = require('../../models/serviceRequest');
 const revenueStatuses = ['completed', 'Paid'];
 const revenueAmount = { $ifNull: ['$totalPrice', '$totalAmount'] };
 
+// Product line items and completed labor are normalized into one concentration report.
+const getRevenueConcentration = async (req, res) => {
+  try {
+    const [productContributors, serviceContributors] = await Promise.all([
+      Order.aggregate([
+        { $match: { status: { $in: revenueStatuses } } },
+        { $unwind: '$items' },
+        { $group: { _id: '$items.productName', revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } }, contributorType: { $first: '$items.category' } } },
+        { $project: { _id: 0, name: '$_id', revenue: 1, contributorType: { $ifNull: ['$contributorType', 'Product'] } } }
+      ]),
+      ServiceRequest.aggregate([
+        { $match: { status: 'completed' } },
+        { $group: { _id: '$serviceType', revenue: { $sum: '$estimatedPrice' } } },
+        { $project: { _id: 0, name: '$_id', revenue: 1, contributorType: { $literal: 'Labor service' } } }
+      ])
+    ]);
+
+    const contributors = [...productContributors, ...serviceContributors]
+      .filter((item) => Number(item.revenue) > 0)
+      .sort((left, right) => right.revenue - left.revenue);
+    const totalRevenue = contributors.reduce((sum, item) => sum + item.revenue, 0);
+    const rankedContributors = contributors.map((item) => ({
+      ...item,
+      share: totalRevenue ? Number(((item.revenue / totalRevenue) * 100).toFixed(2)) : 0
+    }));
+    const topOneShare = rankedContributors[0]?.share || 0;
+    const topThreeShare = rankedContributors.slice(0, 3).reduce((sum, item) => sum + item.share, 0);
+    const hhi = Number(rankedContributors.reduce((sum, item) => sum + ((item.share / 100) ** 2), 0).toFixed(4));
+    const concentrationLevel = topOneShare >= 50 || topThreeShare >= 80 || hhi >= 0.25
+      ? 'High'
+      : topOneShare >= 30 || topThreeShare >= 60 || hhi >= 0.15 ? 'Moderate' : 'Low';
+
+    res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        contributors: rankedContributors,
+        indicators: { topOneShare, topThreeShare, hhi, concentrationLevel },
+        dependentOnLimitedContributors: concentrationLevel !== 'Low'
+      }
+    });
+  } catch (error) {
+    console.error('[getRevenueConcentration] error', error);
+    res.status(500).json({ success: false, message: 'Failed to calculate revenue concentration.' });
+  }
+};
+
 // Get Dashboard Stats
 const getDashboardStats = async (req, res) => {
   try {
@@ -484,7 +531,7 @@ const getMechanicsReport = async (req, res) => {
           _id: '$_id',
           name: { $first: '$name' },
           specialty: { $first: '$specialty' },
-          totalJobs: { $size: '$jobs' },
+          totalJobs: { $sum: { $size: '$jobs' } },
           completedJobs: {
             $sum: {
               $cond: [{ $eq: ['$jobs.status', 'Completed'] }, 1, 0]
@@ -512,6 +559,7 @@ module.exports = {
   getQuarterlyData,
   getDailyData,
   getRevenueRisk,
+  getRevenueConcentration,
   getProjectedRevenue,
   getAllTransactions,
   getTransactionById,

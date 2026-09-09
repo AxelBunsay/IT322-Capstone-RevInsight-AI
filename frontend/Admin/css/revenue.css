@@ -207,6 +207,31 @@
   letter-spacing: 1px;
 }
 
+.concentration-list {
+  display: grid;
+  gap: 8px;
+}
+
+.concentration-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eeeeee;
+  color: #5f514c;
+  font-size: 13px;
+}
+
+.concentration-row span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.concentration-row small {
+  color: #9a8880;
+}
+
 .analytics-grid .chart-canvas {
   position: relative;
   height: 270px;

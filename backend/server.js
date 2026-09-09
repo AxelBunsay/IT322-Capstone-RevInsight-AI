@@ -36,8 +36,6 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 
-app.use('/api/admin', aiRoutes);
-
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -61,6 +59,8 @@ app.use(express.static('uploads'));
 // serve frontend static files from the workspace `frontend` folder
 const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use(express.static(frontendPath));
+
+app.use('/api/admin', aiRoutes);
 
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/revinsight-ai';

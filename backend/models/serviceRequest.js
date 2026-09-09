@@ -19,6 +19,11 @@ const serviceRequestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  estimatedPrice: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'accepted', 'in-progress', 'completed', 'declined'],
@@ -38,6 +43,10 @@ const serviceRequestSchema = new mongoose.Schema({
       },
       message: 'Start time must be between 08:00 and 17:00.'
     }
+  },
+  scheduledDate: {
+    type: Date,
+    default: null
   },
   createdAt: {
     type: Date,

@@ -23,6 +23,7 @@ function App() {
           <Route path="/admin/service-requests" element={<ServiceRequests />} />
         </Route>
         <Route path="/customer/login" element={<CustomerLogin />} />
+        <Route path="/customer/customerLogin" element={<CustomerLogin />} />
         <Route path="/customer/register" element={<CustomerRegister />} />
         <Route path="/customer/shop" element={<Shop />} />
         <Route path="/customer/cart" element={<Cart />} />

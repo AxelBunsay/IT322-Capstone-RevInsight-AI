@@ -46,7 +46,7 @@ const Mechanic = require('../models/mechanic');
 // User creates a service request
 const createServiceRequest = async (req, res) => {
   try {
-    const { serviceType, description, mechanicId } = req.body;
+    const { serviceType, description, mechanicId, estimatedPrice, scheduledDate } = req.body;
     const userId = req.user.userId;
 
     if (!serviceType || !description) {
@@ -55,12 +55,20 @@ const createServiceRequest = async (req, res) => {
     if (!mechanicId) return res.status(400).json({ message: 'Please select a mechanic' });
     const mechanic = await Mechanic.findOne({ _id: mechanicId, isActive: true });
     if (!mechanic) return res.status(400).json({ message: 'Selected mechanic is not available' });
+    if (scheduledDate && Number.isNaN(Date.parse(scheduledDate))) {
+      return res.status(400).json({ message: 'A valid scheduled date is required' });
+    }
+    if (scheduledDate && new Date(scheduledDate) < new Date(new Date().setHours(0, 0, 0, 0))) {
+      return res.status(400).json({ message: 'Scheduled date cannot be in the past' });
+    }
 
     const serviceRequest = await ServiceRequest.create({
       user: userId,
       serviceType,
       description,
-      mechanic: mechanicId
+      mechanic: mechanicId,
+      estimatedPrice: Number(estimatedPrice) || 0,
+      scheduledDate: scheduledDate ? new Date(scheduledDate) : null
     });
 
     res.status(201).json({
@@ -141,6 +149,25 @@ const updateJobStatus = async (req, res) => {
   }
 };
 
+// Admin updates the booking status while monitoring the schedule.
+const updateBookingStatus = async (req, res) => {
+  try {
+    const { requestId, status } = req.body;
+    const validStatuses = ['pending', 'confirmed', 'accepted', 'in-progress', 'completed', 'declined'];
+    if (!validStatuses.includes(status)) return res.status(400).json({ message: 'Invalid booking status' });
+
+    const serviceRequest = await ServiceRequest.findById(requestId);
+    if (!serviceRequest) return res.status(404).json({ message: 'Service request not found' });
+
+    serviceRequest.status = status;
+    await serviceRequest.save();
+    res.status(200).json({ message: 'Booking status updated', serviceRequest });
+  } catch (error) {
+    console.error('[updateBookingStatus] error', error);
+    res.status(500).json({ message: 'Failed to update booking status. Please try again.' });
+  }
+};
+
 // User gets their own service requests
 const getUserServiceRequests = async (req, res) => {
   try {
@@ -172,5 +199,6 @@ module.exports = {
   updateJobStatus,
   getUserServiceRequests,
   getMechanicJobs
-  ,mechanicAcceptJob
+  ,mechanicAcceptJob,
+  updateBookingStatus
 };

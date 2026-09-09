@@ -1,10 +1,9 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
+const wait = (milliseconds) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 async function generateRevenueInsights(question, revenueData) {
   const prompt = `
@@ -20,15 +19,36 @@ Provide a concise, actionable response with specific numbers from the data.
 Focus on trends, anomalies, and actionable insights.
   `.trim();
 
-  const completion = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 1000,
-    temperature: 0.3,
-    system: 'You are a helpful revenue analyst for a motorcycle parts business.',
-    messages: [{ role: 'user', content: prompt }],
-  });
+  const modelNames = [
+    process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+    process.env.GEMINI_FALLBACK_MODEL
+  ].filter(Boolean);
 
-  return completion.content[0].text.trim();
+  let lastError;
+
+  for (const modelName of modelNames) {
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const model = gemini.getGenerativeModel({
+          model: modelName,
+          systemInstruction: 'You are a helpful revenue analyst for a motorcycle parts business.'
+        });
+
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+      } catch (error) {
+        lastError = error;
+
+        if (error.status !== 503 || attempt === 2) {
+          break;
+        }
+
+        await wait(1500);
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 module.exports = { generateRevenueInsights };

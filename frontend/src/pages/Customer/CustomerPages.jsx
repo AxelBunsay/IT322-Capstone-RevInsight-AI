@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
+import heroImage from '../../assets/hero.png';
 import './customer.css';
 
 function CustomerPage({ title, description, children }) {
@@ -10,6 +11,13 @@ function CustomerPage({ title, description, children }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const resetScroll = () => window.scrollTo(0, 0);
+    resetScroll();
+    window.setTimeout(resetScroll, 0);
+    window.setTimeout(resetScroll, 100);
+  }, []);
 
   const logout = () => {
     localStorage.removeItem('customerToken');
@@ -24,7 +32,7 @@ function CustomerPage({ title, description, children }) {
   ];
 
   return (
-    <main className="customer-page">
+    <main className={`customer-page ${title === 'Motorcycle Shop' ? 'shop-page' : ''} ${title === 'Motorcycle Services' ? 'services-page' : ''}`}>
       <header className="customer-header">
         <Link className="customer-brand" to="/customer/shop">REVINSIGHT <span>AI</span></Link>
         <nav aria-label="Customer navigation" className="customer-nav">
@@ -41,6 +49,34 @@ function CustomerPage({ title, description, children }) {
       {children}
     </main>
   );
+}
+
+function CustomerAuthShell({ activeTab, children }) {
+  return <main className="customer-auth-page">
+    <section className="customer-auth-showcase">
+      <div className="customer-auth-brand"><span className="customer-auth-logo">&#9874;</span><span><strong>MMPS</strong><small>SHOP</small></span></div>
+      <div className="customer-auth-copy">
+        <p className="customer-auth-eyebrow">MANOY&apos;S MOTORCYCLE PARTS &amp; ACCESSORIES</p>
+        <h1>Everything your ride needs.</h1>
+        <p>Browse genuine motorcycle parts and accessories. Fast, reliable, and trusted by riders.</p>
+        <ul>
+          <li><span>&#8594;</span><span><strong>Wide Product Selection</strong><small>Parts, accessories &amp; more</small></span></li>
+          <li><span>&#8594;</span><span><strong>Track Your Orders</strong><small>Real-time order status</small></span></li>
+          <li><span>&#8594;</span><span><strong>Trusted Service</strong><small>Quality parts and support</small></span></li>
+        </ul>
+      </div>
+    </section>
+    <section className="customer-auth-panel">
+      <div className="customer-auth-content">
+        <nav className="customer-auth-tabs" aria-label="Customer account">
+          <Link className={activeTab === 'login' ? 'active' : ''} to="/customer/customerLogin">Sign In</Link>
+          <Link className={activeTab === 'register' ? 'active' : ''} to="/customer/register">Register</Link>
+        </nav>
+        {children}
+        <p className="customer-auth-footer">&copy; 2026 Manoy&apos;s Motorcycle Parts &amp; Accessories</p>
+      </div>
+    </section>
+  </main>;
 }
 
 function CustomerLogin() {
@@ -65,14 +101,18 @@ function CustomerLogin() {
     }
   };
 
-  return <CustomerPage title="Customer Login" description="Sign in to manage your motorcycle orders and services.">
-    <form className="customer-form" onSubmit={submitLogin}>
+  return <CustomerAuthShell activeTab="login">
+    <div className="customer-auth-heading">
+      <h2>Welcome back!</h2>
+      <p>Sign in to your customer account</p>
+    </div>
+    <form className="customer-auth-form" onSubmit={submitLogin}>
       {error && <p className="customer-error" role="alert">{error}</p>}
-      <label>Email<input type="email" required value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} /></label>
-      <label>Password<input type="password" required value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} /></label>
+      <label>Email Address<input type="email" required placeholder="you@email.com" value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} /></label>
+      <label>Password<input type="password" required placeholder="********" value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} /></label>
       <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing in...' : 'Sign In'}</button>
     </form>
-  </CustomerPage>;
+  </CustomerAuthShell>;
 }
 
 function CustomerRegister() {
@@ -131,10 +171,14 @@ function CustomerRegister() {
   };
 
   if (step === 'register') {
-    return <CustomerPage title="Create Account" description="Register to start shopping and booking services.">
+    return <CustomerAuthShell activeTab="register">
+      <div className="customer-auth-heading">
+        <h2>Create your account</h2>
+        <p>Register to shop parts and book services</p>
+      </div>
       {error && <p className="customer-error" role="alert">{error}</p>}
       {message && <p className="customer-success" role="status">{message}</p>}
-      <form className="customer-form" onSubmit={handleRegister}>
+      <form className="customer-auth-form" onSubmit={handleRegister}>
         <div className="form-row">
           <label>First Name<input type="text" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} /></label>
           <label>Last Name<input type="text" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} /></label>
@@ -144,38 +188,47 @@ function CustomerRegister() {
         <label>Password<input type="password" required minLength="6" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} /></label>
         <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Sending OTP...' : 'Send OTP'}</button>
       </form>
-      <p className="customer-link">Already have an account? <Link to="/customer/login">Sign In</Link></p>
-    </CustomerPage>;
+    </CustomerAuthShell>;
   }
 
-  return <CustomerPage title="Verify Email" description="Enter the 6-digit code sent to your email.">
+  return <CustomerAuthShell activeTab="register">
+    <div className="customer-auth-heading">
+      <h2>Verify your email</h2>
+      <p>Enter the 6-digit OTP sent to your email</p>
+    </div>
     {error && <p className="customer-error" role="alert">{error}</p>}
     {message && <p className="customer-success" role="status">{message}</p>}
-    <form className="customer-form" onSubmit={handleVerify}>
+    <form className="customer-auth-form" onSubmit={handleVerify}>
       <label>OTP Code<input type="text" required maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" style={{ letterSpacing: '0.5em', textAlign: 'center' }} /></label>
       <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Verifying...' : 'Verify & Continue'}</button>
     </form>
     <p className="customer-link">Didn't receive the code? <button type="button" onClick={handleResend} disabled={isSubmitting}>Resend OTP</button></p>
-    <p className="customer-link"><Link to="/customer/login">Back to Login</Link></p>
-  </CustomerPage>;
+    <p className="customer-link"><Link to="/customer/customerLogin">Back to Login</Link></p>
+  </CustomerAuthShell>;
 }
 
 function Shop() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [addingId, setAddingId] = useState('');
+  const pageSize = 10;
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([api.getProducts(), api.getCart().catch(() => ({ cart: { items: [] } }))])
-      .then(([productResponse, cartResponse]) => {
+    setIsLoading(true);
+    api.getProducts(currentPage, pageSize)
+      .then((productResponse) => {
         if (!isMounted) return;
         setProducts(productResponse.products || productResponse.data || []);
-        setCartCount((cartResponse.cart?.items || []).reduce((total, item) => total + item.quantity, 0));
+        setTotalProducts(productResponse.pagination?.total ?? productResponse.count ?? 0);
+        setPageCount(productResponse.pagination?.pages || 1);
       })
       .catch((requestError) => {
         if (isMounted) setError(requestError.message || 'Products could not be loaded.');
@@ -184,11 +237,21 @@ function Shop() {
         if (isMounted) setIsLoading(false);
       });
     return () => { isMounted = false; };
-  }, []);
+    }, [currentPage]);
+
+    useEffect(() => {
+      let isMounted = true;
+      api.getCart().catch(() => ({ cart: { items: [] } }))
+        .then((cartResponse) => {
+          if (isMounted) setCartCount((cartResponse.cart?.items || []).reduce((total, item) => total + item.quantity, 0));
+        });
+      return () => { isMounted = false; };
+    }, []);
 
   const categories = ['All', ...new Set(products.map((product) => product.category).filter(Boolean))];
   const visibleProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query || product.name.toLowerCase().includes(query);
     return matchesSearch && (category === 'All' || product.category === category);
   });
 
@@ -206,10 +269,16 @@ function Shop() {
   };
 
   return <CustomerPage title="Motorcycle Shop" description="Browse available parts and accessories.">
-    <div className="shop-toolbar"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products..." aria-label="Search products" /><select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by category">{categories.map((item) => <option key={item}>{item}</option>)}</select><Link className="cart-link" to="/customer/cart">Cart ({cartCount})</Link></div>
+    <section className="shop-hero" style={{ '--shop-hero-image': `url(${heroImage})` }} aria-label="Shop introduction">
+      <div><p>MANOY&apos;S MOTORCYCLE PARTS, ACCESSORIES &amp; SERVICES</p><h2>Welcome, rider! <span aria-hidden="true">👋</span></h2><span>Find the right parts for your ride. Quality guaranteed.</span></div>
+      <div className="shop-hero-stats"><strong>{totalProducts} Products Available</strong><strong>Fast Service</strong><strong>Expert Mechanics</strong></div>
+    </section>
+    <div className="shop-toolbar"><input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="Search parts, accessories..." aria-label="Search products" /><select value={category} onChange={(event) => { setCategory(event.target.value); setCurrentPage(1); }} aria-label="Filter by category"><option value="All">Default</option>{categories.filter((item) => item !== 'All').map((item) => <option key={item} value={item}>{item}</option>)}</select><Link className="cart-link" to="/customer/cart">Cart ({cartCount})</Link></div>
+    <div className="category-pills">{categories.map((item) => <button type="button" className={item === category ? 'active' : ''} key={item} onClick={() => { setCategory(item); setCurrentPage(1); }}>{item}<span>{item === 'All' ? totalProducts : products.filter((product) => product.category === item).length}</span></button>)}</div>
     {error && <p className="customer-error" role="alert">{error}</p>}
-    {isLoading ? <p>Loading products...</p> : <div className="product-grid">{visibleProducts.map((product) => <article className="product-card" key={product._id}><div className="product-image">{product.image ? <img src={product.image} alt={product.name} /> : <span>Parts</span>}</div><div className="product-card-body"><h2>{product.name}</h2><p className="product-category">{product.category}</p><p className="product-price">₱{Number(product.price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p><p className={product.quantity > 0 ? 'product-stock' : 'product-stock out-of-stock'}>{product.quantity > 0 ? `${product.quantity} in stock` : 'Out of stock'}</p><button type="button" disabled={!product.quantity || addingId === product._id} onClick={() => addProduct(product)}>{addingId === product._id ? 'Adding...' : 'Add to cart'}</button></div></article>)}</div>}
+    {isLoading ? <p>Loading products...</p> : <div className="product-grid">{visibleProducts.map((product) => <article className="product-card" key={product._id}><div className="product-image">{product.image ? <img src={product.image} alt={product.name} /> : <span>{product.category || 'Parts'}</span>}<span className="product-badge">{product.category || 'Parts'}</span></div><div className="product-card-body"><h2>{product.name}</h2><p>Quality motorcycle parts and accessories for your ride.</p><p className="product-price">₱{Number(product.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</p><p className={product.quantity > 0 ? 'product-stock' : 'product-stock out-of-stock'}>{product.quantity > 0 ? `${product.quantity} left` : 'Out of stock'}</p><button type="button" disabled={!product.quantity || addingId === product._id} onClick={() => addProduct(product)}>{addingId === product._id ? 'Adding...' : 'Add to cart'}</button></div></article>)}</div>}
     {!isLoading && !visibleProducts.length && <p className="customer-empty">No products match your search.</p>}
+    {!isLoading && pageCount > 1 && <div className="service-pagination" aria-label="Product pages">{Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => <button type="button" className={page === currentPage ? 'active' : ''} key={page} onClick={() => setCurrentPage(page)}>{page}</button>)}</div>}
   </CustomerPage>;
 }
 
@@ -282,7 +351,7 @@ const serviceCatalog = [
 ];
 
 function Services() {
-  const [form, setForm] = useState({ serviceType: '', description: '', mechanicId: '' });
+  const [form, setForm] = useState({ serviceType: '', description: '', mechanicId: '', estimatedPrice: 0, scheduledDate: '' });
   const [selectedService, setSelectedService] = useState(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
@@ -332,20 +401,24 @@ function Services() {
 
   const chooseService = (service) => {
     setSelectedService(service);
-    setForm((currentForm) => ({ ...currentForm, serviceType: service.title, description: `${service.title} - ${service.description}` }));
+    setForm((currentForm) => ({ ...currentForm, serviceType: service.title, estimatedPrice: service.price, description: `${service.title} - ${service.description}` }));
   };
 
   return <CustomerPage title="Motorcycle Services" description="Request a service from our mechanics.">
+    <section className="service-hero" aria-label="Services introduction">
+      <div><p>MANOY&apos;S MOTORCYCLE PARTS, ACCESSORIES &amp; SERVICES</p><h2>Mechanic Services <span aria-hidden="true">🔧</span></h2><span>Book a service by adding it to your cart. Our skilled mechanics will handle the rest.</span></div>
+      <div className="service-hero-stats"><strong>{serviceCatalog.length} Services</strong><strong>Expert Mechanics</strong><strong>Quality Guaranteed</strong></div>
+    </section>
     {error && <p className="customer-error" role="alert">{error}</p>}
     {message && <p className="customer-success" role="status">{message}</p>}
-    <div className="shop-toolbar"><input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="Search services..." aria-label="Search services" /><select value={category} onChange={(event) => { setCategory(event.target.value); setCurrentPage(1); }} aria-label="Filter services by category">{categories.map((item) => <option key={item}>{item}</option>)}</select><span>{filteredServices.length} services</span></div>
-    <div className="category-pills">{categories.map((item) => <button type="button" className={item === category ? 'active' : ''} key={item} onClick={() => { setCategory(item); setCurrentPage(1); }}>{item}</button>)}</div>
-    <div className="product-grid">{visibleServices.map((service) => <article className="product-card" key={service.id}><div className="product-image"><span>{service.category}</span></div><div className="product-card-body"><h2>{service.title}</h2><p>{service.description}</p><p className="product-price">₱{service.price.toLocaleString('en-PH')}</p><p className="product-category">Estimated time: {service.duration}</p><button type="button" onClick={() => chooseService(service)}>Book Service</button></div></article>)}</div>
+    <div className="shop-toolbar"><input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="Search services..." aria-label="Search services" /><span>{filteredServices.length} services</span></div>
+    <div className="category-pills">{categories.map((item) => <button type="button" className={item === category ? 'active' : ''} key={item} onClick={() => { setCategory(item); setCurrentPage(1); }}>{item}<span>{item === 'All' ? serviceCatalog.length : serviceCatalog.filter((service) => service.category === item).length}</span></button>)}</div>
+    <div className="product-grid">{visibleServices.map((service, index) => <article className="product-card service-card" key={service.id}><div className={`product-image service-image service-tone-${index % 4}`}><small>{service.id}</small><span className="service-icon" aria-hidden="true">{['✂', '✂', '☆', '♨'][index % 4]}</span><small>◷ {service.duration}</small></div><div className="product-card-body"><h2>{service.title}</h2><p>{service.description}</p><div className="service-card-footer"><p className="product-price">₱{service.price.toLocaleString('en-PH')}</p><span>Available</span></div><button type="button" onClick={() => chooseService(service)}>Book Service</button></div></article>)}</div>
     <div className="service-pagination" aria-label="Service pages">{Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => <button type="button" className={page === currentPage ? 'active' : ''} key={page} onClick={() => setCurrentPage(page)}>{page}</button>)}</div>
     {selectedService && <p className="customer-success" role="status">Selected: {selectedService.title}. Choose a mechanic below to submit your request.</p>}
-    <form className="service-form" onSubmit={submitRequest}><label>Preferred mechanic<select required value={form.mechanicId} onChange={(event) => setForm({ ...form, mechanicId: event.target.value })}><option value="">Choose a mechanic</option>{mechanics.filter((mechanic) => mechanic.isActive !== false).map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName} · {mechanic.specialization || 'General service'}</option>)}</select></label><label>Selected service<input readOnly required value={form.serviceType} placeholder="Choose Book Service above" /></label><label>Description<textarea required minLength="10" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Add details about the service needed..." /></label><button type="submit" disabled={isSubmitting || !mechanics.length || !form.serviceType}>{isSubmitting ? 'Submitting...' : 'Request Service'}</button></form>
+    <form className="service-form" onSubmit={submitRequest}><label>Preferred mechanic<select required value={form.mechanicId} onChange={(event) => setForm({ ...form, mechanicId: event.target.value })}><option value="">Choose a mechanic</option>{mechanics.filter((mechanic) => mechanic.isActive !== false).map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName} · {mechanic.specialization || 'General service'}</option>)}</select></label><label>Requested date<input required type="date" min={new Date().toISOString().slice(0, 10)} value={form.scheduledDate} onChange={(event) => setForm({ ...form, scheduledDate: event.target.value })} /></label><label>Selected service<input readOnly required value={form.serviceType} placeholder="Choose Book Service above" /></label><label>Description<textarea required minLength="10" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Add details about the service needed..." /></label><button type="submit" disabled={isSubmitting || !mechanics.length || !form.serviceType}>{isSubmitting ? 'Submitting...' : 'Request Service'}</button></form>
     <h2 className="customer-section-title">Your Requests</h2>
-    {isLoading ? <p>Loading service requests...</p> : !requests.length ? <p className="customer-empty">You have no service requests yet.</p> : <div className="service-request-list">{requests.map((request) => <article className="service-request-card" key={request._id}><div><h3>{request.serviceType.replaceAll('-', ' ')}</h3><p>{request.description}</p><small>{request.mechanic ? `Mechanic: ${request.mechanic.firstName || ''} ${request.mechanic.lastName || ''}` : 'Awaiting mechanic confirmation'} · {new Date(request.createdAt).toLocaleString('en-PH')}</small></div><span className={`order-status status-${request.status}`}>{request.status.replaceAll('-', ' ')}</span></article>)}</div>}
+    {isLoading ? <p>Loading service requests...</p> : !requests.length ? <p className="customer-empty">You have no service requests yet.</p> : <div className="service-request-list">{requests.map((request) => <article className="service-request-card" key={request._id}><div><h3>{request.serviceType.replaceAll('-', ' ')}</h3><p>{request.description}</p><small>{request.mechanic ? `Mechanic: ${request.mechanic.firstName || ''} ${request.mechanic.lastName || ''}` : 'Awaiting mechanic confirmation'} · Requested {new Date(request.createdAt).toLocaleString('en-PH')}{request.scheduledDate ? ` · Scheduled ${new Date(request.scheduledDate).toLocaleDateString('en-PH')}` : ''}</small></div><span className={`order-status status-${request.status}`}>{request.status.replaceAll('-', ' ')}</span></article>)}</div>}
   </CustomerPage>;
 }
 
