@@ -74,6 +74,16 @@ export const api = {
   getDashboardStats: () => request('/api/dashboard/dashboard'),
   getQuarterlySales: () => request('/api/dashboard/dashboard/quarterly'),
   getDailySales: () => request('/api/dashboard/dashboard/daily'),
+  getBusinessRecords: (query = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return request(`/api/dashboard/business-records${suffix}`);
+  },
   getRevenueConcentration: () => request('/api/dashboard/analytics/revenue-concentration'),
   getInventory: (page = 1, limit = 15) => request(`/api/dashboard/inventory?page=${page}&limit=${limit}`),
   createInventory: (item) => request('/api/dashboard/inventory', { method: 'POST', body: JSON.stringify(item) }),

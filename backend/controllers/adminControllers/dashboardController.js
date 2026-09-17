@@ -3,6 +3,7 @@ const Product = require('../../models/product');
 const User = require('../../models/user');
 const Mechanic = require('../../models/mechanic');
 const ServiceRequest = require('../../models/serviceRequest');
+const BusinessRecord = require('../../models/businessRecord');
 
 const revenueStatuses = ['completed', 'Paid'];
 const revenueAmount = { $ifNull: ['$totalPrice', '$totalAmount'] };
@@ -241,6 +242,37 @@ const getProjectedRevenue = async (req, res) => {
 };
 
 // Get All Transactions
+const getBusinessRecords = async (req, res) => {
+  try {
+    const { recordType, status, startDate, endDate, mechanicId } = req.query;
+    const query = {};
+
+    if (recordType) query.recordType = recordType;
+    if (status) query.status = status;
+    if (mechanicId) query.mechanicId = mechanicId;
+
+    if (startDate || endDate) {
+      query.completedAt = {};
+      if (startDate) query.completedAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.completedAt.$lte = end;
+      }
+    }
+
+    const records = await BusinessRecord.find(query).sort({ completedAt: -1 });
+
+    res.json({
+      success: true,
+      data: records
+    });
+  } catch (error) {
+    console.error('[getBusinessRecords] error', error);
+    res.status(500).json({ success: false, message: 'Failed to load business records.' });
+  }
+};
+
 const getAllTransactions = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = null } = req.query;
@@ -561,6 +593,7 @@ module.exports = {
   getRevenueRisk,
   getRevenueConcentration,
   getProjectedRevenue,
+  getBusinessRecords,
   getAllTransactions,
   getTransactionById,
   createTransaction,

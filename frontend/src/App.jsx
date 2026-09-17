@@ -4,7 +4,11 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Inventory, Mechanics, Revenue, ServiceRequests, Transactions } from './pages/Admin/AdminPages';
 import AdminLogin from './pages/Auth/AdminLogin';
-import { Cart, CustomerLogin, CustomerRegister, Orders, Services, Shop } from './pages/Customer/CustomerPages';
+import Cart from './pages/Customer/Cart';
+import { CustomerLogin, CustomerRegister } from './pages/Customer/CustomerAuth';
+import Orders from './pages/Customer/Orders';
+import Shop from './pages/Customer/Shop';
+import Services from './pages/Customer/Services';
 import { Jobs, MechanicDashboard, MechanicLogin, Profile } from './pages/Mechanic/MechanicPages';
 
 function App() {
@@ -23,7 +27,6 @@ function App() {
           <Route path="/admin/service-requests" element={<ServiceRequests />} />
         </Route>
         <Route path="/customer/login" element={<CustomerLogin />} />
-        <Route path="/customer/customerLogin" element={<CustomerLogin />} />
         <Route path="/customer/register" element={<CustomerRegister />} />
         <Route path="/customer/shop" element={<Shop />} />
         <Route path="/customer/cart" element={<Cart />} />

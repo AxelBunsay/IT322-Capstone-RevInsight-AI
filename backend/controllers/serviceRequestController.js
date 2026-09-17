@@ -42,6 +42,37 @@ const mechanicAcceptJob = async (req, res) => {
 };
 const ServiceRequest = require('../models/serviceRequest');
 const Mechanic = require('../models/mechanic');
+const BusinessRecord = require('../models/businessRecord');
+const User = require('../models/user');
+
+const syncCompletedServiceBusinessRecord = async (serviceRequest) => {
+  if (!serviceRequest || serviceRequest.status !== 'completed') return null;
+
+  const user = await User.findById(serviceRequest.user).lean();
+  const mechanic = await Mechanic.findById(serviceRequest.mechanic).lean();
+
+  const customerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Customer' : 'Customer';
+  const businessRecordData = {
+    recordType: 'service',
+    sourceId: serviceRequest._id,
+    customer: customerName,
+    customerPhone: user?.phoneNumber || '',
+    itemName: serviceRequest.serviceType,
+    category: 'Service Booking',
+    mechanicId: serviceRequest.mechanic || null,
+    mechanicName: mechanic ? `${mechanic.firstName || ''} ${mechanic.lastName || ''}`.trim() : '',
+    amount: Number(serviceRequest.estimatedPrice) || 0,
+    status: serviceRequest.status,
+    completedAt: new Date(serviceRequest.updatedAt || Date.now()),
+    notes: serviceRequest.description || 'Completed service request'
+  };
+
+  return BusinessRecord.findOneAndUpdate(
+    { recordType: 'service', sourceId: serviceRequest._id },
+    businessRecordData,
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+};
 
 // User creates a service request
 const createServiceRequest = async (req, res) => {
@@ -138,6 +169,7 @@ const updateJobStatus = async (req, res) => {
 
     serviceRequest.status = status;
     await serviceRequest.save();
+    await syncCompletedServiceBusinessRecord(serviceRequest);
 
     res.status(200).json({
       message: 'Job status updated',
@@ -161,6 +193,7 @@ const updateBookingStatus = async (req, res) => {
 
     serviceRequest.status = status;
     await serviceRequest.save();
+    await syncCompletedServiceBusinessRecord(serviceRequest);
     res.status(200).json({ message: 'Booking status updated', serviceRequest });
   } catch (error) {
     console.error('[updateBookingStatus] error', error);

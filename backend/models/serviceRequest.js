@@ -29,6 +29,20 @@ const serviceRequestSchema = new mongoose.Schema({
     enum: ['pending', 'confirmed', 'accepted', 'in-progress', 'completed', 'declined'],
     default: 'pending'
   },
+  statusHistory: [{
+    status: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    note: {
+      type: String,
+      default: ''
+    }
+  }],
   startTime: {
     type: String, // e.g., '08:00', '14:30'
     default: null,
@@ -59,6 +73,17 @@ const serviceRequestSchema = new mongoose.Schema({
 });
 
 serviceRequestSchema.pre('save', function(next) {
+  if (this.isModified('status')) {
+    const lastStatus = this.statusHistory[this.statusHistory.length - 1];
+    if (!lastStatus || lastStatus.status !== this.status) {
+      this.statusHistory.push({
+        status: this.status,
+        timestamp: new Date(),
+        note: `Status updated to ${this.status}`
+      });
+    }
+  }
+
   this.updatedAt = Date.now();
   next();
 });
