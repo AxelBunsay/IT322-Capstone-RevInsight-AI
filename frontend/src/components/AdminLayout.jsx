@@ -2,12 +2,13 @@ import { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import '../../Admin/css/adminDashboard.css';
+import '../pages/Admin/react-admin.css';
 
 function AdminLayout({ title, activePath, children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="admin-container">
+    <div className="admin-container react-admin">
       <Sidebar
         isOpen={isSidebarOpen}
         activePath={activePath}
