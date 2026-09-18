@@ -54,7 +54,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ email })
   }),
-  getProducts: () => request('/api/products', { tokenKey: 'customerToken' }),
+  getProducts: (page = 1, limit = 10) => request(`/api/products?page=${page}&limit=${limit}`, { tokenKey: 'customerToken' }),
   getCart: () => request('/api/cart', { tokenKey: 'customerToken' }),
   addToCart: (productId, quantity = 1) => request('/api/cart/add', { method: 'POST', body: JSON.stringify({ productId, quantity }), tokenKey: 'customerToken' }),
   updateCart: (productId, quantity) => request(`/api/cart/update/${productId}`, { method: 'PUT', body: JSON.stringify({ quantity }), tokenKey: 'customerToken' }),
@@ -70,9 +70,21 @@ export const api = {
   getAvailableMechanics: () => request('/api/mechanics/available', { tokenKey: 'customerToken' }),
   getAdminServiceRequests: () => request('/api/service-requests'),
   confirmServiceRequest: (requestId, mechanicId) => request('/api/service-requests/assign', { method: 'PUT', body: JSON.stringify({ requestId, mechanicId }) }),
+  updateAdminServiceRequestStatus: (requestId, status) => request('/api/service-requests/status/admin', { method: 'PUT', body: JSON.stringify({ requestId, status }) }),
   getDashboardStats: () => request('/api/dashboard/dashboard'),
   getQuarterlySales: () => request('/api/dashboard/dashboard/quarterly'),
   getDailySales: () => request('/api/dashboard/dashboard/daily'),
+  getBusinessRecords: (query = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return request(`/api/dashboard/business-records${suffix}`);
+  },
+  getRevenueConcentration: () => request('/api/dashboard/analytics/revenue-concentration'),
   getInventory: (page = 1, limit = 15) => request(`/api/dashboard/inventory?page=${page}&limit=${limit}`),
   createInventory: (item) => request('/api/dashboard/inventory', { method: 'POST', body: JSON.stringify(item) }),
   updateInventory: (id, item) => request(`/api/dashboard/inventory/${id}`, { method: 'PUT', body: JSON.stringify(item) }),

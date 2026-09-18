@@ -98,6 +98,7 @@ const reorderOrder = async (req, res) => {
         cart.items.push({
           productId: orderItem.productId,
           productName: product.name,
+          category: product.category,
           price: product.price,
           quantity,
           image: product.image

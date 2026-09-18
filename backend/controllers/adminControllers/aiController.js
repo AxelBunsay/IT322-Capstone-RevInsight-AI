@@ -1,6 +1,25 @@
 const { generateRevenueInsights } = require('../../services/aiService');
 const dashboardController = require('./dashboardController');
 
+async function getControllerResult(controller, req) {
+  let result;
+  const response = {
+    json: (data) => {
+      result = data;
+      return data;
+    },
+    status: (code) => ({
+      json: (data) => {
+        result = { ...data, status: code };
+        return result;
+      }
+    })
+  };
+
+  await controller(req, response);
+  return result;
+}
+
 async function askRevenueAI(req, res) {
   try {
     const { question } = req.body;
@@ -10,15 +29,10 @@ async function askRevenueAI(req, res) {
 
     // Fetch current revenue data
     const mockReq = { ...req, query: {} };
-    const mockRes = {
-      json: (data) => data,
-      status: (code) => ({ json: (data) => ({ status: code, ...data }) })
-    };
-
     const [statsRes, quarterlyRes, dailyRes] = await Promise.all([
-      dashboardController.getDashboardStats(mockReq, mockRes),
-      dashboardController.getQuarterlyData(mockReq, mockRes),
-      dashboardController.getDailyData(mockReq, mockRes)
+      getControllerResult(dashboardController.getDashboardStats, mockReq),
+      getControllerResult(dashboardController.getQuarterlyData, mockReq),
+      getControllerResult(dashboardController.getDailyData, mockReq)
     ]);
 
     const revenueData = {

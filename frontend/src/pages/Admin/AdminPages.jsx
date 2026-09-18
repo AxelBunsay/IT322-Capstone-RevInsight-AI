@@ -424,7 +424,12 @@ function ServiceRequests() {
     }
   };
 
-  return <AdminLayout title="SERVICE REQUESTS" activePath="/admin/service-requests"><section className="section-content active"><div className="mechanics-container">{error && <p className="dashboard-error" role="alert">{error}</p>}<div className="mechanics-header"><h2>SERVICE REQUESTS</h2></div>{isLoading ? <p>Loading service requests...</p> : !requests.length ? <p>No service requests found.</p> : requests.map((request) => <article className="mechanic-card" key={request._id}><div className="mechanic-header-row"><div><div className="mechanic-name">{request.serviceType.replaceAll('-', ' ')}</div><div className="mechanic-email">{request.user ? `${request.user.firstName || ''} ${request.user.lastName || ''}`.trim() : 'Customer'}</div><p>{request.description}</p></div><span className={`status-badge status-${request.status}`}>{request.status.replaceAll('-', ' ')}</span></div><div className="mechanic-actions"><select defaultValue={request.mechanic?._id || request.mechanic || ''} disabled={savingId === request._id} onChange={(event) => confirmAssignment(request._id, event.target.value)}><option value="">Select mechanic</option>{mechanics.map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName}</option>)}</select></div></article>)}</div></section></AdminLayout>;
+  const updateStatus = async (requestId, status) => {
+    setSavingId(requestId);
+    try { await api.updateAdminServiceRequestStatus(requestId, status); await loadRequests(); } catch (saveError) { setError(saveError.message || 'Failed to update booking status'); } finally { setSavingId(''); }
+  };
+
+  return <AdminLayout title="SERVICE REQUESTS" activePath="/admin/service-requests"><section className="section-content active"><div className="mechanics-container">{error && <p className="dashboard-error" role="alert">{error}</p>}<div className="mechanics-header"><h2>SERVICE REQUESTS</h2></div>{isLoading ? <p>Loading service requests...</p> : !requests.length ? <p>No service requests found.</p> : requests.map((request) => <article className="mechanic-card" key={request._id}><div className="mechanic-header-row"><div><div className="mechanic-name">{request.serviceType.replaceAll('-', ' ')}</div><div className="mechanic-email">{request.user ? `${request.user.firstName || ''} ${request.user.lastName || ''}`.trim() : 'Customer'}</div><p>{request.description}</p><small>{request.scheduledDate ? `Scheduled ${new Date(request.scheduledDate).toLocaleDateString('en-PH')}` : 'No date selected'} · ₱{Number(request.estimatedPrice || 0).toLocaleString('en-PH')}</small></div><span className={`status-badge status-${request.status}`}>{request.status.replaceAll('-', ' ')}</span></div><div className="mechanic-actions"><select value={request.mechanic?._id || request.mechanic || ''} disabled={savingId === request._id} onChange={(event) => confirmAssignment(request._id, event.target.value)}><option value="">Select mechanic</option>{mechanics.map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName}</option>)}</select><select value={request.status} disabled={savingId === request._id} onChange={(event) => updateStatus(request._id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="accepted">Accepted</option><option value="in-progress">In progress</option><option value="completed">Completed</option><option value="declined">Declined</option></select></div></article>)}</div></section></AdminLayout>;
 }
 
 function RevenueChart({ type, data }) {
@@ -449,6 +454,7 @@ function RevenueChart({ type, data }) {
 
 function Revenue() {
   const [stats, setStats] = useState({ totalRevenue: 0 });
+  const [concentration, setConcentration] = useState({ contributors: [], indicators: { topOneShare: 0, topThreeShare: 0, hhi: 0, concentrationLevel: 'Low' }, dependentOnLimitedContributors: false });
   const [quarterlyData, setQuarterlyData] = useState({
     labels: [],
     datasets: [{ label: 'Revenue', data: [], borderColor: '#ff6b35', backgroundColor: 'rgba(255, 107, 53, 0.15)', borderWidth: 3, tension: 0.3, fill: true }]
@@ -460,19 +466,36 @@ function Revenue() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [aiQuestion, setAiQuestion] = useState('');
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [isAskingAI, setIsAskingAI] = useState(false);
+
+  const askAI = async () => {
+    if (!aiQuestion.trim()) return;
+    setIsAskingAI(true);
+    setError('');
+    try {
+      const response = await api.askRevenueAI(aiQuestion.trim());
+      setAiAnswer(response.answer || 'No insight was returned.');
+    } catch (requestError) {
+      setError(requestError.message || 'AI insights could not be generated.');
+    } finally {
+      setIsAskingAI(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
 
     const loadRevenue = () => {
       setIsLoading(true);
-      Promise.all([api.getDashboardStats(), api.getQuarterlySales(), api.getDailySales()])
-      .then(([statsResponse, quarterlyResponse, dailyResponse]) => {
+      Promise.all([api.getDashboardStats(), api.getQuarterlySales(), api.getDailySales(), api.getRevenueConcentration()])
+      .then(([statsResponse, quarterlyResponse, dailyResponse, concentrationResponse]) => {
         if (!isMounted) return;
 
         const quarterlyResult = quarterlyResponse.data || [];
         const dailyResult = dailyResponse.data || [];
         setStats(statsResponse.data || { totalRevenue: 0 });
+        setConcentration(concentrationResponse.data || concentration);
         setQuarterlyData((currentData) => ({
           ...currentData,
           labels: quarterlyResult.map((item) => `Q${item._id.quarter} ${item._id.year}`),
@@ -516,16 +539,26 @@ function Revenue() {
             <div className="risk-indicator">{isLoading ? '...' : Number(stats.totalTransactions || 0).toLocaleString()}</div>
             <div className="risk-description">Confirmed orders contributing to revenue</div>
           </div>
+          <div className="risk-card">
+            <div className="risk-header"><h3>REVENUE CONCENTRATION</h3></div>
+            <div className="risk-indicator">{concentration.indicators.concentrationLevel}</div>
+            <div className="risk-description">Top 1: {concentration.indicators.topOneShare}% · Top 3: {concentration.indicators.topThreeShare}% · {concentration.dependentOnLimitedContributors ? 'Dependent on limited contributors' : 'Broad contributor base'}</div>
+          </div>
+          <div className="chart-card full-width">
+            <h3>TOP REVENUE CONTRIBUTORS</h3>
+            {!concentration.contributors.length ? <p>No completed product or labor revenue yet.</p> : <div className="concentration-list">{concentration.contributors.slice(0, 8).map((contributor) => <div className="concentration-row" key={`${contributor.contributorType}-${contributor.name}`}><span><strong>{contributor.name}</strong><small>{contributor.contributorType}</small></span><span>₱{Number(contributor.revenue).toLocaleString('en-PH', { minimumFractionDigits: 2 })} · {contributor.share}%</span></div>)}</div>}
+          </div>
           <div className="ai-card">
             <div className="ai-header">
               <h3>Ask AI for Revenue Insights</h3>
-              <button className="btn-clear" type="button" onClick={() => setAiQuestion('')}>Clear</button>
+              <button className="btn-clear" type="button" onClick={() => { setAiQuestion(''); setAiAnswer(''); }}>Clear</button>
             </div>
             <p className="ai-intro">Hello! I&apos;m your AI revenue analyst. Ask me about your revenue trends, risk levels, or category performance.</p>
             <div className="ai-input-row">
               <input className="ai-input" value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} placeholder="Ask about revenue..." aria-label="Ask about revenue" />
-              <button className="btn-send" type="button" aria-label="Send revenue question">Send</button>
+              <button className="btn-send" type="button" onClick={askAI} disabled={isAskingAI || !aiQuestion.trim()} aria-label="Send revenue question">{isAskingAI ? 'Asking...' : 'Send'}</button>
             </div>
+            {aiAnswer && <div className="ai-answer"><pre>{aiAnswer}</pre></div>}
           </div>
           <div className="revenue-charts">
             <div className="chart-card full-width">

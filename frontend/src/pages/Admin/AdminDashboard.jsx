@@ -167,7 +167,7 @@ function AdminDashboard() {
                 <p className="chart-subtitle">Sales breakdown by category this week</p>
                 <div className="chart-canvas">
                   <SalesChart
-                    type="bar"
+                    type="line"
                     data={dailyData}
                     options={{
                       responsive: true,

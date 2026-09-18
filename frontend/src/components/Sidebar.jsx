@@ -7,7 +7,6 @@ const navigationItems = [
   { href: '/admin/transactions', icon: '📋', label: 'Transactions' },
   { href: '/admin/inventory', icon: '📦', label: 'Inventory' },
   { href: '/admin/mechanics', icon: '🔧', label: 'Mechanics' }
-  ,{ href: '/admin/service-requests', icon: '🛠️', label: 'Service Requests' }
 ];
 
 function Sidebar({ isOpen, activePath = '/admin', onClose }) {

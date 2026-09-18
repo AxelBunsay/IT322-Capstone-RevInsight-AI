@@ -3,6 +3,7 @@ const Order = require('../models/orderingModels/order');
 const Cart = require('../models/orderingModels/cart');
 const Product = require('../models/product');
 const User = require('../models/user');
+const BusinessRecord = require('../models/businessRecord');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -119,6 +120,23 @@ const confirmPayment = async (req, res) => {
     });
 
     await order.save();
+
+    await BusinessRecord.findOneAndUpdate(
+      { recordType: 'product', sourceId: order._id },
+      {
+        recordType: 'product',
+        sourceId: order._id,
+        customer: customerName,
+        customerPhone,
+        itemName: cartItems.map((item) => item.productName).join(', '),
+        category: 'Product Sales',
+        amount: order.totalPrice,
+        status: order.status,
+        completedAt: new Date(),
+        notes: `${cartItems.length} product item${cartItems.length > 1 ? 's' : ''} sold`
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     user.totalPurchases += 1;
     user.totalSpent += paymentIntent.amount / 100;

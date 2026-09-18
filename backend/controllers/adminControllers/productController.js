@@ -1,5 +1,18 @@
 const Product = require('../../models/product');
 const cloudinary = require('../../config/cloudinary');
+const mongoose = require('mongoose');
+
+const validateProductId = (id, res) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid product id'
+    });
+    return false;
+  }
+
+  return true;
+};
 
 //Create 
 const createProduct = async (req, res) => {
@@ -55,7 +68,13 @@ const uploadToCloudinary = (file) =>
 //Get products
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
+    const skip = (page - 1) * limit;
+    const [products, total] = await Promise.all([
+      Product.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.countDocuments()
+    ]);
 
     const productsWithUrls = products.map(product => ({
       ...product.toObject(),
@@ -64,8 +83,14 @@ const getProducts = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: products.length,
-      products: productsWithUrls
+      count: total,
+      products: productsWithUrls,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.max(1, Math.ceil(total / limit))
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -78,6 +103,8 @@ const getProducts = async (req, res) => {
 // Get single product
 const getProduct = async (req, res) => {
   try {
+    if (!validateProductId(req.params.id, res)) return;
+
     const product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -107,6 +134,8 @@ const getProduct = async (req, res) => {
 // Update product
 const updateProduct = async (req, res) => {
   try {
+    if (!validateProductId(req.params.id, res)) return;
+
     const { name, price, quantity, category } = req.body;
 
     let product = await Product.findById(req.params.id);
@@ -140,6 +169,8 @@ const updateProduct = async (req, res) => {
 // Delete product
 const deleteProduct = async (req, res) => {
   try {
+    if (!validateProductId(req.params.id, res)) return;
+
     const product = await Product.findById(req.params.id);
 
     if (!product) {

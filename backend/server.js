@@ -32,11 +32,10 @@ if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:5175'
 ].filter(Boolean);
 
-
-app.use('/api/admin', aiRoutes);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -61,6 +60,8 @@ app.use(express.static('uploads'));
 // serve frontend static files from the workspace `frontend` folder
 const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use(express.static(frontendPath));
+
+app.use('/api/admin', aiRoutes);
 
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/revinsight-ai';

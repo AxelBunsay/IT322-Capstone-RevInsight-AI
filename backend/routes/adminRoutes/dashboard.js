@@ -12,8 +12,10 @@ router.get('/dashboard/daily', protect, dashboardController.getDailyData);
 // Analytics Routes
 router.get('/analytics/revenue-risk', protect, dashboardController.getRevenueRisk);
 router.get('/analytics/projected-revenue', protect, dashboardController.getProjectedRevenue);
+router.get('/analytics/revenue-concentration', protect, dashboardController.getRevenueConcentration);
 
-// Transactions Routes
+// Business records and transactions routes
+router.get('/business-records', protect, dashboardController.getBusinessRecords);
 router.get('/transactions', protect, dashboardController.getAllTransactions);
 router.get('/transactions/:id', protect, dashboardController.getTransactionById);
 router.post('/transactions', protect, dashboardController.createTransaction);
