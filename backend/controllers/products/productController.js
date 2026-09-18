@@ -14,7 +14,19 @@ const validateProductId = (id, res) => {
   return true;
 };
 
-//Create 
+const uploadToCloudinary = (file) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'revinsight/products' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+
 const createProduct = async (req, res) => {
   try {
     const { name, price, quantity, category } = req.body;
@@ -22,12 +34,10 @@ const createProduct = async (req, res) => {
       ? await uploadToCloudinary(req.file)
       : null;
 
-    const image = uploadResult?.secure_url || null;
-
-    if (!name || !price || !quantity || !category) {
+    if (!name || price === undefined || quantity === undefined || !category) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'Name, price, quantity, and category are required'
       });
     }
 
@@ -36,7 +46,7 @@ const createProduct = async (req, res) => {
       price,
       quantity,
       category,
-      image
+      image: uploadResult?.secure_url || null
     });
 
     res.status(201).json({
@@ -52,20 +62,6 @@ const createProduct = async (req, res) => {
   }
 };
 
-const uploadToCloudinary = (file) =>
-  new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: 'revinsight/products' },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
-
-    stream.end(file.buffer);
-  });
-
-//Get products
 const getProducts = async (req, res) => {
   try {
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
@@ -76,15 +72,13 @@ const getProducts = async (req, res) => {
       Product.countDocuments()
     ]);
 
-    const productsWithUrls = products.map(product => ({
-      ...product.toObject(),
-      image: product.image || null
-    }));
-
     res.status(200).json({
       success: true,
       count: total,
-      products: productsWithUrls,
+      products: products.map(product => ({
+        ...product.toObject(),
+        image: product.image || null
+      })),
       pagination: {
         page,
         limit,
@@ -100,7 +94,6 @@ const getProducts = async (req, res) => {
   }
 };
 
-// Get single product
 const getProduct = async (req, res) => {
   try {
     if (!validateProductId(req.params.id, res)) return;
@@ -114,13 +107,11 @@ const getProduct = async (req, res) => {
       });
     }
 
-    const imageUrl = product.image || null;
-
     res.status(200).json({
       success: true,
       product: {
         ...product.toObject(),
-        image: imageUrl
+        image: product.image || null
       }
     });
   } catch (error) {
@@ -131,14 +122,16 @@ const getProduct = async (req, res) => {
   }
 };
 
-// Update product
 const updateProduct = async (req, res) => {
   try {
     if (!validateProductId(req.params.id, res)) return;
 
     const { name, price, quantity, category } = req.body;
-
-    let product = await Product.findById(req.params.id);
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { name, price, quantity, category },
+      { new: true, runValidators: true }
+    );
 
     if (!product) {
       return res.status(404).json({
@@ -146,12 +139,6 @@ const updateProduct = async (req, res) => {
         message: 'Product not found'
       });
     }
-
-    product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { name, price, quantity, category },
-      { new: true, runValidators: true }
-    );
 
     res.status(200).json({
       success: true,
@@ -166,12 +153,11 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// Delete product
 const deleteProduct = async (req, res) => {
   try {
     if (!validateProductId(req.params.id, res)) return;
 
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findByIdAndDelete(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -179,8 +165,6 @@ const deleteProduct = async (req, res) => {
         message: 'Product not found'
       });
     }
-
-    await Product.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
