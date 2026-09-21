@@ -1,0 +1,431 @@
+.service-modal-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(36, 37, 42, 0.42);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.service-modal {
+  width: min(100%, 560px);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid #eadfd6;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(44, 35, 29, 0.28);
+}
+
+.service-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.service-modal-kicker {
+  margin: 0 0 5px;
+  color: #ff6b0b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.service-modal h2 {
+  margin: 0;
+  color: #24252a;
+  font-size: 21px;
+}
+
+.service-modal-close {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f5eee9;
+  color: #6d5a50;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.service-modal-close:hover {
+  background: #ff6b0b;
+  color: #ffffff;
+}
+
+.service-modal > .customer-success {
+  margin: 0 0 16px;
+}
+
+.service-modal .service-form {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.services-page {
+  padding: 0 16px 48px;
+  background: #f8f5f1;
+  color: #24252a;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.services-page .customer-header {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto 18px;
+  padding-top: 400px;
+  background: linear-gradient(110deg, #ff6331, #f45124);
+  border-bottom: 0;
+}
+
+.services-page .customer-header > * {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.services-page .customer-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font: 900 15px 'Segoe UI', sans-serif;
+  letter-spacing: 0;
+  color: #ffffff;
+}
+
+.services-page .customer-brand::before {
+  content: '⚙';
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.services-page .customer-brand span {
+  display: block;
+  color: #ffffff;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.services-page .customer-brand span::after {
+  content: "Manoy's Motorcycle Parts, Accessories and Services";
+  display: block;
+  margin-top: 3px;
+  color: #fff1e8;
+  font-size: 9px;
+}
+
+.services-page .customer-nav a,
+.services-page .customer-logout {
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+}
+
+.services-page .customer-nav a.active,
+.services-page .customer-nav .customer-cart-link {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.services-page .customer-heading {
+  display: none;
+}
+
+.service-hero,
+.services-page > .shop-toolbar,
+.services-page > .category-pills,
+.services-page > .product-grid,
+.services-page > .service-pagination,
+.services-page > .customer-error,
+.services-page > .customer-success {
+  width: min(928px, 100%);
+}
+
+.service-hero {
+  display: flex;
+  min-height: 144px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(100%, 928px);
+  margin: 0 auto 22px;
+  padding: 26px 30px;
+  overflow: hidden;
+  border: 1px solid #6d3e2b;
+  border-radius: 16px;
+  background: linear-gradient(105deg, #4a2518, #70412d 58%, #8a5a42);
+  box-shadow: 0 8px 20px rgba(72, 39, 25, 0.16);
+  color: #ffffff;
+}
+
+.service-hero p {
+  margin: 0 0 5px;
+  color: #ff861f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.service-hero h2 {
+  margin: 0 0 5px;
+  font-size: 24px;
+}
+
+.service-hero span {
+  display: block;
+  max-width: 430px;
+  color: #f2ddd1;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.service-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.service-hero-stats strong {
+  padding: 7px 11px;
+  border-radius: 99px;
+  background: #ffffff;
+  color: #70412d;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.service-hero-mark {
+  display: grid;
+  width: 86px;
+  height: 86px;
+  place-items: center;
+  border: 6px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.16);
+  font-size: 48px;
+}
+
+.services-page .shop-toolbar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 0 auto 12px;
+}
+
+.services-page .shop-toolbar input {
+  height: 34px;
+  padding: 8px 11px;
+  border-color: #e4e0dc;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.services-page .shop-toolbar span {
+  display: none;
+}
+
+.services-page .category-pills {
+  margin-bottom: 20px;
+}
+
+.services-page .category-pills button {
+  padding: 7px 12px;
+  border-color: #ebe6e1;
+  font-size: 11px;
+}
+
+.services-page .category-pills button span {
+  margin-left: 6px;
+  color: #a1a5aa;
+}
+
+.services-page .category-pills button.active span {
+  color: #ffffff;
+}
+
+.services-page .product-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 300px;
+  margin-left: 90px;
+  align-items: start;
+  width: min(100%, 928px);
+}
+
+.service-card {
+  min-height: 300px;
+  border: 1px solid #e7ded8;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(44, 35, 29, 0.08);
+  width: 250px;
+}
+
+.service-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 16px rgba(44, 35, 29, 0.13);
+}
+
+.service-image {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 100px;
+  padding: 10px 12px;
+  color: rgba(43, 43, 43, 0.5);
+  font-size: 9px;
+}
+
+.service-image small {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.service-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-top: 10px;
+  border-radius: 13px;
+  color: #ffffff !important;
+  font-size: 25px !important;
+  font-weight: 400 !important;
+  box-shadow: 0 4px 8px rgba(37, 30, 25, 0.14);
+}
+
+.service-tone-0 { background: #ffeda8; }
+.service-tone-1 { background: #ddd4ff; }
+.service-tone-2 { background: #c7f5d8; }
+.service-tone-3 { background: #ffcaca; }
+.service-tone-0 .service-icon { background: #f9a000; }
+.service-tone-1 .service-icon { background: #8958ed; }
+.service-tone-2 .service-icon { background: #20bd63; }
+.service-tone-3 .service-icon { background: #f0444d; }
+
+.services-page .product-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 14px;
+}
+
+.services-page .product-card h2 {
+  min-height: 30px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.services-page .product-card-body > p:not(.product-price):not(.product-category):not(.product-stock) {
+  min-height: 72px;
+  margin: 0;
+  color: #8b8e94;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.service-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 8px;
+}
+
+.service-card-footer .product-price {
+  margin: 0;
+  color: #f15d16;
+  font-size: 15px;
+}
+
+.service-card-footer span {
+  padding: 3px 7px;
+  border-radius: 99px;
+  background: #e4efff;
+  color: #3977dd;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.services-page .product-card button {
+  width: 100%;
+  padding: 9px 8px;
+  border-radius: 8px;
+  background: #ff6b0b;
+  font-size: 10px;
+}
+
+.services-page .service-pagination {
+  width: min(100%, 928px);
+  min-height: 48px;
+  align-items: center;
+  margin: 20px auto 24px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: #ff6b0b;
+}
+
+.services-page .service-pagination button {
+  min-width: 30px;
+  border-color: transparent;
+  background: transparent;
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.services-page .service-pagination button.active,
+.services-page .service-pagination button:hover {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #ff6b0b;
+}
+
+@media (max-width: 1200px) {
+  .services-page .product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .services-page .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .services-page .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .service-hero {
+    display: block;
+    padding: 22px;
+  }
+
+  .service-hero-stats {
+    justify-content: flex-start;
+    margin-top: 16px;
+  }
+
+  .services-page .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

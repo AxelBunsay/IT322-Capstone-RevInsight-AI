@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import AuthContext from './authContext';
 
@@ -8,6 +8,17 @@ function AuthProvider({ children }) {
     const username = localStorage.getItem('adminEmail');
     return username ? { username } : null;
   });
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      localStorage.removeItem('adminEmail');
+      setToken(null);
+      setUser(null);
+    };
+
+    window.addEventListener('admin-auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('admin-auth-expired', handleAuthExpired);
+  }, []);
 
   async function login(credentials) {
     const result = await api.loginAdmin(credentials);

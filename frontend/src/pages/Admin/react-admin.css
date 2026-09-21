@@ -83,8 +83,35 @@
 .react-admin .analytics-grid {
   grid-template-areas:
     "stat risk"
-    "risk-secondary ai"
-    "charts charts";
+    "charts ai"
+    "contributors contributors";
+}
+
+.react-admin .transactions-risk {
+  display: none;
+}
+
+.react-admin .revenue-stat {
+  grid-area: stat;
+}
+
+.react-admin .concentration-risk {
+  grid-area: risk;
+}
+
+.react-admin .revenue-chart-stack {
+  grid-area: charts;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.react-admin .revenue-ai {
+  grid-area: ai;
+}
+
+.react-admin .revenue-contributors {
+  grid-area: contributors;
 }
 
 .react-admin .analytics-grid .stat-card {
@@ -250,9 +277,9 @@
     grid-template-areas:
       "stat"
       "risk"
-      "risk-secondary"
       "charts"
-      "ai";
+      "ai"
+      "contributors";
   }
 }
 

@@ -4,11 +4,11 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Inventory, Mechanics, Revenue, ServiceRequests, Transactions } from './pages/Admin/AdminPages';
 import AdminLogin from './pages/Auth/AdminLogin';
-import Cart from './pages/Customer/Cart';
-import { CustomerLogin, CustomerRegister } from './pages/Customer/CustomerAuth';
-import Orders from './pages/Customer/Orders';
-import Shop from './pages/Customer/Shop';
-import Services from './pages/Customer/Services';
+import Cart from './pages/Customer/react/Cart';
+import { CustomerLogin, CustomerRegister } from './pages/Customer/react/CustomerAuth';
+import CustomerProfile from './pages/Customer/react/Profile';
+import Shop from './pages/Customer/react/Shop';
+import Services from './pages/Customer/react/Services';
 import { Jobs, MechanicDashboard, MechanicLogin, Profile } from './pages/Mechanic/MechanicPages';
 
 function App() {
@@ -31,7 +31,8 @@ function App() {
         <Route path="/customer/shop" element={<Shop />} />
         <Route path="/customer/cart" element={<Cart />} />
         <Route path="/customer/services" element={<Services />} />
-        <Route path="/customer/orders" element={<Orders />} />
+        <Route path="/customer/orders" element={<CustomerProfile />} />
+        <Route path="/customer/profile" element={<CustomerProfile />} />
         <Route path="/mechanic/login" element={<MechanicLogin />} />
         <Route path="/mechanic/dashboard" element={<MechanicDashboard />} />
         <Route path="/mechanic/jobs" element={<Jobs />} />

@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import './customer.css';
+import '../styles/shared.css';
 
 export function CustomerHeader() {
   const location = useLocation();
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const isSignedIn = Boolean(localStorage.getItem('customerToken'));
 
   const logout = () => {
@@ -14,14 +15,22 @@ export function CustomerHeader() {
 
   const navigation = [
     { label: 'Shop', path: '/customer/shop' },
-    { label: 'Services', path: '/customer/services' },
-    { label: 'My Orders', path: '/customer/orders' }
+    { label: 'Services', path: '/customer/services' }
   ];
 
   return <header className="customer-header">
-    <Link className="customer-brand" to="/customer/shop">REVINSIGHT <span>AI</span></Link>
+    <Link className="customer-brand" to="/customer/shop">Manoy&apos;s Motorcycle Parts, Accessories and Services</Link>
     <nav aria-label="Customer navigation" className="customer-nav">
       {navigation.map((item) => <Link className={location.pathname === item.path ? 'active' : ''} key={item.path} to={item.path}>{item.label}</Link>)}
+      {isSignedIn && <div className="customer-profile-menu">
+        <button className={`customer-profile-toggle${location.pathname === '/customer/profile' ? ' active' : ''}`} type="button" aria-expanded={isProfileMenuOpen} onClick={() => setIsProfileMenuOpen((isOpen) => !isOpen)}>
+          Profile <span aria-hidden="true">⌄</span>
+        </button>
+        {isProfileMenuOpen && <div className="customer-profile-dropdown">
+          <Link to="/customer/profile" onClick={() => setIsProfileMenuOpen(false)}>Profile</Link>
+          <Link to="/customer/profile#purchase-history-title" onClick={() => setIsProfileMenuOpen(false)}>Purchase History</Link>
+        </div>}
+      </div>}
       <Link className="customer-cart-link" to="/customer/cart">Cart</Link>
       {isSignedIn ? <button type="button" className="customer-logout" onClick={logout}>Sign out</button> : <Link to="/customer/login">Sign in</Link>}
     </nav>
@@ -43,7 +52,7 @@ export function CustomerPage({ title, description, children, includeHeader = tru
   }, []);
 
   return (
-    <main className={`customer-page ${title === 'Motorcycle Shop' ? 'shop-page' : ''} ${title === 'Motorcycle Services' ? 'services-page' : ''} ${title === 'My Orders' ? 'orders-page' : ''}`}>
+    <main className={`customer-page ${title === 'Motorcycle Shop' ? 'shop-page' : ''} ${title === 'Motorcycle Services' ? 'services-page' : ''} ${title === 'My Orders' ? 'orders-page' : ''} ${title === 'Profile' ? 'profile-page' : ''}`}>
       {includeHeader && <CustomerHeader />}
       <section className="customer-heading">
         <p className="customer-eyebrow">MOTORCYCLE PARTS, ACCESSORIES &amp; SERVICES</p>
