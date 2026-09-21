@@ -22,6 +22,71 @@ function AdminDialog({ title, children, onClose }) {
   );
 }
 
+function formatBusinessRecord(record) {
+  return {
+    ...record,
+    id: record._id,
+    customer: record.customer || 'Unknown',
+    date: new Date(record.completedAt || record.createdAt).toLocaleDateString('en-PH'),
+    items: record.itemName || 'N/A',
+    amount: Number(record.amount || 0),
+    status: record.status || 'completed',
+    mechanic: record.mechanicName || (record.recordType === 'service' ? 'Unassigned' : 'N/A'),
+    recordLabel: record.recordType === 'service' ? 'Service' : 'Product'
+  };
+}
+
+function buildRevenueAnalytics(records) {
+  const quarterly = new Map();
+  const daily = new Map();
+  const contributors = new Map();
+  const totalRevenue = records.reduce((sum, record) => sum + Number(record.amount || 0), 0);
+
+  records.forEach((record) => {
+    const date = new Date(record.completedAt || record.createdAt);
+    const quarter = Math.floor(date.getMonth() / 3) + 1;
+    const quarterKey = `${date.getFullYear()}-${quarter}`;
+    const dayKey = date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+    const contributorKey = record.category || record.itemName || 'Other';
+    const amount = Number(record.amount || 0);
+
+    quarterly.set(quarterKey, (quarterly.get(quarterKey) || 0) + amount);
+    daily.set(dayKey, (daily.get(dayKey) || 0) + amount);
+    contributors.set(contributorKey, (contributors.get(contributorKey) || 0) + amount);
+  });
+
+  const contributorRows = [...contributors.entries()]
+    .map(([name, revenue]) => ({
+      name,
+      revenue,
+      contributorType: 'Business record',
+      share: totalRevenue ? Number(((revenue / totalRevenue) * 100).toFixed(2)) : 0
+    }))
+    .sort((left, right) => right.revenue - left.revenue);
+  const topOneShare = contributorRows[0]?.share || 0;
+  const topThreeShare = contributorRows.slice(0, 3).reduce((sum, row) => sum + row.share, 0);
+
+  return {
+    totalRevenue,
+    totalTransactions: records.length,
+    quarterly: [...quarterly.entries()].sort().map(([key, revenue]) => {
+      const [year, quarter] = key.split('-');
+      return { _id: { year: Number(year), quarter: Number(quarter) }, revenue };
+    }),
+    daily: [...daily.entries()].map(([_id, revenue]) => ({ _id, revenue })),
+    concentration: {
+      contributors: contributorRows,
+      indicators: {
+        topOneShare,
+        topThreeShare,
+        hhi: contributorRows.reduce((sum, row) => sum + ((row.share / 100) ** 2) * 10000, 0),
+        concentrationLevel: topOneShare >= 70 ? 'High' : topOneShare >= 40 ? 'Moderate' : 'Low'
+      },
+      dependentOnLimitedContributors: topOneShare >= 70
+    }
+  };
+}
+
 function Inventory() {
   const [search, setSearch] = useState('');
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -168,23 +233,15 @@ function Transactions() {
     let isMounted = true;
     const loadTransactions = () => {
       setIsLoading(true);
-      api.getTransactions(page, 10, statusFilter === 'All' ? '' : statusFilter)
+      api.getBusinessRecords(statusFilter === 'All' ? {} : { status: statusFilter })
       .then((response) => {
         if (isMounted) {
-          const data = response.data || [];
-          const formattedData = data.map((item) => ({
-            ...item,
-            id: item._id,
-            customer: item.userId?.name || 'Unknown',
-            date: new Date(item.createdAt).toLocaleDateString('en-PH'),
-            items: item.items?.map((i) => i.name).join(', ') || 'N/A',
-            amount: `₱${Number(item.totalPrice ?? item.totalAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
-            status: item.status || 'Pending',
-            mechanic: item.mechanic || 'Unassigned'
-          }));
-          setTransactions(formattedData);
-          setTotalAmount(data.reduce((sum, t) => sum + (t.totalPrice ?? t.totalAmount ?? 0), 0));
-          setTotalPages(response.pagination?.totalPages || 1);
+          const data = (response.data || []).map(formatBusinessRecord);
+          const pageCount = Math.max(1, Math.ceil(data.length / 10));
+          setTransactions(data);
+          setTotalAmount(data.reduce((sum, record) => sum + record.amount, 0));
+          setTotalPages(pageCount);
+          if (page > pageCount) setPage(pageCount);
         }
       })
       .catch((fetchError) => {
@@ -210,9 +267,16 @@ function Transactions() {
     return matchesSearch && matchesStatus;
   });
 
+  const pagedTransactions = filteredTransactions.slice((page - 1) * 10, page * 10);
+
   const viewTransaction = async (transaction) => {
+    if (transaction.recordType !== 'product') {
+      setSelectedTransaction(transaction);
+      return;
+    }
+
     try {
-      const response = await api.getTransaction(transaction.id);
+      const response = await api.getTransaction(transaction.sourceId);
       setSelectedTransaction(response.data || transaction);
     } catch (detailError) {
       setError(detailError.message || 'Failed to load transaction details');
@@ -241,8 +305,8 @@ function Transactions() {
           <div className="transactions-header"><button className="btn-primary" type="button" onClick={() => navigate('/admin/revenue')}>View Revenue</button><div className="transactions-info">Total: ₱{Number(totalAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div></div>
           <div className="search-filter"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by customer, item, mechanic..." /><select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}><option value="All">All</option><option value="completed">Completed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option><option value="Paid">Legacy Paid</option></select></div>
           {isLoading ? <p>Loading transactions...</p> : <table className="transactions-table">
-            <thead><tr><th>ITEM ID</th><th>PURCHASE DATE</th><th>CUSTOMER NAME</th><th>ITEMS</th><th>TOTAL AMOUNT</th><th>STATUS</th><th>MECHANIC</th><th>ACTION</th></tr></thead>
-            <tbody>{filteredTransactions.map((transaction) => <tr key={transaction.id}><td>{transaction.id}</td><td>{transaction.date}</td><td><strong>{transaction.customer}</strong></td><td>{transaction.items}</td><td className="price-text">{transaction.amount}</td><td><span className={`status-badge status-${transaction.status.toLowerCase()}`}>{transaction.status}</span></td><td>{transaction.mechanic}</td><td><button className="btn-small btn-edit" type="button" onClick={() => viewTransaction(transaction)}>View</button></td></tr>)}</tbody>
+            <thead><tr><th>RECORD ID</th><th>DATE</th><th>TYPE</th><th>CUSTOMER</th><th>ITEM / SERVICE</th><th>AMOUNT</th><th>STATUS</th><th>MECHANIC</th><th>ACTION</th></tr></thead>
+            <tbody>{pagedTransactions.map((transaction) => <tr key={transaction.id}><td>{transaction.id}</td><td>{transaction.date}</td><td>{transaction.recordLabel}</td><td><strong>{transaction.customer}</strong></td><td>{transaction.items}</td><td className="price-text">₱{transaction.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td><td><span className={`status-badge status-${transaction.status.toLowerCase()}`}>{transaction.status}</span></td><td>{transaction.mechanic}</td><td><button className="btn-small btn-edit" type="button" onClick={() => viewTransaction(transaction)}>View</button></td></tr>)}</tbody>
           </table>}
           <div className="pagination-container" aria-label="Transaction pagination">
             <button className={`pagination-button${page === 1 ? ' disabled' : ''}`} type="button" disabled={page === 1} onClick={() => setPage((currentPage) => currentPage - 1)}>Previous</button>
@@ -253,12 +317,12 @@ function Transactions() {
       </section>
       {selectedTransaction && <AdminDialog title="Transaction Details" onClose={() => setSelectedTransaction(null)}>
         <div className="transaction-details">
-          <p><strong>Order ID:</strong> {selectedTransaction._id || selectedTransaction.id}</p>
-          <p><strong>Date:</strong> {new Date(selectedTransaction.createdAt).toLocaleString('en-PH')}</p>
+          <p><strong>Record ID:</strong> {selectedTransaction._id || selectedTransaction.id}</p>
+          <p><strong>Date:</strong> {new Date(selectedTransaction.completedAt || selectedTransaction.createdAt).toLocaleString('en-PH')}</p>
           <p><strong>Customer:</strong> {selectedTransaction.userId?.name || selectedTransaction.customer || 'Unknown'}</p>
-          <label><strong>Status:</strong><select value={selectedTransaction.status || 'pending'} disabled={statusBeingSaved} onChange={(event) => updateTransactionStatus(event.target.value)}><option value="completed">Completed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option><option value="Paid">Legacy Paid</option></select></label>
-          <p><strong>Total:</strong> ₱{Number(selectedTransaction.totalPrice ?? selectedTransaction.totalAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
-          <p><strong>Items:</strong> {selectedTransaction.items?.map((item) => item.name || item.productId?.name || 'Item').join(', ') || selectedTransaction.items || 'N/A'}</p>
+          {selectedTransaction.recordType === 'service' ? <p><strong>Status:</strong> {selectedTransaction.status || 'completed'}</p> : <label><strong>Status:</strong><select value={selectedTransaction.status || 'pending'} disabled={statusBeingSaved} onChange={(event) => updateTransactionStatus(event.target.value)}><option value="completed">Completed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option><option value="Paid">Legacy Paid</option></select></label>}
+          <p><strong>Total:</strong> ₱{Number(selectedTransaction.amount ?? selectedTransaction.totalPrice ?? selectedTransaction.totalAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+          <p><strong>Items:</strong> {Array.isArray(selectedTransaction.items) ? selectedTransaction.items.map((item) => item.name || item.productName || item.productId?.name || 'Item').join(', ') : selectedTransaction.itemName || selectedTransaction.items || 'N/A'}</p>
         </div>
       </AdminDialog>}
     </AdminLayout>
@@ -488,23 +552,36 @@ function Revenue() {
 
     const loadRevenue = () => {
       setIsLoading(true);
-      Promise.all([api.getDashboardStats(), api.getQuarterlySales(), api.getDailySales(), api.getRevenueConcentration()])
-      .then(([statsResponse, quarterlyResponse, dailyResponse, concentrationResponse]) => {
+      Promise.allSettled([api.getDashboardStats(), api.getQuarterlySales(), api.getDailySales(), api.getRevenueConcentration(), api.getBusinessRecords({ status: 'completed' })])
+      .then(([statsResult, quarterlyResult, dailyResult, concentrationResult, recordsResult]) => {
         if (!isMounted) return;
 
-        const quarterlyResult = quarterlyResponse.data || [];
-        const dailyResult = dailyResponse.data || [];
-        setStats(statsResponse.data || { totalRevenue: 0 });
-        setConcentration(concentrationResponse.data || concentration);
+        const records = recordsResult.status === 'fulfilled' ? (recordsResult.value.data || []).map(formatBusinessRecord) : [];
+        const fallback = buildRevenueAnalytics(records);
+        const legacyStats = statsResult.status === 'fulfilled' ? (statsResult.value.data || {}) : {};
+        const legacyQuarterly = quarterlyResult.status === 'fulfilled' ? (quarterlyResult.value.data || []) : [];
+        const legacyDaily = dailyResult.status === 'fulfilled' ? (dailyResult.value.data || []) : [];
+        const legacyConcentration = concentrationResult.status === 'fulfilled' ? concentrationResult.value.data : null;
+
+        if ([statsResult, quarterlyResult, dailyResult, concentrationResult, recordsResult].every((result) => result.status === 'rejected')) {
+          setError('Revenue data could not be loaded. Check the backend and MongoDB connection.');
+        }
+
+        setStats({
+          ...legacyStats,
+          totalRevenue: records.length ? fallback.totalRevenue : (legacyStats.totalRevenue || 0),
+          totalTransactions: records.length ? fallback.totalTransactions : (legacyStats.totalTransactions || 0)
+        });
+        setConcentration(legacyConcentration?.contributors?.length ? legacyConcentration : (records.length ? fallback.concentration : concentration));
         setQuarterlyData((currentData) => ({
           ...currentData,
-          labels: quarterlyResult.map((item) => `Q${item._id.quarter} ${item._id.year}`),
-          datasets: [{ ...currentData.datasets[0], data: quarterlyResult.map((item) => item.revenue || 0) }]
+          labels: (legacyQuarterly.length ? legacyQuarterly : fallback.quarterly).map((item) => `Q${item._id.quarter} ${item._id.year}`),
+          datasets: [{ ...currentData.datasets[0], data: (legacyQuarterly.length ? legacyQuarterly : fallback.quarterly).map((item) => item.revenue || 0) }]
         }));
         setDailyData((currentData) => ({
           ...currentData,
-          labels: dailyResult.map((item) => item._id),
-          datasets: [{ ...currentData.datasets[0], data: dailyResult.map((item) => item.revenue || 0) }]
+          labels: (legacyDaily.length ? legacyDaily : fallback.daily).map((item) => item._id),
+          datasets: [{ ...currentData.datasets[0], data: (legacyDaily.length ? legacyDaily : fallback.daily).map((item) => item.revenue || 0) }]
         }));
       })
       .catch((requestError) => {
@@ -529,26 +606,26 @@ function Revenue() {
       <section className="section-content active">
         <div className="analytics-grid">
           {error && <p className="dashboard-error" role="alert">{error}</p>}
-          <div className="stat-card">
+          <div className="stat-card revenue-stat">
             <div className="stat-header"><h3>TOTAL REVENUE</h3><div className="stat-indicator orange"></div></div>
             <div className="stat-value">₱{Number(stats.totalRevenue).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
             <div className="stat-subtitle">{isLoading ? 'Loading...' : 'From confirmed orders'}</div>
           </div>
-          <div className="risk-card">
+          <div className="risk-card revenue-risk transactions-risk">
             <div className="risk-header"><h3>TRANSACTIONS</h3></div>
             <div className="risk-indicator">{isLoading ? '...' : Number(stats.totalTransactions || 0).toLocaleString()}</div>
             <div className="risk-description">Confirmed orders contributing to revenue</div>
           </div>
-          <div className="risk-card">
+          <div className="risk-card revenue-risk concentration-risk">
             <div className="risk-header"><h3>REVENUE CONCENTRATION</h3></div>
             <div className="risk-indicator">{concentration.indicators.concentrationLevel}</div>
             <div className="risk-description">Top 1: {concentration.indicators.topOneShare}% · Top 3: {concentration.indicators.topThreeShare}% · {concentration.dependentOnLimitedContributors ? 'Dependent on limited contributors' : 'Broad contributor base'}</div>
           </div>
-          <div className="chart-card full-width">
+          <div className="chart-card full-width revenue-contributors">
             <h3>TOP REVENUE CONTRIBUTORS</h3>
             {!concentration.contributors.length ? <p>No completed product or labor revenue yet.</p> : <div className="concentration-list">{concentration.contributors.slice(0, 8).map((contributor) => <div className="concentration-row" key={`${contributor.contributorType}-${contributor.name}`}><span><strong>{contributor.name}</strong><small>{contributor.contributorType}</small></span><span>₱{Number(contributor.revenue).toLocaleString('en-PH', { minimumFractionDigits: 2 })} · {contributor.share}%</span></div>)}</div>}
           </div>
-          <div className="ai-card">
+          <div className="ai-card revenue-ai">
             <div className="ai-header">
               <h3>Ask AI for Revenue Insights</h3>
               <button className="btn-clear" type="button" onClick={() => { setAiQuestion(''); setAiAnswer(''); }}>Clear</button>
@@ -560,7 +637,7 @@ function Revenue() {
             </div>
             {aiAnswer && <div className="ai-answer"><pre>{aiAnswer}</pre></div>}
           </div>
-          <div className="revenue-charts">
+          <div className="revenue-charts revenue-chart-stack">
             <div className="chart-card full-width">
               <h3>QUARTERLY REVENUE</h3>
               <div className="chart-canvas"><RevenueChart type="line" data={quarterlyData} /></div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+import { api } from '../../../services/api';
 import { CustomerHeader, CustomerPage } from './CustomerLayout';
-import './customer.css';
+import '../styles/shared.css';
+import '../styles/services.css';
 
 const serviceCatalog = [
   { id: 'SVC-01', title: 'Foam Seat Repair', description: 'Professional foam seat repair for worn-out or damaged motorcycle seats. Restores comfort and shape.', price: 250, duration: '1-2 hrs', category: 'Seat Works' },

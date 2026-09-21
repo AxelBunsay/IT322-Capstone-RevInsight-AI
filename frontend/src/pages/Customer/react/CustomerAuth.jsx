@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
+import { api } from '../../../services/api';
 import { CustomerAuthShell } from './CustomerLayout';
-import './customer.css';
+import '../styles/shared.css';
 
 export function CustomerLogin() {
   const navigate = useNavigate();

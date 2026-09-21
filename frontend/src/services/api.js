@@ -14,12 +14,28 @@ async function request(path, options = {}) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_URL}${path}`, { ...requestOptions, headers });
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...requestOptions, headers });
+  } catch (error) {
+    throw new Error(`Unable to reach the backend at ${API_URL}. Start the backend server and check its database connection.`);
+  }
+
   const contentType = response.headers.get('content-type') || '';
   const body = contentType.includes('application/json') ? await response.json() : await response.text();
 
   if (!response.ok) {
-    throw new Error(body?.message || `Request failed with status ${response.status}`);
+    if (response.status === 401) {
+      localStorage.removeItem(options.tokenKey || 'adminToken');
+      if (options.tokenKey === undefined) {
+        window.dispatchEvent(new Event('admin-auth-expired'));
+      }
+    }
+
+    const message = typeof body === 'string' ? body : body?.message;
+    const requestError = new Error(message || `Request failed with status ${response.status}`);
+    requestError.status = response.status;
+    throw requestError;
   }
 
   return body;
