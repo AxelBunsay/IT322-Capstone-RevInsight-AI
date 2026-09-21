@@ -64,7 +64,7 @@ app.use(express.static(frontendPath));
 app.use('/api/admin', aiRoutes);
 
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/revinsight-ai';
+const mongoUri = process.env.MONGODB_URI;
 const port = process.env.PORT || 5000;
 
 const ensureAdminUser = async () => {

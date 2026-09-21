@@ -7,16 +7,15 @@ const {
   getProduct,
   updateProduct,
   deleteProduct
-} = require('../../controllers/adminControllers/productController');
+} = require('../../controllers/products/productController');
 
-const { protect } = require('../../middleware/adminAuth');
+const { authenticate, adminOnly } = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
 
-// All admin write routes are protected
-router.post('/', protect, upload.single('image'), createProduct);
+router.post('/', adminOnly, upload.single('image'), createProduct);
 router.get('/', getProducts);
-router.get('/:id', getProduct);
-router.put('/:id', protect, upload.single('image'), updateProduct);
-router.delete('/:id', protect, deleteProduct);
+router.get('/:id', authenticate, getProduct);
+router.put('/:id', adminOnly, upload.single('image'), updateProduct);
+router.delete('/:id', adminOnly, deleteProduct);
 
 module.exports = router;
