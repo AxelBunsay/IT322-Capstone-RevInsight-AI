@@ -1,728 +1,499 @@
-.customer-page {
+.services-page {
   min-height: 100vh;
-  max-height: none;
-  padding: 22px clamp(16px, 4vw, 64px) 64px;
-  background: radial-gradient(circle at 85% 8%, #ffe1ca 0, transparent 28%), #fff7ed;
-  color: #fdfdfd;
-  font-family: Georgia, 'Times New Roman', serif;
+  padding: 0 28px 64px;
+  background: #f8f5f1;
+  color: #24252a;
+  font-family: "Segoe UI", sans-serif;
 }
 
-.customer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  max-width: 1280px;
-  margin: 0 auto 64px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(217, 77, 34, 0.18);
-}
-
-.customer-brand {
-  color: #3d2b24;
-  font: 900 18px 'Segoe UI', sans-serif;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-}
-
-.customer-brand span {
-  color: #f05a28;
-}
-
-.customer-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  padding-top: 75px;
-  gap: 8px;
-}
-
-.customer-nav a,
-.customer-logout {
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #806b60;
-  font-family: 'Segoe UI', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.customer-nav a:hover,
-.customer-nav a.active,
-.customer-nav .customer-cart-link,
-.customer-profile-toggle:hover,
-.customer-profile-toggle.active {
-  background: #fff0e7;
-  color: #d94d22;
-}
-
-.customer-heading,
-.customer-page > form,
-.customer-page > .shop-toolbar,
-.customer-page > .category-pills,
-.customer-page > .product-grid,
-.customer-page > .service-pagination,
-.customer-page > .service-request-list,
-.customer-page > .orders-list,
-.customer-page > .cart-layout,
-.customer-page > .customer-section-title {
-  max-width: 1280px;
+.services-page > :not(.customer-header) {
+  width: min(100%, 1180px);
   margin-left: auto;
   margin-right: auto;
 }
-
-.customer-heading > p:last-child {
-  margin: 0 0 24px;
-  color: #806b60;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.shop-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px auto;
-  gap: 12px;
-  align-items: center;
-  margin: 28px 0 24px;
-}
-
-.shop-toolbar input,
-.shop-toolbar select,
-.service-form input {
-  min-width: 0;
-  padding: 12px 14px;
-  border: 1px solid #e5cfc0;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #49372f;
-  font: 14px 'Segoe UI', sans-serif;
-}
-
-.shop-toolbar span {
-  color: #806b60;
-  font: 700 13px 'Segoe UI', sans-serif;
-  white-space: nowrap;
-}
-
-.category-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.category-pills button,
-.service-pagination button {
-  padding: 8px 13px;
-  border: 1px solid #f0ded1;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #806b60;
-  font: 700 12px 'Segoe UI', sans-serif;
-  cursor: pointer;
-}
-
-.category-pills button.active,
-.category-pills button:hover,
-.service-pagination button.active {
-  border-color: #f05a28;
-  background: #f05a28;
-  color: #ffffff;
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-}
-
-.product-card {
-  overflow: hidden;
-  background: #ffffff;
-  border: 1px solid #f0ded1;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(120, 64, 32, 0.08);
-  transition: transform 160ms ease, box-shadow 160ms ease;
-}
-
-.product-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 30px rgba(120, 64, 32, 0.14);
-}
-
-.product-image {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 4 / 3;
-  background: linear-gradient(135deg, #ffd5bd, #f9a477);
-  color: #9b421f;
-  font: 700 15px 'Segoe UI', sans-serif;
-}
-
-.product-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.product-card-body {
-  padding: 16px;
-}
-
-.product-card h2 {
-  margin: 0 0 5px;
-  font: 700 18px 'Segoe UI', sans-serif;
-}
-
-.product-card-body > p:not(.product-price):not(.product-category):not(.product-stock) {
-  min-height: 42px;
-  margin: 0;
-  color: #806b60;
-  font: 13px/1.5 'Segoe UI', sans-serif;
-}
-
-.product-price {
-  margin: 12px 0 4px;
-  color: #e94f21;
-  font: 700 22px 'Segoe UI', sans-serif;
-}
-
-.customer-error,
-.customer-empty {
-  padding: 12px 14px;
-  border-radius: 8px;
-  font: 13px 'Segoe UI', sans-serif;
-}
-
-.customer-error {
-  background: #fff0ed;
-  color: #a53828;
-}
-
-.customer-empty {
-  background: #ffffff;
-  color: #806b60;
-}
-
-.customer-success {
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: #edf8ef;
-  color: #357344;
-  font: 13px 'Segoe UI', sans-serif;
-}
-
-.service-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
-  padding: 24px;
-  background: rgba(19, 15, 14, 0.45);
-  backdrop-filter: blur(14px) brightness(0.8) saturate(0.85);
-  -webkit-backdrop-filter: blur(14px) brightness(0.8) saturate(0.85);
-}
-
-.service-modal {
-  position: relative;
-  width: min(100%, 560px);
-  max-height: min(720px, calc(100vh - 48px));
-  margin: auto;
-  overflow-y: auto;
-  padding: 24px 24px 18px;
-  border: 1px solid rgba(170, 146, 133, 0.35);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 30px 80px rgba(52, 38, 29, 0.22);
-}
-
-.service-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 16px;
-}
-
-.service-modal-kicker {
-  margin: 0 0 6px;
-  color: #ff6b0b;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.service-modal h2 {
-  margin: 0;
-  color: #24252a;
-  font-size: 21px;
-  line-height: 1.2;
-}
-
-.service-modal-close {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: #f3efe9;
-  color: #5f514b;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.service-modal-close:hover {
-  background: #ff6b0b;
-  color: #ffffff;
-  transform: rotate(90deg);
-}
-
-.service-modal > .customer-success {
-  margin: 0 0 18px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(53, 115, 68, 0.12);
-  background: linear-gradient(180deg, #edf9ef, #e7f5ea);
-  color: #2f6d3d;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.service-modal .service-form {
-  display: grid;
-  gap: 16px;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.service-modal .service-form label {
-  display: grid;
-  gap: 8px;
-  color: #3d3734;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.service-modal .service-form select,
-.service-modal .service-form input,
-.service-modal .service-form textarea {
-  width: 100%;
-  border: 1px solid #e5d9d0;
-  border-radius: 10px;
-  background: #fffdfc;
-  color: #2d2928;
-  font: 13px 'Segoe UI', sans-serif;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.service-modal .service-form select,
-.service-modal .service-form input {
-  min-height: 42px;
-  padding: 10px 12px;
-}
-
-.service-modal .service-form textarea {
-  min-height: 90px;
-  padding: 12px;
-  resize: vertical;
-}
-
-.service-modal .service-form select:focus,
-.service-modal .service-form input:focus,
-.service-modal .service-form textarea:focus {
-  outline: none;
-  border-color: #ff7a2a;
-  box-shadow: 0 0 0 3px rgba(255, 122, 42, 0.12);
-}
-
-.service-modal .service-form button {
-  width: fit-content;
-  min-width: 150px;
-  margin-top: 6px;
-  padding: 11px 18px;
-  border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #ff6b0b, #ef5b1c);
-  color: #ffffff;
-  font: 700 13px 'Segoe UI', sans-serif;
-  cursor: pointer;
-  box-shadow: 0 10px 18px rgba(239, 91, 28, 0.18);
-}
-
-.service-modal .service-form button:disabled {
-  background: #c8bdb8;
-  box-shadow: none;
-  cursor: wait;
-}
-
-.services-page {
-  padding: 0 16px 48px;
-  background: #f8f5f1;
-  color: #24252a;
-  font-family: 'Segoe UI', sans-serif;
-}
-
 .services-page .customer-header {
   box-sizing: border-box;
-  width: 100%;
+  width: calc(100% + 56px);
   max-width: none;
-  margin: 0 auto 18px;
-  padding-top: 400px;
-  background: linear-gradient(110deg, #ff6331, #f45124);
-  border-bottom: 0;
+  margin: 0 -28px 28px;
+  padding: 12px max(28px, calc((100vw - 1180px) / 2)) 10px;
+  background: #fff;
+  border-bottom: 1px solid #eadfd6;
 }
-
-.services-page .customer-header > * {
-  width: min(100%, 1180px);
-  margin: 0 auto;
-}
-
 .services-page .customer-brand {
   display: flex;
   align-items: center;
   gap: 9px;
-  font: 900 15px 'Segoe UI', sans-serif;
+  font:
+    900 15px "Segoe UI",
+    sans-serif;
   letter-spacing: 0;
-  color: #ffffff;
 }
-
 .services-page .customer-brand::before {
-  content: '⚙';
+  content: "⚙";
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #ff6811;
+  color: #fff;
+  font-size: 18px;
+  box-shadow: 0 4px 10px rgba(240, 90, 40, 0.2);
+}
+.services-page .customer-brand::after {
+  content: "Customer Shop";
+  position: absolute;
+  margin: 30px 0 0 51px;
+  color: #ff6811;
+  font-size: 11px;
+  font-weight: 700;
+}
+.services-page .customer-nav {
+  padding-top: 0;
+  gap: 10px;
+}
+.services-page .customer-nav a,
+.services-page .customer-logout,
+.services-page .customer-profile-toggle {
+  border-radius: 999px;
+  color: #777d8a;
   font-size: 14px;
 }
-
-.services-page .customer-brand span {
-  display: block;
-  color: #ffffff;
-  font-size: 10px;
-  line-height: 1;
+.services-page .customer-nav a.active {
+  background: #ff6811;
+  color: #fff;
 }
-
-.services-page .customer-brand span::after {
-  content: "Manoy's Motorcycle Parts, Accessories and Services";
-  display: block;
-  margin-top: 3px;
-  color: #fff1e8;
-  font-size: 9px;
-}
-
-.services-page .customer-nav a,
-.services-page .customer-logout {
-  border-radius: 7px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 11px;
-}
-
-.services-page .customer-nav a.active,
 .services-page .customer-nav .customer-cart-link {
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
+  background: transparent;
+  color: #777d8a;
 }
-
 .services-page .customer-heading {
   display: none;
 }
 
-.service-hero,
-.services-page > .shop-toolbar,
-.services-page > .category-pills,
-.services-page > .product-grid,
-.services-page > .service-pagination,
-.services-page > .customer-error,
-.services-page > .customer-success {
-  width: min(928px, 100%);
-}
-
-.service-hero {
+.services-hero {
   display: flex;
-  min-height: 144px;
+  min-height: 272px;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  width: min(100%, 928px);
-  margin: 0 auto 22px;
-  padding: 26px 30px;
+  gap: 32px;
+  margin-bottom: 38px;
+  padding: 44px 48px;
   overflow: hidden;
-  border: 1px solid #6d3e2b;
-  border-radius: 16px;
-  background: linear-gradient(105deg, #4a2518, #70412d 58%, #8a5a42);
-  box-shadow: 0 8px 20px rgba(72, 39, 25, 0.16);
-  color: #ffffff;
+  border-radius: 28px;
+  background: linear-gradient(110deg, #281004, #451707 52%, #211b4e);
+  color: #fff;
 }
-
-.service-hero p {
-  margin: 0 0 5px;
-  color: #ff861f;
-  font-size: 10px;
+.services-hero-eyebrow {
+  margin: 0 0 8px;
+  color: #ff8b12;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
 }
-
-.service-hero h2 {
-  margin: 0 0 5px;
-  font-size: 24px;
+.services-hero h2 {
+  margin: 0 0 8px;
+  font-size: 36px;
+  line-height: 1.1;
 }
-
-.service-hero span {
-  display: block;
-  max-width: 430px;
-  color: #f2ddd1;
-  font-size: 12px;
-  line-height: 1.35;
+.services-hero h2 span {
+  font-size: 30px;
 }
-
-.service-hero-stats {
+.services-hero > div:first-child > p:not(.services-hero-eyebrow) {
+  max-width: 550px;
+  margin: 0;
+  color: #efd8ca;
+  font:
+    17px/1.45 Georgia,
+    serif;
+}
+.services-hero-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 20px;
 }
-
-.service-hero-stats strong {
-  padding: 7px 11px;
-  border-radius: 99px;
-  background: #ffffff;
-  color: #70412d;
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.service-hero-mark {
-  display: grid;
-  width: 86px;
-  height: 86px;
-  place-items: center;
-  border: 6px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
-  color: rgba(255, 255, 255, 0.16);
-  font-size: 48px;
-}
-
-.services-page .shop-toolbar {
-  grid-template-columns: minmax(0, 1fr) auto;
-  margin: 0 auto 12px;
-}
-
-.services-page .shop-toolbar input {
-  height: 34px;
-  padding: 8px 11px;
-  border-color: #e4e0dc;
-  border-radius: 9px;
-  font-size: 11px;
-}
-
-.services-page .shop-toolbar span {
-  display: none;
-}
-
-.services-page .category-pills {
-  margin-bottom: 20px;
-}
-
-.services-page .category-pills button {
-  padding: 7px 12px;
-  border-color: #ebe6e1;
-  font-size: 11px;
-}
-
-.services-page .category-pills button span {
-  margin-left: 6px;
-  color: #a1a5aa;
-}
-
-.services-page .category-pills button.active span {
-  color: #ffffff;
-}
-
-.services-page .product-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-  margin: 0 auto;
-  align-items: start;
-  width: min(100%, 928px);
-}
-
-.service-card {
-  width: 100%;
-  min-height: 300px;
-  border: 1px solid #e7ded8;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(44, 35, 29, 0.08);
-}
-
-.service-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 7px 16px rgba(44, 35, 29, 0.13);
-}
-
-.service-image {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  min-height: 100px;
-  padding: 10px 12px;
-  color: rgba(43, 43, 43, 0.5);
-  font-size: 9px;
-}
-
-.service-image small {
-  font-size: 9px;
+.services-hero-stats span {
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: rgba(178, 78, 12, 0.68);
+  color: #fff;
+  font-size: 13px;
   font-weight: 700;
 }
-
-.service-icon {
+.services-hero-wheel {
+  width: 122px;
+  height: 122px;
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  margin-top: 10px;
-  border-radius: 13px;
-  color: #ffffff !important;
-  font-size: 25px !important;
-  font-weight: 400 !important;
-  box-shadow: 0 4px 8px rgba(37, 30, 25, 0.14);
+  border: 8px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.14);
+  font-size: 70px;
 }
 
-.service-tone-0 { background: #ffeda8; }
-.service-tone-1 { background: #ddd4ff; }
-.service-tone-2 { background: #c7f5d8; }
-.service-tone-3 { background: #ffcaca; }
-.service-tone-0 .service-icon { background: #f9a000; }
-.service-tone-1 .service-icon { background: #8958ed; }
-.service-tone-2 .service-icon { background: #20bd63; }
-.service-tone-3 .service-icon { background: #f0444d; }
-
-.services-page .product-card-body {
+.services-toolbar {
+  margin-bottom: 34px;
+}
+.services-search {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  width: min(100%, 460px);
+  height: 52px;
+  padding: 0 15px;
+  border: 1px solid #e5e0dc;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(44, 35, 29, 0.08);
+  color: #a8b2c0;
+}
+.services-search span {
+  font-size: 27px;
+  line-height: 1;
+}
+.services-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #3c4048;
+  font:
+    16px "Segoe UI",
+    sans-serif;
+}
+.service-category-pills {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  padding: 12px 12px 14px;
+  margin-top: 18px;
+}
+.service-category-pills button {
+  padding: 12px 18px;
+  border: 1px solid #ece8e4;
+  border-radius: 16px;
+  background: #fff;
+  color: #646d7b;
+  font:
+    700 14px "Segoe UI",
+    sans-serif;
+  box-shadow: 0 2px 5px rgba(44, 35, 29, 0.06);
+  cursor: pointer;
+}
+.service-category-pills button.active {
+  border-color: #ff6811;
+  background: #ff6811;
+  color: #fff;
+}
+.service-category-pills small {
+  margin-left: 6px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f1f2f4;
+  color: #a3a9b2;
+  font-size: 11px;
+}
+.service-category-pills button.active small {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
-.services-page .product-card h2 {
-  min-height: 30px;
+.service-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.service-card {
+  overflow: hidden;
+  border: 1px solid #eee8e2;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 4px 13px rgba(44, 35, 29, 0.07);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.service-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 11px 24px rgba(44, 35, 29, 0.13);
+}
+.service-card-art {
+  position: relative;
+  display: grid;
+  min-height: 144px;
+  place-items: center;
+}
+.tone-sun .service-card-art {
+  background: #ffeba0;
+}
+.tone-lavender .service-card-art {
+  background: #ded6ff;
+}
+.tone-mint .service-card-art {
+  background: #c9f7d9;
+}
+.tone-peach .service-card-art {
+  background: #ffd8c4;
+}
+.tone-blue .service-card-art {
+  background: #cfeaff;
+}
+.tone-rose .service-card-art {
+  background: #ffd5de;
+}
+.tone-sand .service-card-art {
+  background: #eadfcd;
+}
+.tone-sky .service-card-art {
+  background: #d4f0f5;
+}
+.tone-lemon .service-card-art {
+  background: #fff0b7;
+}
+.tone-slate .service-card-art {
+  background: #dce2eb;
+}
+.service-code,
+.service-duration {
+  position: absolute;
+  top: 15px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.48);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.service-code {
+  left: 15px;
+}
+.service-duration {
+  right: 15px;
+}
+.service-icon {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: 20px;
+  background: #ffab08;
+  color: #fff;
+  font-size: 38px;
+  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.14);
+}
+.tone-lavender .service-icon {
+  background: #8752ed;
+}
+.tone-mint .service-icon {
+  background: #1fc35d;
+}
+.tone-peach .service-icon {
+  background: #f06a3a;
+}
+.tone-blue .service-icon {
+  background: #458bd1;
+}
+.tone-rose .service-icon {
+  background: #df5674;
+}
+.tone-sand .service-icon {
+  background: #a67d4f;
+}
+.tone-sky .service-icon {
+  background: #2699a9;
+}
+.tone-lemon .service-icon {
+  background: #dda900;
+}
+.tone-slate .service-icon {
+  background: #63738d;
+}
+.service-card-body {
+  padding: 20px;
+}
+.service-category-label {
+  margin: 0 0 7px;
+  color: #ff6811;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.service-card h2 {
+  margin: 0 0 7px;
+  color: #202633;
+  font-size: 17px;
+}
+.service-card-body > p:not(.service-category-label) {
+  min-height: 42px;
   margin: 0;
-  font-size: 12px;
-  line-height: 1.35;
+  color: #8b94a2;
+  font-size: 13px;
+  line-height: 1.45;
 }
-
-.services-page .product-card-body > p:not(.product-price):not(.product-category):not(.product-stock) {
-  min-height: 72px;
-  margin: 0;
-  color: #8b8e94;
-  font-size: 10px;
-  line-height: 1.5;
-}
-
 .service-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 0 8px;
+  gap: 10px;
+  margin-top: 18px;
+}
+.service-card-footer strong {
+  color: #f05a18;
+  font-size: 17px;
+}
+.service-card-footer button,
+.service-booking-form > button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 13px;
+  background: #ff6811;
+  color: #fff;
+  font:
+    700 12px "Segoe UI",
+    sans-serif;
+  cursor: pointer;
+}
+.service-card-footer button:hover,
+.service-booking-form > button:hover {
+  background: #e95500;
 }
 
-.service-card-footer .product-price {
-  margin: 0;
-  color: #f15d16;
-  font-size: 15px;
+.service-modal-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 16, 14, 0.55);
 }
-
-.service-card-footer span {
-  padding: 3px 7px;
-  border-radius: 99px;
-  background: #e4efff;
-  color: #3977dd;
-  font-size: 9px;
+.service-modal {
+  position: relative;
+  width: min(100%, 500px);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 28px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.service-modal h2 {
+  margin: 0 0 5px;
+  color: #24252a;
+}
+.service-modal-price {
+  margin: 0 0 18px;
+  color: #f05a18;
   font-weight: 700;
 }
-
-.services-page .product-card button {
-  width: 100%;
-  padding: 9px 8px;
-  border-radius: 8px;
-  background: #ff6b0b;
-  font-size: 10px;
-}
-
-.services-page .service-pagination {
-  width: min(100%, 928px);
-  min-height: 48px;
-  align-items: center;
-  margin: 20px auto 24px;
-  padding: 7px 12px;
-  border-radius: 10px;
-  background: #ff6b0b;
-}
-
-.services-page .service-pagination button {
-  min-width: 30px;
-  border-color: transparent;
+.service-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  border: 0;
   background: transparent;
-  color: #ffffff;
-  font-size: 11px;
+  color: #7a818b;
+  font-size: 28px;
+  cursor: pointer;
+}
+.service-booking-form {
+  display: grid;
+  gap: 14px;
+}
+.service-booking-form label {
+  display: grid;
+  gap: 6px;
+  color: #48505c;
+  font-size: 13px;
+  font-weight: 700;
+}
+.service-booking-form input,
+.service-booking-form textarea,
+.service-booking-form select {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #ddd9d4;
+  border-radius: 9px;
+  background: #fff;
+  color: #24252a;
+  font:
+    14px "Segoe UI",
+    sans-serif;
+}
+.service-booking-form textarea {
+  resize: vertical;
+}
+.service-booking-form > button:disabled {
+  background: #b9b5b1;
+  cursor: wait;
+}
+.customer-error,
+.customer-success,
+.customer-empty {
+  width: 100%;
+  margin: 0 0 16px;
+  font-family: "Segoe UI", sans-serif;
 }
 
-.services-page .service-pagination button.active,
-.services-page .service-pagination button:hover {
-  border-color: #ffffff;
-  background: #ffffff;
-  color: #ff6b0b;
-}
-
-@media (max-width: 1200px) {
-  .services-page .product-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 980px) {
-  .services-page .product-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 760px) {
-  .services-page .product-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 620px) {
-  .service-hero {
-    display: block;
-    padding: 22px;
-  }
-
-  .service-hero-stats {
-    justify-content: flex-start;
-    margin-top: 16px;
-  }
-
-  .services-page .product-grid {
+@media (max-width: 900px) {
+  .service-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .services-hero {
+    padding: 32px;
+  }
+  .services-hero-wheel {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .services-page {
+    padding: 0 16px 40px;
+  }
+  .services-page .customer-header {
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .services-page .customer-brand {
+    max-width: 145px;
+  }
+  .services-page .customer-nav {
+    gap: 2px;
+  }
+  .services-page .customer-nav a,
+  .services-page .customer-logout,
+  .services-page .customer-profile-toggle {
+    padding: 7px 6px;
+    font-size: 11px;
+  }
+  .services-hero {
+    min-height: 0;
+    margin-bottom: 24px;
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+  .services-hero-eyebrow {
+    font-size: 10px;
+  }
+  .services-hero h2 {
+    font-size: 28px;
+  }
+  .services-hero > div:first-child > p:not(.services-hero-eyebrow) {
+    font-size: 15px;
+  }
+  .service-category-pills {
+    gap: 7px;
+  }
+  .service-category-pills button {
+    padding: 9px 10px;
+    font-size: 11px;
+  }
+  .service-card-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 }
