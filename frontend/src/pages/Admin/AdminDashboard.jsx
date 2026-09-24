@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Chart from 'chart.js/auto';
 import AdminLayout from '../../components/AdminLayout';
 import { api } from '../../services/api';
+import '../../../Admin/css/revenue.css';
 
 const quarterlySalesData = {
   labels: ['Q1', 'Q2', 'Q3', 'Q4'],
@@ -64,24 +65,40 @@ function AdminDashboard() {
     labels: [],
     datasets: [{ label: 'Revenue', data: [], backgroundColor: '#ff6b35' }]
   });
+  const [concentration, setConcentration] = useState({
+    contributors: [],
+    indicators: { topOneShare: 0, topThreeShare: 0, hhi: 0, concentrationLevel: 'Low' },
+    dependentOnLimitedContributors: false
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([api.getDashboardStats(), api.getQuarterlySales(), api.getDailySales()])
-      .then(([statsResponse, quarterlyResponse, dailyResponse]) => {
+    Promise.all([api.getDashboardStats(), api.getQuarterlySales(), api.getDailySales(), api.getRevenueConcentration()])
+      .then(([statsResponse, quarterlyResponse, dailyResponse, concentrationResponse]) => {
         if (!isMounted) return;
 
         const statsResult = statsResponse.data || {};
         const quarterlyResult = quarterlyResponse.data || [];
         const dailyResult = dailyResponse.data || [];
+        const concentrationResult = concentrationResponse?.data || {
+          contributors: [],
+          indicators: { topOneShare: 0, topThreeShare: 0, hhi: 0, concentrationLevel: 'Low' },
+          dependentOnLimitedContributors: false
+        };
 
         setStats({
           totalRevenue: statsResult.totalRevenue || 0,
           totalTransactions: statsResult.totalTransactions || 0,
           totalInventoryItems: statsResult.totalInventoryItems || 0
+        });
+
+        setConcentration(concentrationResult.contributors?.length ? concentrationResult : {
+          contributors: [],
+          indicators: { topOneShare: 0, topThreeShare: 0, hhi: 0, concentrationLevel: 'Low' },
+          dependentOnLimitedContributors: false
         });
 
         if (quarterlyResult.length) {
@@ -162,7 +179,12 @@ function AdminDashboard() {
                   />
                 </div>
               </div>
-              <div className="chart-card">
+              <div className="risk-card revenue-risk concentration-risk">
+                <div className="risk-header"><h3>REVENUE ANALYSIS</h3></div>
+                <div className="risk-indicator">{isLoading ? '...' : concentration.indicators.concentrationLevel}</div>
+                <div className="risk-description">Top 1: {concentration.indicators.topOneShare}% · Top 3: {concentration.indicators.topThreeShare}% · {concentration.dependentOnLimitedContributors ? 'Dependent on limited contributors' : 'Broad contributor base'}</div>
+              </div>
+              <div className="chart-card full-width">
                 <h3>DAILY SALES</h3>
                 <p className="chart-subtitle">Sales breakdown by category this week</p>
                 <div className="chart-canvas">
