@@ -16,7 +16,6 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-        <Route path="/" element={<h1>RevInsight AI</h1>} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/admin" element={<AdminDashboard />} />
@@ -27,9 +26,9 @@ function App() {
           <Route path="/admin/mechanics" element={<Mechanics />} />
           <Route path="/admin/service-requests" element={<ServiceRequests />} />
         </Route>
+          <Route path="/" element={<Shop />} />
         <Route path="/customer/login" element={<CustomerLogin />} />
         <Route path="/customer/register" element={<CustomerRegister />} />
-        <Route path="/customer/shop" element={<Shop />} />
         <Route path="/customer/cart" element={<Cart />} />
         <Route path="/customer/services" element={<Services />} />
         <Route path="/customer/orders" element={<CustomerProfile />} />
