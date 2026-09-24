@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../../services/api';
 import { CustomerPage } from './CustomerLayout';
-import '../styles/shared.css';
 import '../styles/orders.css';
 
 export default function Orders() {

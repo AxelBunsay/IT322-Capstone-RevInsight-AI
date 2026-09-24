@@ -20,6 +20,7 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/revenue" element={<Revenue />} />
           <Route path="/admin/transactions" element={<Transactions />} />
           <Route path="/admin/inventory" element={<Inventory />} />

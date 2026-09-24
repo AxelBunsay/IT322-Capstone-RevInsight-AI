@@ -1,16 +1,73 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import './mechanic.css';
 
-function MechanicPage({ title, description, children }) {
+function MechanicPage({ title, description, children, showSidebar = true }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navItems = [
+    { to: '/mechanic/dashboard', label: 'Dashboard', icon: '📊' },
+    { to: '/mechanic/jobs', label: 'Jobs', icon: '🔨' },
+    { to: '/mechanic/profile', label: 'Profile', icon: '👤' }
+  ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('mechanicToken');
+    localStorage.removeItem('mechanicUser');
+    navigate('/mechanic/login');
+  };
+
   return (
-    <main className="mechanic-page">
-      <nav aria-label="Mechanic navigation"><Link to="/mechanic/dashboard">Dashboard</Link><Link to="/mechanic/jobs">Jobs</Link><Link to="/mechanic/profile">Profile</Link></nav>
-      <h1>{title}</h1>
-      <p>{description}</p>
-      {children}
-    </main>
+    <div className="mechanic-shell">
+      <div className={`dashboard-container ${showSidebar ? '' : 'mechanic-no-sidebar'}`}>
+        {showSidebar && (
+          <aside className="sidebar">
+            <div className="sidebar-header"><div className="logo">🔧</div></div>
+            <nav className="sidebar-nav" aria-label="Mechanic navigation">
+              {navItems.map((item) => (
+                <Link key={item.to} to={item.to} className={`nav-item ${location.pathname === item.to ? 'active' : ''}`}>
+                  <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-label">{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+            <div className="sidebar-footer">
+              <button type="button" className="logout-btn" onClick={handleLogout}>
+                <span>🚪</span>
+                <span>Logout</span>
+              </button>
+            </div>
+          </aside>
+        )}
+
+        <main className={`main-content ${showSidebar ? '' : 'mechanic-auth-main'}`}>
+          {showSidebar ? (
+            <header className="top-header">
+              <div className="header-title">
+                <span className="section-label">MECHANIC PORTAL</span>
+                <h1>{title}</h1>
+              </div>
+              <div className="header-info">
+                <span className="date">{new Date().toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                <div className="user-avatar">👤</div>
+              </div>
+            </header>
+          ) : (
+            <div className="mechanic-auth-header">
+              <div className="mechanic-logo">🔧</div>
+              <span className="section-label">MECHANIC PORTAL</span>
+              <h1>{title}</h1>
+              {description && <p>{description}</p>}
+            </div>
+          )}
+
+          <div className={`mechanic-page-content ${showSidebar ? '' : 'mechanic-auth-content'}`}>
+            {showSidebar ? children : <div className="mechanic-auth-panel">{children}</div>}
+          </div>
+        </main>
+      </div>
+    </div>
   );
 }
 
@@ -36,7 +93,7 @@ function MechanicLogin() {
     }
   };
 
-  return <MechanicPage title="Mechanic Login" description="Sign in to manage assigned service jobs."><form className="mechanic-form" onSubmit={submitLogin}>{error && <p className="mechanic-error" role="alert">{error}</p>}<label>Email<input type="email" required value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} /></label><label>Password<input type="password" required value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} /></label><button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing in...' : 'Sign In'}</button></form></MechanicPage>;
+  return <MechanicPage title="Mechanic Login" description="Sign in to manage assigned service jobs." showSidebar={false}><form className="mechanic-form" onSubmit={submitLogin}>{error && <p className="mechanic-error" role="alert">{error}</p>}<label>Email<input type="email" required value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} /></label><label>Password<input type="password" required value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} /></label><button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing in...' : 'Sign In'}</button></form></MechanicPage>;
 }
 
 function MechanicDashboard() {

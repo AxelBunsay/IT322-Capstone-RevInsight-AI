@@ -1,3 +1,109 @@
+.customer-page {
+  min-height: 100vh;
+  max-height: none;
+  padding: 22px clamp(16px, 4vw, 64px) 64px;
+  background: radial-gradient(circle at 85% 8%, #ffe1ca 0, transparent 28%), #fff7ed;
+  color: #fdfdfd;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.customer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto 64px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(217, 77, 34, 0.18);
+}
+
+.customer-brand {
+  color: #3d2b24;
+  font: 900 18px 'Segoe UI', sans-serif;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.customer-brand span {
+  color: #f05a28;
+}
+
+.customer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 75px;
+  gap: 8px;
+}
+
+.customer-nav a,
+.customer-logout {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #806b60;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.customer-heading,
+.customer-page > .cart-layout {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.customer-error,
+.customer-empty,
+.customer-success,
+.customer-link {
+  font: 13px 'Segoe UI', sans-serif;
+}
+
+.customer-error {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff0ed;
+  color: #a53828;
+}
+
+.customer-empty {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #806b60;
+}
+
+.customer-success {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #edf8ef;
+  color: #357344;
+}
+
+.customer-link {
+  margin-top: 16px;
+  color: #6d5a50;
+  text-align: center;
+}
+
+.customer-link a,
+.customer-link button {
+  background: none;
+  border: 0;
+  color: #d94d22;
+  font-weight: 700;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
 .cart-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;

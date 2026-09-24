@@ -1,3 +1,246 @@
+.customer-page {
+  min-height: 100vh;
+  max-height: none;
+  padding: 22px clamp(16px, 4vw, 64px) 64px;
+  background: radial-gradient(circle at 85% 8%, #ffe1ca 0, transparent 28%), #fff7ed;
+  color: #fdfdfd;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.customer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto 64px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(217, 77, 34, 0.18);
+}
+
+.customer-brand {
+  color: #3d2b24;
+  font: 900 18px 'Segoe UI', sans-serif;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.customer-brand span {
+  color: #f05a28;
+}
+
+.customer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 75px;
+  gap: 8px;
+}
+
+.customer-nav a,
+.customer-logout {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #806b60;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.customer-nav a:hover,
+.customer-nav a.active,
+.customer-nav .customer-cart-link,
+.customer-profile-toggle:hover,
+.customer-profile-toggle.active {
+  background: #fff0e7;
+  color: #d94d22;
+}
+
+.customer-heading,
+.customer-page > form,
+.customer-page > .shop-toolbar,
+.customer-page > .category-pills,
+.customer-page > .product-grid,
+.customer-page > .service-pagination,
+.customer-page > .service-request-list,
+.customer-page > .orders-list,
+.customer-page > .cart-layout,
+.customer-page > .customer-section-title {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.customer-heading > p:last-child {
+  margin: 0 0 24px;
+  color: #806b60;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.shop-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px auto;
+  gap: 12px;
+  align-items: center;
+  margin: 28px 0 24px;
+}
+
+.shop-toolbar input,
+.shop-toolbar select,
+.service-form input {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #e5cfc0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #49372f;
+  font: 14px 'Segoe UI', sans-serif;
+}
+
+.shop-toolbar span {
+  color: #806b60;
+  font: 700 13px 'Segoe UI', sans-serif;
+  white-space: nowrap;
+}
+
+.category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.category-pills button,
+.service-pagination button {
+  padding: 8px 13px;
+  border: 1px solid #f0ded1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #806b60;
+  font: 700 12px 'Segoe UI', sans-serif;
+  cursor: pointer;
+}
+
+.category-pills button.active,
+.category-pills button:hover,
+.service-pagination button.active {
+  border-color: #f05a28;
+  background: #f05a28;
+  color: #ffffff;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.product-card {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #f0ded1;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(120, 64, 32, 0.08);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(120, 64, 32, 0.14);
+}
+
+.product-image {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, #ffd5bd, #f9a477);
+  color: #9b421f;
+  font: 700 15px 'Segoe UI', sans-serif;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-card-body {
+  padding: 16px;
+}
+
+.product-card h2 {
+  margin: 0 0 5px;
+  font: 700 18px 'Segoe UI', sans-serif;
+}
+
+.product-card-body > p:not(.product-price):not(.product-category):not(.product-stock) {
+  min-height: 42px;
+  margin: 0;
+  color: #806b60;
+  font: 13px/1.5 'Segoe UI', sans-serif;
+}
+
+.product-price {
+  margin: 12px 0 4px;
+  color: #e94f21;
+  font: 700 22px 'Segoe UI', sans-serif;
+}
+
+.product-card button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #f05a28;
+  color: #ffffff;
+  font: 700 13px 'Segoe UI', sans-serif;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.product-card button:disabled {
+  background: #c9bdb7;
+  cursor: not-allowed;
+}
+
+.service-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px auto 28px;
+}
+
+.customer-error,
+.customer-empty {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font: 13px 'Segoe UI', sans-serif;
+}
+
+.customer-error {
+  background: #fff0ed;
+  color: #a53828;
+}
+
+.customer-empty {
+  background: #ffffff;
+  color: #806b60;
+}
+
+.customer-success {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #edf8ef;
+  color: #357344;
+  font: 13px 'Segoe UI', sans-serif;
+}
+
 .shop-page {
   padding: 0 0 48px;
   min-height: auto;

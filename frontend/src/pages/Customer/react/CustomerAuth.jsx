@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../../services/api';
 import { CustomerAuthShell } from './CustomerLayout';
-import '../styles/shared.css';
+import '../styles/auth.css';
 
 export function CustomerLogin() {
   const navigate = useNavigate();

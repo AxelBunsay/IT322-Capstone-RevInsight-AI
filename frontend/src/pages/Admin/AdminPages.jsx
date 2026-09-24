@@ -616,11 +616,6 @@ function Revenue() {
             <div className="risk-indicator">{isLoading ? '...' : Number(stats.totalTransactions || 0).toLocaleString()}</div>
             <div className="risk-description">Confirmed orders contributing to revenue</div>
           </div>
-          <div className="risk-card revenue-risk concentration-risk">
-            <div className="risk-header"><h3>REVENUE CONCENTRATION</h3></div>
-            <div className="risk-indicator">{concentration.indicators.concentrationLevel}</div>
-            <div className="risk-description">Top 1: {concentration.indicators.topOneShare}% · Top 3: {concentration.indicators.topThreeShare}% · {concentration.dependentOnLimitedContributors ? 'Dependent on limited contributors' : 'Broad contributor base'}</div>
-          </div>
           <div className="chart-card full-width revenue-contributors">
             <h3>TOP REVENUE CONTRIBUTORS</h3>
             {!concentration.contributors.length ? <p>No completed product or labor revenue yet.</p> : <div className="concentration-list">{concentration.contributors.slice(0, 8).map((contributor) => <div className="concentration-row" key={`${contributor.contributorType}-${contributor.name}`}><span><strong>{contributor.name}</strong><small>{contributor.contributorType}</small></span><span>₱{Number(contributor.revenue).toLocaleString('en-PH', { minimumFractionDigits: 2 })} · {contributor.share}%</span></div>)}</div>}

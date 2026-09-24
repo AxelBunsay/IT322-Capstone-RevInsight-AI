@@ -1,124 +1,113 @@
-.inventory-container {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+@import '../../src/pages/Admin/react-admin.css';
+
+.inventory-container,
+.transactions-container,
+.mechanics-container {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
 }
 
-.inventory-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+.inventory-header,
+.transactions-header,
+.mechanics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
+.inventory-header h2,
+.transactions-header h2,
+.mechanics-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.search-filter,
 .inventory-header input {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-right: 15px;
-    font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.inventory-info {
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: #999;
+.search-filter input,
+.inventory-header input,
+.search-filter select {
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.85rem;
 }
 
-.inventory-table {
-    width: 100%;
-    border-collapse: collapse;
+.table-wrap {
+  overflow-x: auto;
 }
 
-.inventory-table thead {
-    background-color: #f9f9f9;
+.inventory-table,
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.inventory-table th {
-    padding: 15px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    color: #999;
-    border-bottom: 1px solid #eee;
+.inventory-table th,
+.inventory-table td,
+.transactions-table th,
+.transactions-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eef2f7;
+  text-align: left;
 }
 
-.inventory-table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    font-size: 13px;
+.inventory-table th,
+.transactions-table th {
+  color: #475569;
+  background: #f8fafc;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.inventory-table tbody tr:hover {
-    background-color: #f9f9f9;
+.status-badge,
+.action-btn,
+.btn-primary,
+.btn-small,
+.pagination-button {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
 }
 
-.stock-text {
-    color: #52c77a;
-    font-weight: 600;
+.status-badge {
+  padding: 6px 8px;
+  background: #e0f2fe;
+  color: #0f766e;
 }
 
-.stock-text.low {
-    color: #ff6b35;
+.btn-primary,
+.btn-small {
+  background: #ff6b35;
+  color: #fff;
+  padding: 9px 14px;
 }
 
-.pagination-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 18px;
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .pagination-button {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    color: #333;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background-color 0.2s, border-color 0.2s;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  color: #111827;
 }
 
-.pagination-page {
-    align-self: center;
-    padding: 8px 4px;
-    color: #777;
-    font-size: 13px;
-}
-
-.pagination-button:hover:not(.disabled) {
-    background-color: #f7f7f7;
-}
-
-.pagination-button.active {
-    background-color: #ff6b35;
-    border-color: #ff6b35;
-    color: #fff;
-}
-
-.pagination-button.disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-@media (max-width: 640px) {
-    .inventory-container {
-        padding: 16px;
-        overflow-x: auto;
-    }
-
-    .inventory-table { min-width: 560px; }
-
-    .inventory-header {
-        align-items: stretch;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .inventory-header input {
-        margin-right: 0;
-    }
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
