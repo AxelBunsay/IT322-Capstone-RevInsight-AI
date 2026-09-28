@@ -1,0 +1,48 @@
+{
+  "stats": {
+    "itemsSold": { "value": 3486, "change": 8.2, "sparkline": [21, 25, 23, 28, 27, 30, 28, 34, 32, 37, 35, 39] },
+    "totalTransactions": { "value": 892, "change": 5.1, "sparkline": [12, 15, 13, 18, 17, 21, 19, 23, 21, 26, 24, 28] },
+    "inventoryItems": { "value": 44, "change": -2, "sparkline": [12, 14, 15, 15, 16, 17, 18, 19, 20, 20, 20, 20] },
+    "revenue": { "value": 1286600, "change": 9.4, "sparkline": [20, 24, 21, 28, 26, 32, 30, 36, 33, 39, 36, 42] }
+  },
+  "badges": { "pendingTransactions": 12, "lowStock": 6 },
+  "salesSeries": {
+    "daily": [
+      { "label": "Tue", "value": 3100 }, { "label": "Wed", "value": 4000 },
+      { "label": "Thu", "value": 2600 }, { "label": "Fri", "value": 5300 },
+      { "label": "Sat", "value": 6300 }, { "label": "Sun", "value": 7500 },
+      { "label": "Mon", "value": 4900 }
+    ],
+    "weekly": [
+      { "label": "Aug 10", "value": 22500 }, { "label": "Aug 17", "value": 27800 },
+      { "label": "Aug 24", "value": 24100 }, { "label": "Aug 31", "value": 32600 },
+      { "label": "Sep 7", "value": 29300 }, { "label": "Sep 14", "value": 35400 },
+      { "label": "Sep 21", "value": 31900 }, { "label": "Sep 28", "value": 33700 }
+    ],
+    "monthly": [
+      { "label": "Oct", "value": 118000 }, { "label": "Nov", "value": 102000 },
+      { "label": "Dec", "value": 136000 }, { "label": "Jan", "value": 111000 },
+      { "label": "Feb", "value": 124000 }, { "label": "Mar", "value": 107000 },
+      { "label": "Apr", "value": 132000 }, { "label": "May", "value": 119000 },
+      { "label": "Jun", "value": 143000 }, { "label": "Jul", "value": 128000 },
+      { "label": "Aug", "value": 151000 }, { "label": "Sep", "value": 115600 }
+    ]
+  },
+  "categories": [
+    { "name": "Engine parts", "revenue": 620000 },
+    { "name": "Accessories", "revenue": 330000 },
+    { "name": "Brake parts", "revenue": 230000 },
+    { "name": "Services & other", "revenue": 106600 }
+  ],
+  "inventoryHealth": {
+    "inStock": 36,
+    "low": 6,
+    "out": 2,
+    "lowItems": [
+      { "id": "demo-1", "name": "Front brake pad set", "quantity": 3 },
+      { "id": "demo-2", "name": "Motorcycle chain 428H", "quantity": 4 },
+      { "id": "demo-3", "name": "LED signal light pair", "quantity": 6 },
+      { "id": "demo-4", "name": "Oil filter assembly", "quantity": 8 }
+    ]
+  }
+}

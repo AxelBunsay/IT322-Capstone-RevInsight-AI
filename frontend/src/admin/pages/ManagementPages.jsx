@@ -1,12 +1,17 @@
 import { useRef, useState, useEffect } from 'react';
 import Chart from 'chart.js/auto';
 import { useNavigate } from 'react-router-dom';
-import AdminLayout from '../../components/AdminLayout';
-import { api } from '../../services/api';
-import '../../../Admin/css/inventory.css';
-import '../../../Admin/css/transactions.css';
-import '../../../Admin/css/mechanics.css';
-import '../../../Admin/css/revenue.css';
+import { adminApi as api } from '../services/adminApi';
+
+const emptyConcentration = {
+  contributors: [],
+  indicators: { topOneShare: 0, topThreeShare: 0, hhi: 0, concentrationLevel: 'Low' },
+  dependentOnLimitedContributors: false
+};
+
+function AdminPageFrame({ children }) {
+  return <div className="admin-management-page">{children}</div>;
+}
 
 function AdminDialog({ title, children, onClose }) {
   return (
@@ -174,7 +179,7 @@ function Inventory() {
   const filteredItems = inventoryItems.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <AdminLayout title="INVENTORY" activePath="/admin/inventory">
+    <AdminPageFrame>
       <section className="section-content active">
         <div className="inventory-container">
           {error && <p className="dashboard-error" role="alert">{error}</p>}
@@ -211,7 +216,7 @@ function Inventory() {
           <div className="admin-dialog-actions"><button className="btn-small" type="button" onClick={() => { setEditingItem(null); setIsAdding(false); }}>Cancel</button><button className="btn-primary" type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Item'}</button></div>
         </form>
       </AdminDialog>}
-    </AdminLayout>
+    </AdminPageFrame>
   );
 }
 
@@ -298,7 +303,7 @@ function Transactions() {
   };
 
   return (
-    <AdminLayout title="TRANSACTIONS" activePath="/admin/transactions">
+    <AdminPageFrame>
       <section className="section-content active">
         <div className="transactions-container">
           {error && <p className="dashboard-error" role="alert">{error}</p>}
@@ -325,7 +330,7 @@ function Transactions() {
           <p><strong>Items:</strong> {Array.isArray(selectedTransaction.items) ? selectedTransaction.items.map((item) => item.name || item.productName || item.productId?.name || 'Item').join(', ') : selectedTransaction.itemName || selectedTransaction.items || 'N/A'}</p>
         </div>
       </AdminDialog>}
-    </AdminLayout>
+    </AdminPageFrame>
   );
 }
 
@@ -414,7 +419,7 @@ function Mechanics() {
   };
 
   return (
-    <AdminLayout title="MECHANICS" activePath="/admin/mechanics">
+    <AdminPageFrame>
       <section className="section-content active">
         <div className="mechanics-container">
           {error && <p className="dashboard-error" role="alert">{error}</p>}
@@ -454,7 +459,7 @@ function Mechanics() {
           <div className="admin-dialog-actions"><button className="btn-small" type="button" onClick={() => { setEditingMechanic(null); setIsAdding(false); }}>Cancel</button><button className="btn-primary" type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Mechanic'}</button></div>
         </form>
       </AdminDialog>}
-    </AdminLayout>
+    </AdminPageFrame>
   );
 }
 
@@ -493,7 +498,38 @@ function ServiceRequests() {
     try { await api.updateAdminServiceRequestStatus(requestId, status); await loadRequests(); } catch (saveError) { setError(saveError.message || 'Failed to update booking status'); } finally { setSavingId(''); }
   };
 
-  return <AdminLayout title="SERVICE REQUESTS" activePath="/admin/service-requests"><section className="section-content active"><div className="mechanics-container">{error && <p className="dashboard-error" role="alert">{error}</p>}<div className="mechanics-header"><h2>SERVICE REQUESTS</h2></div>{isLoading ? <p>Loading service requests...</p> : !requests.length ? <p>No service requests found.</p> : requests.map((request) => <article className="mechanic-card" key={request._id}><div className="mechanic-header-row"><div><div className="mechanic-name">{request.serviceType.replaceAll('-', ' ')}</div><div className="mechanic-email">{request.user ? `${request.user.firstName || ''} ${request.user.lastName || ''}`.trim() : 'Customer'}</div><p>{request.description}</p><small>{request.scheduledDate ? `Scheduled ${new Date(request.scheduledDate).toLocaleDateString('en-PH')}` : 'No date selected'} · ₱{Number(request.estimatedPrice || 0).toLocaleString('en-PH')}</small></div><span className={`status-badge status-${request.status}`}>{request.status.replaceAll('-', ' ')}</span></div><div className="mechanic-actions"><select value={request.mechanic?._id || request.mechanic || ''} disabled={savingId === request._id} onChange={(event) => confirmAssignment(request._id, event.target.value)}><option value="">Select mechanic</option>{mechanics.map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName}</option>)}</select><select value={request.status} disabled={savingId === request._id} onChange={(event) => updateStatus(request._id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="accepted">Accepted</option><option value="in-progress">In progress</option><option value="completed">Completed</option><option value="declined">Declined</option></select></div></article>)}</div></section></AdminLayout>;
+  return (
+    <AdminPageFrame>
+      <section className="admin-management-section">
+        <div className="mechanics-container">
+          {error && <p className="dashboard-error" role="alert">{error}</p>}
+          <div className="mechanics-header"><h2>Service requests</h2></div>
+          {isLoading ? <p>Loading service requests...</p> : !requests.length ? <p>No service requests found.</p> : requests.map((request) => (
+            <article className="mechanic-card" key={request._id}>
+              <div className="mechanic-header-row">
+                <div>
+                  <div className="mechanic-name">{request.serviceType.replaceAll('-', ' ')}</div>
+                  <div className="mechanic-email">{request.user ? `${request.user.firstName || ''} ${request.user.lastName || ''}`.trim() : 'Customer'}</div>
+                  <p>{request.description}</p>
+                  <small>{request.scheduledDate ? `Scheduled ${new Date(request.scheduledDate).toLocaleDateString('en-PH')}` : 'No date selected'} · ₱{Number(request.estimatedPrice || 0).toLocaleString('en-PH')}</small>
+                </div>
+                <span className={`status-badge status-${request.status}`}>{request.status.replaceAll('-', ' ')}</span>
+              </div>
+              <div className="mechanic-actions">
+                <select aria-label={`Assign mechanic for ${request.serviceType}`} value={request.mechanic?._id || request.mechanic || ''} disabled={savingId === request._id} onChange={(event) => confirmAssignment(request._id, event.target.value)}>
+                  <option value="">Select mechanic</option>
+                  {mechanics.map((mechanic) => <option key={mechanic.id || mechanic._id} value={mechanic.id || mechanic._id}>{mechanic.firstName} {mechanic.lastName}</option>)}
+                </select>
+                <select aria-label={`Update status for ${request.serviceType}`} value={request.status} disabled={savingId === request._id} onChange={(event) => updateStatus(request._id, event.target.value)}>
+                  <option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="accepted">Accepted</option><option value="in-progress">In progress</option><option value="completed">Completed</option><option value="declined">Declined</option>
+                </select>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </AdminPageFrame>
+  );
 }
 
 function RevenueChart({ type, data }) {
@@ -518,7 +554,7 @@ function RevenueChart({ type, data }) {
 
 function Revenue() {
   const [stats, setStats] = useState({ totalRevenue: 0 });
-  const [concentration, setConcentration] = useState({ contributors: [], indicators: { topOneShare: 0, topThreeShare: 0, hhi: 0, concentrationLevel: 'Low' }, dependentOnLimitedContributors: false });
+  const [concentration, setConcentration] = useState(emptyConcentration);
   const [quarterlyData, setQuarterlyData] = useState({
     labels: [],
     datasets: [{ label: 'Revenue', data: [], borderColor: '#ff6b35', backgroundColor: 'rgba(255, 107, 53, 0.15)', borderWidth: 3, tension: 0.3, fill: true }]
@@ -572,7 +608,7 @@ function Revenue() {
           totalRevenue: records.length ? fallback.totalRevenue : (legacyStats.totalRevenue || 0),
           totalTransactions: records.length ? fallback.totalTransactions : (legacyStats.totalTransactions || 0)
         });
-        setConcentration(legacyConcentration?.contributors?.length ? legacyConcentration : (records.length ? fallback.concentration : concentration));
+        setConcentration(legacyConcentration?.contributors?.length ? legacyConcentration : (records.length ? fallback.concentration : emptyConcentration));
         setQuarterlyData((currentData) => ({
           ...currentData,
           labels: (legacyQuarterly.length ? legacyQuarterly : fallback.quarterly).map((item) => `Q${item._id.quarter} ${item._id.year}`),
@@ -602,7 +638,7 @@ function Revenue() {
   }, []);
 
   return (
-    <AdminLayout title="REVENUE" activePath="/admin/revenue">
+    <AdminPageFrame>
       <section className="section-content active">
         <div className="analytics-grid">
           {error && <p className="dashboard-error" role="alert">{error}</p>}
@@ -644,7 +680,7 @@ function Revenue() {
           </div>
         </div>
       </section>
-    </AdminLayout>
+    </AdminPageFrame>
   );
 }
 

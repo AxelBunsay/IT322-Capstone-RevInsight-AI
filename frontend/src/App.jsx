@@ -1,9 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AuthProvider from './context/AuthProvider';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import ProtectedRoute from './components/ProtectedRoute';
-import { Inventory, Mechanics, Revenue, ServiceRequests, Transactions } from './pages/Admin/AdminPages';
-import AdminLogin from './pages/Auth/AdminLogin';
+import { AdminApp } from './admin';
 import Cart from './pages/Customer/react/Cart';
 import { CustomerLogin, CustomerRegister } from './pages/Customer/react/CustomerAuth';
 import CustomerProfile from './pages/Customer/react/Profile';
@@ -16,16 +13,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/revenue" element={<Revenue />} />
-          <Route path="/admin/transactions" element={<Transactions />} />
-          <Route path="/admin/inventory" element={<Inventory />} />
-          <Route path="/admin/mechanics" element={<Mechanics />} />
-          <Route path="/admin/service-requests" element={<ServiceRequests />} />
-        </Route>
+        <Route path="/admin/*" element={<AdminApp />} />
           <Route path="/" element={<Shop />} />
         <Route path="/customer/login" element={<CustomerLogin />} />
         <Route path="/customer/register" element={<CustomerRegister />} />
