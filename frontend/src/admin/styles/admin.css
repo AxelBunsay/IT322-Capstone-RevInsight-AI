@@ -12,8 +12,12 @@
   --good: #2E9E5B;
   --bad: #D6402B;
   --warn: #E6A100;
-  min-height: 100vh;
-  min-height: 100dvh;
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg);
   color: var(--ink);
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;

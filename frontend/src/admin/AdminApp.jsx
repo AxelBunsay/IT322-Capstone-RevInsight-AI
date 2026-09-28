@@ -3,7 +3,6 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
-import Revenue from './pages/Revenue';
 import Transactions from './pages/Transactions';
 import Inventory from './pages/Inventory';
 import Mechanics from './pages/Mechanics';
@@ -17,7 +16,6 @@ function AdminApp() {
         <Route element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="revenue" element={<Revenue />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="mechanics" element={<Mechanics />} />

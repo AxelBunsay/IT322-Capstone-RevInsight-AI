@@ -189,7 +189,6 @@ export const adminApi = {
   getTransactions: (page = 1, limit = 10, status = '') => request(`/api/dashboard/transactions?page=${page}&limit=${limit}${status ? `&status=${encodeURIComponent(status)}` : ''}`),
   getTransaction: (id) => request(`/api/dashboard/transactions/${id}`),
   updateTransaction: (id, transaction) => request(`/api/dashboard/transactions/${id}`, { method: 'PUT', body: JSON.stringify(transaction) }),
-  askRevenueAI: (question) => request('/api/admin/revenue/ask-ai', { method: 'POST', body: JSON.stringify({ question }) }),
   getMechanics: () => request('/api/mechanics/all'),
   createMechanic: (mechanic) => request('/api/mechanics/create', { method: 'POST', body: JSON.stringify(mechanic) }),
   updateMechanic: (id, mechanic) => request(`/api/mechanics/${id}`, { method: 'PUT', body: JSON.stringify(mechanic) }),

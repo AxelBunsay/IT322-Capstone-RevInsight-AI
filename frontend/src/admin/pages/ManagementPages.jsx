@@ -1,13 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
-import Chart from 'chart.js/auto';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { adminApi as api } from '../services/adminApi';
-
-const emptyConcentration = {
-  contributors: [],
-  indicators: { topOneShare: 0, topThreeShare: 0, hhi: 0, concentrationLevel: 'Low' },
-  dependentOnLimitedContributors: false
-};
 
 function AdminPageFrame({ children }) {
   return <div className="admin-management-page">{children}</div>;
@@ -38,57 +30,6 @@ function formatBusinessRecord(record) {
     status: record.status || 'completed',
     mechanic: record.mechanicName || (record.recordType === 'service' ? 'Unassigned' : 'N/A'),
     recordLabel: record.recordType === 'service' ? 'Service' : 'Product'
-  };
-}
-
-function buildRevenueAnalytics(records) {
-  const quarterly = new Map();
-  const daily = new Map();
-  const contributors = new Map();
-  const totalRevenue = records.reduce((sum, record) => sum + Number(record.amount || 0), 0);
-
-  records.forEach((record) => {
-    const date = new Date(record.completedAt || record.createdAt);
-    const quarter = Math.floor(date.getMonth() / 3) + 1;
-    const quarterKey = `${date.getFullYear()}-${quarter}`;
-    const dayKey = date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-    const contributorKey = record.category || record.itemName || 'Other';
-    const amount = Number(record.amount || 0);
-
-    quarterly.set(quarterKey, (quarterly.get(quarterKey) || 0) + amount);
-    daily.set(dayKey, (daily.get(dayKey) || 0) + amount);
-    contributors.set(contributorKey, (contributors.get(contributorKey) || 0) + amount);
-  });
-
-  const contributorRows = [...contributors.entries()]
-    .map(([name, revenue]) => ({
-      name,
-      revenue,
-      contributorType: 'Business record',
-      share: totalRevenue ? Number(((revenue / totalRevenue) * 100).toFixed(2)) : 0
-    }))
-    .sort((left, right) => right.revenue - left.revenue);
-  const topOneShare = contributorRows[0]?.share || 0;
-  const topThreeShare = contributorRows.slice(0, 3).reduce((sum, row) => sum + row.share, 0);
-
-  return {
-    totalRevenue,
-    totalTransactions: records.length,
-    quarterly: [...quarterly.entries()].sort().map(([key, revenue]) => {
-      const [year, quarter] = key.split('-');
-      return { _id: { year: Number(year), quarter: Number(quarter) }, revenue };
-    }),
-    daily: [...daily.entries()].map(([_id, revenue]) => ({ _id, revenue })),
-    concentration: {
-      contributors: contributorRows,
-      indicators: {
-        topOneShare,
-        topThreeShare,
-        hhi: contributorRows.reduce((sum, row) => sum + ((row.share / 100) ** 2) * 10000, 0),
-        concentrationLevel: topOneShare >= 70 ? 'High' : topOneShare >= 40 ? 'Moderate' : 'Low'
-      },
-      dependentOnLimitedContributors: topOneShare >= 70
-    }
   };
 }
 
@@ -221,7 +162,6 @@ function Inventory() {
 }
 
 function Transactions() {
-  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [transactions, setTransactions] = useState([]);
@@ -307,7 +247,7 @@ function Transactions() {
       <section className="section-content active">
         <div className="transactions-container">
           {error && <p className="dashboard-error" role="alert">{error}</p>}
-          <div className="transactions-header"><button className="btn-primary" type="button" onClick={() => navigate('/admin/revenue')}>View Revenue</button><div className="transactions-info">Total: ₱{Number(totalAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div></div>
+          <div className="transactions-header"><div className="transactions-info">Total: ₱{Number(totalAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div></div>
           <div className="search-filter"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by customer, item, mechanic..." /><select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}><option value="All">All</option><option value="completed">Completed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option><option value="Paid">Legacy Paid</option></select></div>
           {isLoading ? <p>Loading transactions...</p> : <table className="transactions-table">
             <thead><tr><th>RECORD ID</th><th>DATE</th><th>TYPE</th><th>CUSTOMER</th><th>ITEM / SERVICE</th><th>AMOUNT</th><th>STATUS</th><th>MECHANIC</th><th>ACTION</th></tr></thead>
@@ -532,156 +472,4 @@ function ServiceRequests() {
   );
 }
 
-function RevenueChart({ type, data }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const chart = new Chart(canvasRef.current, {
-      type,
-      data,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } }
-      }
-    });
-
-    return () => chart.destroy();
-  }, [type, data]);
-
-  return <canvas ref={canvasRef} role="img" aria-label={`${data.datasets[0].label} chart`} />;
-}
-
-function Revenue() {
-  const [stats, setStats] = useState({ totalRevenue: 0 });
-  const [concentration, setConcentration] = useState(emptyConcentration);
-  const [quarterlyData, setQuarterlyData] = useState({
-    labels: [],
-    datasets: [{ label: 'Revenue', data: [], borderColor: '#ff6b35', backgroundColor: 'rgba(255, 107, 53, 0.15)', borderWidth: 3, tension: 0.3, fill: true }]
-  });
-  const [dailyData, setDailyData] = useState({
-    labels: [],
-    datasets: [{ label: 'Revenue', data: [], backgroundColor: '#4a90e2' }]
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [aiQuestion, setAiQuestion] = useState('');
-  const [aiAnswer, setAiAnswer] = useState('');
-  const [isAskingAI, setIsAskingAI] = useState(false);
-
-  const askAI = async () => {
-    if (!aiQuestion.trim()) return;
-    setIsAskingAI(true);
-    setError('');
-    try {
-      const response = await api.askRevenueAI(aiQuestion.trim());
-      setAiAnswer(response.answer || 'No insight was returned.');
-    } catch (requestError) {
-      setError(requestError.message || 'AI insights could not be generated.');
-    } finally {
-      setIsAskingAI(false);
-    }
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadRevenue = () => {
-      setIsLoading(true);
-      Promise.allSettled([api.getDashboardStats(), api.getQuarterlySales(), api.getDailySales(), api.getRevenueConcentration(), api.getBusinessRecords({ status: 'completed' })])
-      .then(([statsResult, quarterlyResult, dailyResult, concentrationResult, recordsResult]) => {
-        if (!isMounted) return;
-
-        const records = recordsResult.status === 'fulfilled' ? (recordsResult.value.data || []).map(formatBusinessRecord) : [];
-        const fallback = buildRevenueAnalytics(records);
-        const legacyStats = statsResult.status === 'fulfilled' ? (statsResult.value.data || {}) : {};
-        const legacyQuarterly = quarterlyResult.status === 'fulfilled' ? (quarterlyResult.value.data || []) : [];
-        const legacyDaily = dailyResult.status === 'fulfilled' ? (dailyResult.value.data || []) : [];
-        const legacyConcentration = concentrationResult.status === 'fulfilled' ? concentrationResult.value.data : null;
-
-        if ([statsResult, quarterlyResult, dailyResult, concentrationResult, recordsResult].every((result) => result.status === 'rejected')) {
-          setError('Revenue data could not be loaded. Check the backend and MongoDB connection.');
-        }
-
-        setStats({
-          ...legacyStats,
-          totalRevenue: records.length ? fallback.totalRevenue : (legacyStats.totalRevenue || 0),
-          totalTransactions: records.length ? fallback.totalTransactions : (legacyStats.totalTransactions || 0)
-        });
-        setConcentration(legacyConcentration?.contributors?.length ? legacyConcentration : (records.length ? fallback.concentration : emptyConcentration));
-        setQuarterlyData((currentData) => ({
-          ...currentData,
-          labels: (legacyQuarterly.length ? legacyQuarterly : fallback.quarterly).map((item) => `Q${item._id.quarter} ${item._id.year}`),
-          datasets: [{ ...currentData.datasets[0], data: (legacyQuarterly.length ? legacyQuarterly : fallback.quarterly).map((item) => item.revenue || 0) }]
-        }));
-        setDailyData((currentData) => ({
-          ...currentData,
-          labels: (legacyDaily.length ? legacyDaily : fallback.daily).map((item) => item._id),
-          datasets: [{ ...currentData.datasets[0], data: (legacyDaily.length ? legacyDaily : fallback.daily).map((item) => item.revenue || 0) }]
-        }));
-      })
-      .catch((requestError) => {
-        if (isMounted) setError(requestError.message || 'Revenue data could not be loaded.');
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-    };
-
-    loadRevenue();
-    const refreshInterval = window.setInterval(loadRevenue, 30000);
-
-    return () => {
-      isMounted = false;
-      window.clearInterval(refreshInterval);
-    };
-  }, []);
-
-  return (
-    <AdminPageFrame>
-      <section className="section-content active">
-        <div className="analytics-grid">
-          {error && <p className="dashboard-error" role="alert">{error}</p>}
-          <div className="stat-card revenue-stat">
-            <div className="stat-header"><h3>TOTAL REVENUE</h3><div className="stat-indicator orange"></div></div>
-            <div className="stat-value">₱{Number(stats.totalRevenue).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-            <div className="stat-subtitle">{isLoading ? 'Loading...' : 'From confirmed orders'}</div>
-          </div>
-          <div className="risk-card revenue-risk transactions-risk">
-            <div className="risk-header"><h3>TRANSACTIONS</h3></div>
-            <div className="risk-indicator">{isLoading ? '...' : Number(stats.totalTransactions || 0).toLocaleString()}</div>
-            <div className="risk-description">Confirmed orders contributing to revenue</div>
-          </div>
-          <div className="chart-card full-width revenue-contributors">
-            <h3>TOP REVENUE CONTRIBUTORS</h3>
-            {!concentration.contributors.length ? <p>No completed product or labor revenue yet.</p> : <div className="concentration-list">{concentration.contributors.slice(0, 8).map((contributor) => <div className="concentration-row" key={`${contributor.contributorType}-${contributor.name}`}><span><strong>{contributor.name}</strong><small>{contributor.contributorType}</small></span><span>₱{Number(contributor.revenue).toLocaleString('en-PH', { minimumFractionDigits: 2 })} · {contributor.share}%</span></div>)}</div>}
-          </div>
-          <div className="ai-card revenue-ai">
-            <div className="ai-header">
-              <h3>Ask AI for Revenue Insights</h3>
-              <button className="btn-clear" type="button" onClick={() => { setAiQuestion(''); setAiAnswer(''); }}>Clear</button>
-            </div>
-            <p className="ai-intro">Hello! I&apos;m your AI revenue analyst. Ask me about your revenue trends, risk levels, or category performance.</p>
-            <div className="ai-input-row">
-              <input className="ai-input" value={aiQuestion} onChange={(event) => setAiQuestion(event.target.value)} placeholder="Ask about revenue..." aria-label="Ask about revenue" />
-              <button className="btn-send" type="button" onClick={askAI} disabled={isAskingAI || !aiQuestion.trim()} aria-label="Send revenue question">{isAskingAI ? 'Asking...' : 'Send'}</button>
-            </div>
-            {aiAnswer && <div className="ai-answer"><pre>{aiAnswer}</pre></div>}
-          </div>
-          <div className="revenue-charts revenue-chart-stack">
-            <div className="chart-card full-width">
-              <h3>QUARTERLY REVENUE</h3>
-              <div className="chart-canvas"><RevenueChart type="line" data={quarterlyData} /></div>
-            </div>
-            <div className="chart-card full-width">
-              <h3>DAILY REVENUE</h3>
-              <div className="chart-canvas"><RevenueChart type="bar" data={dailyData} /></div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </AdminPageFrame>
-  );
-}
-
-export { Inventory, Transactions, Mechanics, ServiceRequests, Revenue };
+export { Inventory, Transactions, Mechanics, ServiceRequests };
