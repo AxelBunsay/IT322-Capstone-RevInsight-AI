@@ -1,6 +1,6 @@
 export const adminTheme = {
-  brandName: 'MMPS',
-  brandMark: 'M',
+  brandName: 'REVINSIGHT',
+  brandMark: 'R',
   colors: {
     bg: '#FBF4EE',
     surface: '#FFFFFF',
