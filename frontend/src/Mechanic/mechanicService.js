@@ -1,4 +1,4 @@
-import { api } from '../../services/api';
+import { api } from '../services/api';
 
 const DEMO_EMAIL = 'miguel@workshop.ph';
 const DEMO_PASSWORD = 'miguel123';

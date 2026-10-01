@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import CategoryRevenue from '../components/dashboard/CategoryRevenue';
+import AIRevenueAnalysis from '../components/dashboard/AIRevenueAnalysis';
 import InventoryHealth from '../components/dashboard/InventoryHealth';
 import PeriodToggle from '../components/dashboard/PeriodToggle';
 import SalesChart from '../components/dashboard/SalesChart';
@@ -48,10 +49,13 @@ function Dashboard() {
       </Panel>
 
       {dashboard.data ? (
-        <div className="admin-dashboard-lower">
-          <CategoryRevenue categories={dashboard.data.categories || []} />
-          <InventoryHealth inventory={dashboard.data.inventoryHealth} />
-        </div>
+        <>
+          <div className="admin-dashboard-lower">
+            <CategoryRevenue categories={dashboard.data.categories || []} />
+            <InventoryHealth inventory={dashboard.data.inventoryHealth} />
+          </div>
+          <AIRevenueAnalysis dashboardData={dashboard.data} />
+        </>
       ) : dashboard.loading ? (
         <div className="admin-dashboard-lower"><Skeleton className="admin-panel-skeleton" /><Skeleton className="admin-panel-skeleton" /></div>
       ) : <EmptyState>No dashboard data is available.</EmptyState>}

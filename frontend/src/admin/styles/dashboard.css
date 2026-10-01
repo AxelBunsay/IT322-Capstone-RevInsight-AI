@@ -71,6 +71,60 @@
 .admin-root .admin-low-stock__row > span:first-child { overflow: hidden; color: var(--ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .admin-root .admin-panel-skeleton { min-height: 235px; border: 1px solid var(--line); border-radius: 20px; }
 
+.admin-root .ai-revenue-analysis { margin-top: 14px; padding: 18px 20px 24px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); }
+.admin-root .ai-revenue-analysis__header { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.admin-root .ai-revenue-analysis__title { display: flex; align-items: center; gap: 11px; }
+.admin-root .ai-revenue-analysis__mark { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; background: var(--brand); color: #fff; font-size: 18px; }
+.admin-root .ai-revenue-analysis h2 { margin: 0; color: var(--ink); font-size: 16px; font-weight: 800; }
+.admin-root .ai-revenue-analysis p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+.admin-root .ai-revenue-tabs { display: flex; gap: 3px; padding: 4px; overflow-x: auto; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+.admin-root .ai-revenue-tabs button { min-width: 54px; min-height: 32px; padding: 6px 9px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer; }
+.admin-root .ai-revenue-tabs button.is-active { background: var(--brand); color: #fff; }
+.admin-root .ai-revenue-summary { display: grid; grid-template-columns: minmax(200px, .8fr) minmax(300px, 1.2fr); align-items: center; gap: 30px; margin-bottom: 16px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 17px; background: #fffdfa; }
+.admin-root .ai-revenue-summary > div:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px; }
+.admin-root .ai-revenue-summary > div:first-child > span { flex-basis: 100%; color: var(--muted); font-size: 11px; }
+.admin-root .ai-revenue-summary strong { color: var(--ink); font-size: 28px; line-height: 1.1; }
+.admin-root .ai-revenue-summary em { padding: 4px 8px; border-radius: 99px; background: #e5f6ee; color: var(--good); font-size: 10px; font-style: normal; font-weight: 800; }
+.admin-root .ai-revenue-summary em.is-negative { background: #fde9e6; color: var(--bad); }
+.admin-root .ai-revenue-summary small { flex-basis: 100%; color: var(--muted); font-size: 11px; }
+.admin-root .ai-revenue-chart { min-width: 0; }
+.admin-root .ai-revenue-chart svg { display: block; width: 100%; height: 122px; overflow: visible; }
+.admin-root .ai-revenue-chart__labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 9px; }
+.admin-root .ai-revenue-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.admin-root .ai-revenue-card { min-width: 0; padding: 15px 16px 16px; border: 1px solid var(--line); border-radius: 16px; background: #fff; text-align: left; cursor: pointer; transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+.admin-root .ai-revenue-card:hover, .admin-root .ai-revenue-card:focus-visible { border-color: var(--brand); box-shadow: 0 8px 20px rgba(59, 29, 15, .08); transform: translateY(-2px); outline: 0; }
+.admin-root .ai-revenue-card__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.admin-root .ai-revenue-card__icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; background: var(--soft); color: var(--brand); font-size: 17px; font-weight: 800; }
+.admin-root .ai-revenue-card > strong { display: block; overflow: hidden; color: var(--ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.admin-root .ai-revenue-card > b { display: block; margin-top: 4px; color: var(--ink); font-size: 18px; line-height: 1.2; }
+.admin-root .ai-revenue-card > small { display: block; min-height: 29px; margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.admin-root .ai-revenue-pill { padding: 4px 7px; border-radius: 99px; background: #e5f6ee; color: var(--good); font-size: 9px; font-style: normal; font-weight: 800; white-space: nowrap; }
+.admin-root .ai-revenue-pill.is-warn { background: #fff1d8; color: #b66b00; }
+.admin-root .ai-revenue-pill.is-bad { background: #fde9e6; color: var(--bad); }
+.admin-root .ai-revenue-modal-layer { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(43, 26, 18, .48); }
+.admin-root .ai-revenue-modal { position: relative; width: min(680px, 100%); max-height: min(780px, 92vh); overflow-y: auto; padding: 28px; border-radius: 20px; background: var(--surface); box-shadow: 0 24px 80px rgba(43, 26, 18, .24); }
+.admin-root .ai-revenue-modal__close { position: absolute; top: 12px; right: 14px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); font-size: 22px; cursor: pointer; }
+.admin-root .ai-revenue-modal__eyebrow { margin: 0 0 4px !important; color: var(--brand) !important; font-size: 11px !important; font-weight: 800; text-transform: uppercase; }
+.admin-root .ai-revenue-modal h2 { margin: 0 35px 16px; font-size: 22px; }
+.admin-root .ai-revenue-modal h3 { margin: 22px 0 9px; color: var(--ink); font-size: 13px; }
+.admin-root .ai-revenue-modal__headline { display: block; color: var(--ink); font-size: 26px; }
+.admin-root .ai-revenue-modal__detail { margin: 4px 0 16px !important; }
+.admin-root .ai-revenue-tier-tabs { display: flex; gap: 8px; margin-bottom: 13px; }
+.admin-root .ai-revenue-tier-tabs span { padding: 6px 10px; border-radius: 99px; background: var(--soft); color: var(--muted); font-size: 10px; font-weight: 700; }
+.admin-root .ai-revenue-tier-tabs span.is-active { background: var(--brand); color: #fff; }
+.admin-root .ai-revenue-callout { display: grid; gap: 4px; margin: 14px 0; padding: 13px 14px; border-left: 4px solid var(--good); border-radius: 8px; background: #eef9f3; color: var(--ink); font-size: 12px; }
+.admin-root .ai-revenue-callout.is-high { border-color: var(--bad); background: #fff0ed; }
+.admin-root .ai-revenue-callout.is-moderate { border-color: var(--warn); background: #fff8e9; }
+.admin-root .ai-revenue-bars { display: grid; gap: 11px; margin: 16px 0; }
+.admin-root .ai-revenue-bar__top { display: flex; justify-content: space-between; color: var(--ink); font-size: 11px; }
+.admin-root .ai-revenue-bar__track { height: 9px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: var(--soft); }
+.admin-root .ai-revenue-bar__track span { display: block; height: 100%; border-radius: inherit; background: var(--brand); }
+.admin-root .ai-revenue-modal-list { display: grid; gap: 8px; margin: 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.admin-root .ai-revenue-modal-list--numbered { color: var(--ink); }
+
+@media (max-width: 900px) { .admin-root .ai-revenue-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .admin-root .ai-revenue-analysis { padding: 16px 14px 18px; } .admin-root .ai-revenue-analysis__header { align-items: flex-start; flex-direction: column; } .admin-root .ai-revenue-tabs { width: 100%; } .admin-root .ai-revenue-tabs button { flex: 1 0 50px; } .admin-root .ai-revenue-summary { grid-template-columns: 1fr; gap: 12px; padding: 15px; } .admin-root .ai-revenue-cards { grid-template-columns: 1fr; } .admin-root .ai-revenue-card > strong { white-space: normal; } .admin-root .ai-revenue-modal { padding: 23px 18px; } }
+
 @media (max-width: 900px) {
   .admin-root .admin-dashboard-lower { grid-template-columns: 1fr; }
   .admin-root .admin-stat-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }

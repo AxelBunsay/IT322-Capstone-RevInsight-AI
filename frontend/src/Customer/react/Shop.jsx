@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../../../services/api';
-import heroImage from '../../../assets/hero.png';
-import Header from '../../../components/Header';
+import { api } from '../../services/api';
+import heroImage from '../../assets/hero.png';
+import Header from '../../components/Header';
 import { CustomerPage } from './CustomerLayout';
 import '../styles/shop.css';
 
