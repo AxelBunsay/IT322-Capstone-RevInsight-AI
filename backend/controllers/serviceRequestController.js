@@ -180,19 +180,15 @@ const updateServiceRequestLaborFee = async (req, res) => {
       req.body.laborFee === null ||
       req.body.laborFee === undefined
     ) {
-      return res
-        .status(400)
-        .json({
-          message: "Request ID and a non-negative labor fee are required",
-        });
+      return res.status(400).json({
+        message: "Request ID and a non-negative labor fee are required",
+      });
     }
     const laborFee = Number(req.body.laborFee);
     if (!requestId || !Number.isFinite(laborFee) || laborFee < 0) {
-      return res
-        .status(400)
-        .json({
-          message: "Request ID and a non-negative labor fee are required",
-        });
+      return res.status(400).json({
+        message: "Request ID and a non-negative labor fee are required",
+      });
     }
 
     const serviceRequest = await ServiceRequest.findById(requestId);
@@ -344,11 +340,9 @@ const updateJobStatus = async (req, res) => {
       "in-progress": ["completed"],
     };
     if (!allowedTransitions[serviceRequest.status]?.includes(status)) {
-      return res
-        .status(400)
-        .json({
-          message: `Cannot change status from ${serviceRequest.status} to ${status}`,
-        });
+      return res.status(400).json({
+        message: `Cannot change status from ${serviceRequest.status} to ${status}`,
+      });
     }
 
     serviceRequest.status = status;
@@ -408,11 +402,9 @@ const getUserServiceRequests = async (req, res) => {
     res.status(200).json({ requests });
   } catch (error) {
     console.error("[getUserServiceRequests] error", error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to load your service requests. Please try again.",
-      });
+    res.status(500).json({
+      message: "Failed to load your service requests. Please try again.",
+    });
   }
 };
 
