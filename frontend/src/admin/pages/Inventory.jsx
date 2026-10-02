@@ -245,47 +245,51 @@ function Inventory() {
                 {isLoading ? "Loading..." : filteredItems.length} inventory
                 items
               </div>
-              <table className="inventory-table">
-                <thead>
-                  <tr>
-                    <th>ITEM NAME</th>
-                    <th>PRICE</th>
-                    <th>STOCK</th>
-                    <th>ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
-                      <td className="price-text">{item.price}</td>
-                      <td
-                        className={
-                          item.stock < 10 ? "stock-text low" : "stock-text"
-                        }
-                      >
-                        {item.stock}
-                      </td>
-                      <td>
-                        <button
-                          className="btn-small btn-edit"
-                          type="button"
-                          onClick={() => openItemDialog(item)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn-small btn-delete"
-                          type="button"
-                          onClick={() => removeItem(item)}
-                        >
-                          Delete
-                        </button>
-                      </td>
+              <div className="inventory-table-scroll">
+                <table className="inventory-table">
+                  <thead>
+                    <tr>
+                      <th>ITEM NAME</th>
+                      <th>CATEGORY</th>
+                      <th>PRICE</th>
+                      <th>STOCK</th>
+                      <th>ACTIONS</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredItems.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{item.category}</td>
+                        <td className="price-text">{item.price}</td>
+                        <td
+                          className={
+                            item.stock < 10 ? "stock-text low" : "stock-text"
+                          }
+                        >
+                          {item.stock}
+                        </td>
+                        <td>
+                          <button
+                            className="btn-small btn-edit"
+                            type="button"
+                            onClick={() => openItemDialog(item)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-small btn-delete"
+                            type="button"
+                            onClick={() => removeItem(item)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               <div
                 className="pagination-container"
                 aria-label="Inventory pagination"
@@ -328,77 +332,79 @@ function Inventory() {
                 {isLoadingRates ? "Loading..." : filteredLaborRates.length}{" "}
                 services · default labor fee per completed service
               </div>
-              <table className="inventory-table">
-                <thead>
-                  <tr>
-                    <th>SERVICE</th>
-                    <th>DEFAULT LABOR FEE</th>
-                    <th>ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLaborRates.map((rate) => (
-                    <tr key={rate._id}>
-                      <td>{rate.serviceType}</td>
-                      <td className="price-text">
-                        {editingRateId === rate._id ? (
-                          <input
-                            className="service-fee-input"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={rateDraft}
-                            aria-label={`Default labor fee for ${rate.serviceType}`}
-                            onChange={(event) =>
-                              setRateDraft(event.target.value)
-                            }
-                          />
-                        ) : (
-                          `₱${Number(rate.laborFee).toLocaleString("en-PH", {
-                            minimumFractionDigits: 2,
-                          })}`
-                        )}
-                      </td>
-                      <td>
-                        {editingRateId === rate._id ? (
-                          <>
+              <div className="inventory-table-scroll">
+                <table className="inventory-table">
+                  <thead>
+                    <tr>
+                      <th>SERVICE</th>
+                      <th>DEFAULT LABOR FEE</th>
+                      <th>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLaborRates.map((rate) => (
+                      <tr key={rate._id}>
+                        <td>{rate.serviceType}</td>
+                        <td className="price-text">
+                          {editingRateId === rate._id ? (
+                            <input
+                              className="service-fee-input"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={rateDraft}
+                              aria-label={`Default labor fee for ${rate.serviceType}`}
+                              onChange={(event) =>
+                                setRateDraft(event.target.value)
+                              }
+                            />
+                          ) : (
+                            `₱${Number(rate.laborFee).toLocaleString("en-PH", {
+                              minimumFractionDigits: 2,
+                            })}`
+                          )}
+                        </td>
+                        <td>
+                          {editingRateId === rate._id ? (
+                            <>
+                              <button
+                                className="btn-small btn-edit"
+                                type="button"
+                                disabled={isSavingRate}
+                                onClick={() => saveLaborRate(rate)}
+                              >
+                                {isSavingRate ? "Saving..." : "Save"}
+                              </button>
+                              <button
+                                className="btn-small"
+                                type="button"
+                                disabled={isSavingRate}
+                                onClick={() => {
+                                  setEditingRateId("");
+                                  setRateDraft("");
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
                             <button
                               className="btn-small btn-edit"
                               type="button"
-                              disabled={isSavingRate}
-                              onClick={() => saveLaborRate(rate)}
-                            >
-                              {isSavingRate ? "Saving..." : "Save"}
-                            </button>
-                            <button
-                              className="btn-small"
-                              type="button"
-                              disabled={isSavingRate}
                               onClick={() => {
-                                setEditingRateId("");
-                                setRateDraft("");
+                                setEditingRateId(rate._id);
+                                setRateDraft(String(rate.laborFee));
                               }}
                             >
-                              Cancel
+                              Edit fee
                             </button>
-                          </>
-                        ) : (
-                          <button
-                            className="btn-small btn-edit"
-                            type="button"
-                            onClick={() => {
-                              setEditingRateId(rate._id);
-                              setRateDraft(String(rate.laborFee));
-                            }}
-                          >
-                            Edit fee
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

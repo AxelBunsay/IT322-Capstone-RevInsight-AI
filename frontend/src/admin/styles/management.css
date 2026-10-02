@@ -126,6 +126,21 @@
   border-collapse: collapse;
   text-align: left;
 }
+.admin-root .admin-management-page .inventory-table-scroll {
+  max-height: min(52vh, 430px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.admin-root .admin-management-page .inventory-table-scroll .inventory-table {
+  margin-top: 0;
+}
+.admin-root .admin-management-page .inventory-table-scroll th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: var(--surface);
+}
 .admin-root .admin-management-page .inventory-container,
 .admin-root .admin-management-page .transactions-container {
   overflow-x: auto;
@@ -200,7 +215,7 @@
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: var(--surface);
+  background: #160a04;
 }
 .admin-root .admin-management-page .mechanic-card {
   margin-top: 12px;
