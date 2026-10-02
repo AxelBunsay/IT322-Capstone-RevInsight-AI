@@ -194,6 +194,9 @@ export const adminApi = {
   updateMechanic: (id, mechanic) => request(`/api/mechanics/${id}`, { method: 'PUT', body: JSON.stringify(mechanic) }),
   deleteMechanic: (id) => request(`/api/mechanics/${id}`, { method: 'DELETE' }),
   getAdminServiceRequests: () => request('/api/service-requests'),
+  getServiceLaborRates: () => request('/api/service-requests/labor-rates'),
+  updateServiceLaborRate: (id, laborFee) => request(`/api/service-requests/labor-rates/${id}`, { method: 'PUT', body: JSON.stringify({ laborFee }) }),
+  updateServiceRequestLaborFee: (requestId, laborFee) => request('/api/service-requests/labor-fee', { method: 'PUT', body: JSON.stringify({ requestId, laborFee }) }),
   confirmServiceRequest: (requestId, mechanicId) => request('/api/service-requests/assign', { method: 'PUT', body: JSON.stringify({ requestId, mechanicId }) }),
   updateAdminServiceRequestStatus: (requestId, status) => request('/api/service-requests/status/admin', { method: 'PUT', body: JSON.stringify({ requestId, status }) })
 };

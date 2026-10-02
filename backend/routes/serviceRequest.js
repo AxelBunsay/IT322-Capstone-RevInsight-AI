@@ -16,6 +16,9 @@ router.put('/status', authorizeRoles('mechanic'), serviceRequestController.updat
 // Admin assigns mechanic to job
 router.put('/assign', authorizeRoles('admin'), serviceRequestController.assignMechanic);
 router.put('/status/admin', authorizeRoles('admin'), serviceRequestController.updateBookingStatus);
+router.get('/labor-rates', authorizeRoles('admin'), serviceRequestController.getServiceLaborRates);
+router.put('/labor-rates/:id', authorizeRoles('admin'), serviceRequestController.updateServiceLaborRate);
+router.put('/labor-fee', authorizeRoles('admin'), serviceRequestController.updateServiceRequestLaborFee);
 // Admin gets all service requests
 router.get('/', authorizeRoles('admin'), serviceRequestController.getAllServiceRequests);
 

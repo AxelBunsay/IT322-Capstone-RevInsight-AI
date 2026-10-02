@@ -1,14 +1,28 @@
-.admin-root .admin-management-page { width: min(100%, 1200px); min-width: 0; margin: 0 auto; }
+.admin-root .admin-management-page {
+  width: min(100%, 1200px);
+  min-width: 0;
+  margin: 0 auto;
+}
 .admin-root .admin-management-page h1,
-.admin-root .admin-management-page h2 { color: var(--ink); }
-.admin-root .admin-management-page .section-content { min-width: 0; }
+.admin-root .admin-management-page h2 {
+  color: var(--ink);
+}
+.admin-root .admin-management-page .section-content {
+  min-width: 0;
+}
 .admin-root .admin-management-page .inventory-container,
 .admin-root .admin-management-page .transactions-container,
 .admin-root .admin-management-page .mechanics-container,
 .admin-root .admin-management-page .chart-card,
 .admin-root .admin-management-page .stat-card,
 .admin-root .admin-management-page .risk-card,
-.admin-root .admin-management-page .ai-card { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.admin-root .admin-management-page .ai-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
 .admin-root .admin-management-page .inventory-header,
 .admin-root .admin-management-page .transactions-header,
 .admin-root .admin-management-page .mechanics-header,
@@ -16,10 +30,17 @@
 .admin-root .admin-management-page .ai-input-row,
 .admin-root .admin-management-page .mechanic-header-row,
 .admin-root .admin-management-page .mechanic-actions,
-.admin-root .admin-management-page .admin-dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-root .admin-management-page .admin-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .admin-root .admin-management-page .inventory-header,
 .admin-root .admin-management-page .transactions-header,
-.admin-root .admin-management-page .mechanics-header { margin-bottom: 16px; }
+.admin-root .admin-management-page .mechanics-header {
+  margin-bottom: 16px;
+}
 .admin-root .admin-management-page .inventory-header input,
 .admin-root .admin-management-page .search-filter input,
 .admin-root .admin-management-page .search-filter select,
@@ -27,84 +48,319 @@
 .admin-root .admin-management-page .admin-dialog-form select,
 .admin-root .admin-management-page .transaction-details select,
 .admin-root .admin-management-page .mechanic-actions select,
-.admin-root .admin-management-page .ai-input { min-width: 0; min-height: 42px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.admin-root .admin-management-page .ai-input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+}
 .admin-root .admin-management-page .inventory-header input,
-.admin-root .admin-management-page .search-filter input { flex: 1; }
+.admin-root .admin-management-page .search-filter input {
+  flex: 1;
+}
 .admin-root .admin-management-page .btn-primary,
 .admin-root .admin-management-page .btn-small,
 .admin-root .admin-management-page .pagination-button,
 .admin-root .admin-management-page .btn-send,
-.admin-root .admin-management-page .btn-clear { min-height: 40px; padding: 8px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font-weight: 700; cursor: pointer; }
+.admin-root .admin-management-page .btn-clear {
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
 .admin-root .admin-management-page .btn-primary,
-.admin-root .admin-management-page .btn-send { border-color: var(--brand); background: var(--brand); color: #fff; }
-.admin-root .admin-management-page .btn-delete { color: var(--bad); }
+.admin-root .admin-management-page .btn-send {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+.admin-root .admin-management-page .btn-delete {
+  color: var(--bad);
+}
 .admin-root .admin-management-page .inventory-info,
 .admin-root .admin-management-page .transactions-info,
 .admin-root .admin-management-page .chart-subtitle,
 .admin-root .admin-management-page .stat-subtitle,
-.admin-root .admin-management-page .risk-description { color: var(--muted); }
+.admin-root .admin-management-page .risk-description {
+  color: var(--muted);
+}
+.admin-root .admin-management-page .inventory-view-toggle {
+  display: inline-flex;
+  gap: 3px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--soft);
+}
+.admin-root .admin-management-page .inventory-view-toggle button {
+  min-width: 96px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-root .admin-management-page .inventory-view-toggle button.is-active {
+  background: var(--brand);
+  color: #fff;
+}
+.admin-root .admin-management-page .inventory-view-toggle button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
 .admin-root .admin-management-page .inventory-table,
-.admin-root .admin-management-page .transactions-table { width: 100%; margin-top: 14px; border-collapse: collapse; text-align: left; }
+.admin-root .admin-management-page .transactions-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  text-align: left;
+}
 .admin-root .admin-management-page .inventory-container,
-.admin-root .admin-management-page .transactions-container { overflow-x: auto; }
+.admin-root .admin-management-page .transactions-container {
+  overflow-x: auto;
+}
 .admin-root .admin-management-page .inventory-table th,
-.admin-root .admin-management-page .transactions-table th { color: var(--muted); font-size: 11px; font-weight: 700; }
+.admin-root .admin-management-page .transactions-table th {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
 .admin-root .admin-management-page .inventory-table th,
 .admin-root .admin-management-page .inventory-table td,
 .admin-root .admin-management-page .transactions-table th,
-.admin-root .admin-management-page .transactions-table td { padding: 12px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.admin-root .admin-management-page .price-text { font-weight: 700; }
-.admin-root .admin-management-page .stock-text.low { color: var(--bad); }
-.admin-root .admin-management-page .pagination-container { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px; }
-.admin-root .admin-management-page .pagination-page { color: var(--muted); font-size: 12px; }
+.admin-root .admin-management-page .transactions-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.admin-root .admin-management-page .price-text {
+  font-weight: 700;
+}
+.admin-root .admin-management-page .stock-text.low {
+  color: var(--bad);
+}
+.admin-root .admin-management-page .service-fee-input,
+.admin-root .admin-management-page .service-labor-fee-control input {
+  width: 140px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.admin-root .admin-management-page .service-labor-fee-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 12px 0 2px;
+}
+.admin-root .admin-management-page .service-labor-fee-control label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-root .admin-management-page .pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+.admin-root .admin-management-page .pagination-page {
+  color: var(--muted);
+  font-size: 12px;
+}
 .admin-root .admin-management-page .mechanics-stats,
-.admin-root .admin-management-page .mechanic-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.admin-root .admin-management-page .mechanic-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
 .admin-root .admin-management-page .stat-box,
 .admin-root .admin-management-page .mechanic-stat,
-.admin-root .admin-management-page .mechanic-card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
-.admin-root .admin-management-page .mechanic-card { margin-top: 12px; }
-.admin-root .admin-management-page .mechanic-avatar { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: var(--soft); color: var(--brand); font-weight: 800; }
-.admin-root .admin-management-page .mechanic-info { display: flex; align-items: center; gap: 12px; }
-.admin-root .admin-management-page .mechanic-name { font-weight: 700; }
+.admin-root .admin-management-page .mechanic-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.admin-root .admin-management-page .mechanic-card {
+  margin-top: 12px;
+}
+.admin-root .admin-management-page .mechanic-avatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--brand);
+  font-weight: 800;
+}
+.admin-root .admin-management-page .mechanic-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.admin-root .admin-management-page .mechanic-name {
+  font-weight: 700;
+}
 .admin-root .admin-management-page .mechanic-specialty,
 .admin-root .admin-management-page .mechanic-email,
 .admin-root .admin-management-page .mechanic-stat-label,
-.admin-root .admin-management-page .stat-label { color: var(--muted); font-size: 12px; }
-.admin-root .admin-management-page .status-badge { display: inline-flex; padding: 4px 9px; border-radius: 99px; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 700; }
-.admin-root .admin-management-page .admin-dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(20, 11, 7, .55); }
-.admin-root .admin-management-page .admin-dialog { width: min(100%, 560px); max-height: min(90dvh, 800px); overflow: auto; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
-.admin-root .admin-management-page .admin-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-.admin-root .admin-management-page .admin-dialog-header h2 { margin: 0; font-size: 18px; }
-.admin-root .admin-management-page .admin-dialog-close { width: 40px; height: 40px; border: 0; border-radius: 10px; background: var(--soft); cursor: pointer; }
+.admin-root .admin-management-page .stat-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+.admin-root .admin-management-page .status-badge {
+  display: inline-flex;
+  padding: 4px 9px;
+  border-radius: 99px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.admin-root .admin-management-page .admin-dialog-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 11, 7, 0.55);
+}
+.admin-root .admin-management-page .admin-dialog {
+  width: min(100%, 560px);
+  max-height: min(90dvh, 800px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.admin-root .admin-management-page .admin-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.admin-root .admin-management-page .admin-dialog-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.admin-root .admin-management-page .admin-dialog-close {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--soft);
+  cursor: pointer;
+}
 .admin-root .admin-management-page .admin-dialog-form,
-.admin-root .admin-management-page .admin-dialog-form label { display: grid; gap: 8px; }
-.admin-root .admin-management-page .admin-dialog-form { gap: 14px; }
-.admin-root .admin-management-page .admin-dialog-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.admin-root .admin-management-page .admin-dialog-actions { justify-content: flex-end; margin-top: 8px; }
-.admin-root .admin-management-page .analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.admin-root .admin-management-page .admin-dialog-form label {
+  display: grid;
+  gap: 8px;
+}
+.admin-root .admin-management-page .admin-dialog-form {
+  gap: 14px;
+}
+.admin-root .admin-management-page .admin-dialog-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-root .admin-management-page .admin-dialog-actions {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.admin-root .admin-management-page .analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
 .admin-root .admin-management-page .revenue-stat,
 .admin-root .admin-management-page .revenue-contributors,
-.admin-root .admin-management-page .revenue-charts { grid-column: 1 / -1; }
-.admin-root .admin-management-page .chart-canvas { position: relative; height: 280px; }
-.admin-root .admin-management-page .chart-canvas canvas { width: 100% !important; height: 100% !important; }
-.admin-root .admin-management-page .concentration-list { display: grid; gap: 8px; }
-.admin-root .admin-management-page .concentration-row { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.admin-root .admin-management-page .concentration-row small { display: block; color: var(--muted); }
-.admin-root .admin-management-page .ai-input-row { align-items: stretch; }
-.admin-root .admin-management-page .ai-answer pre { overflow: auto; white-space: pre-wrap; }
-.admin-root .admin-management-page .dashboard-error { color: var(--bad); }
+.admin-root .admin-management-page .revenue-charts {
+  grid-column: 1 / -1;
+}
+.admin-root .admin-management-page .chart-canvas {
+  position: relative;
+  height: 280px;
+}
+.admin-root .admin-management-page .chart-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.admin-root .admin-management-page .concentration-list {
+  display: grid;
+  gap: 8px;
+}
+.admin-root .admin-management-page .concentration-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.admin-root .admin-management-page .concentration-row small {
+  display: block;
+  color: var(--muted);
+}
+.admin-root .admin-management-page .ai-input-row {
+  align-items: stretch;
+}
+.admin-root .admin-management-page .ai-answer pre {
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.admin-root .admin-management-page .dashboard-error {
+  color: var(--bad);
+}
 
 @media (max-width: 700px) {
   .admin-root .admin-management-page .inventory-container,
   .admin-root .admin-management-page .transactions-container,
-  .admin-root .admin-management-page .mechanics-container { padding: 14px; }
+  .admin-root .admin-management-page .mechanics-container {
+    padding: 14px;
+  }
   .admin-root .admin-management-page .search-filter,
   .admin-root .admin-management-page .transactions-header,
   .admin-root .admin-management-page .inventory-header,
-  .admin-root .admin-management-page .mechanic-header-row { align-items: stretch; flex-direction: column; }
+  .admin-root .admin-management-page .mechanic-header-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
   .admin-root .admin-management-page .mechanics-stats,
-  .admin-root .admin-management-page .mechanic-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .admin-root .admin-management-page .analytics-grid { grid-template-columns: 1fr; }
-  .admin-root .admin-management-page .admin-dialog-fields { grid-template-columns: 1fr; }
-  .admin-root .admin-management-page .mechanic-actions { flex-wrap: wrap; }
+  .admin-root .admin-management-page .mechanic-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .admin-root .admin-management-page .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-root .admin-management-page .admin-dialog-fields {
+    grid-template-columns: 1fr;
+  }
+  .admin-root .admin-management-page .mechanic-actions {
+    flex-wrap: wrap;
+  }
 }

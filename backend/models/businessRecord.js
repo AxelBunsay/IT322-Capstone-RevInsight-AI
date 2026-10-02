@@ -41,6 +41,11 @@ const businessRecordSchema = new mongoose.Schema({
     min: 0,
     default: 0
   },
+  laborFee: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
   status: {
     type: String,
     default: 'completed'
