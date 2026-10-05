@@ -401,6 +401,21 @@
   color: var(--muted);
   font-size: 11px;
 }
+.admin-root .ai-revenue-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-root .ai-revenue-toolbar__action {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
+}
 .admin-root .ai-revenue-tabs {
   display: flex;
   gap: 3px;
@@ -426,12 +441,24 @@
   background: var(--brand);
   color: #fff;
 }
+.admin-root .ai-revenue-completeness-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 18px;
+  padding: 10px 12px;
+  border: 1px solid #f1d69a;
+  border-radius: 12px;
+  background: #fff7e5;
+  color: #8b5800;
+  font-size: 12px;
+}
 .admin-root .ai-revenue-summary {
   display: grid;
   grid-template-columns: minmax(200px, 0.8fr) minmax(300px, 1.2fr);
   align-items: center;
   gap: 30px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 17px;
@@ -470,6 +497,30 @@
   flex-basis: 100%;
   color: var(--muted);
   font-size: 11px;
+}
+.admin-root .ai-revenue-collected-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.admin-root .ai-revenue-collected-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.admin-root .ai-revenue-collected-row span {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.admin-root .ai-revenue-collected-row strong {
+  color: var(--ink);
+  font-size: 18px;
 }
 .admin-root .ai-revenue-chart {
   min-width: 0;
@@ -698,6 +749,174 @@
 .admin-root .ai-revenue-modal-list--numbered {
   color: var(--ink);
 }
+.admin-root .ai-revenue-view-transactions {
+  margin-top: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-root .ai-revenue-thresholds {
+  display: grid;
+  gap: 12px;
+}
+.admin-root .ai-revenue-thresholds label {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 12px;
+}
+.admin-root .ai-revenue-thresholds input {
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+.admin-root .ai-revenue-thresholds__note {
+  margin-top: 12px;
+  border-radius: 10px;
+  background: #fff7f1;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 10px 12px;
+}
+.admin-root .ai-revenue-settings__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.admin-root .ai-revenue-settings__primary,
+.admin-root .ai-revenue-settings__secondary {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-root .ai-revenue-settings__primary {
+  background: var(--brand);
+  color: #fff;
+}
+.admin-root .ai-revenue-settings__secondary {
+  background: #f3ece7;
+  color: var(--ink);
+}
+.admin-root .ai-revenue-report__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+.admin-root .ai-revenue-report__summary strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+.admin-root .ai-revenue-report__summary span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.admin-root .ai-revenue-report__month-tabs {
+  display: inline-flex;
+  gap: 3px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.admin-root .ai-revenue-report__month-tabs button {
+  min-height: 30px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-root .ai-revenue-report__month-tabs button.is-active {
+  background: var(--brand);
+  color: #fff;
+}
+.admin-root .ai-revenue-report__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.admin-root .ai-revenue-report__table-wrap--drilldown {
+  margin-top: 14px;
+}
+.admin-root .ai-revenue-report__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+.admin-root .ai-revenue-report__table th,
+.admin-root .ai-revenue-report__table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: 12px;
+}
+.admin-root .ai-revenue-report__table th {
+  background: #f8f3f0;
+  color: var(--ink);
+  font-weight: 800;
+}
+.admin-root .ai-revenue-report__table td {
+  color: var(--ink);
+}
+.admin-root .ai-revenue-report__table .ai-revenue-report__empty {
+  padding: 24px 12px;
+  color: var(--muted);
+  text-align: center;
+}
+.admin-root .ai-revenue-settings__actions--report {
+  justify-content: center;
+  margin-top: 18px;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .admin-root .ai-revenue-report,
+  .admin-root .ai-revenue-report * {
+    visibility: visible !important;
+  }
+  .admin-root .ai-revenue-report {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .admin-root .ai-revenue-report .ai-revenue-modal__eyebrow,
+  .admin-root .ai-revenue-report h2,
+  .admin-root .ai-revenue-report__month-tabs,
+  .admin-root .ai-revenue-report .ai-revenue-modal__close,
+  .admin-root .ai-revenue-report .ai-revenue-settings__actions {
+    display: none !important;
+  }
+  .admin-root .ai-revenue-report__table-wrap {
+    overflow: visible;
+    border: 0;
+  }
+  .admin-root .ai-revenue-report__table {
+    min-width: 0;
+  }
+}
 
 @media (max-width: 900px) {
   .admin-root .ai-revenue-cards {
@@ -712,6 +931,10 @@
     align-items: flex-start;
     flex-direction: column;
   }
+  .admin-root .ai-revenue-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+  }
   .admin-root .ai-revenue-tabs {
     width: 100%;
   }
@@ -722,6 +945,9 @@
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 15px;
+  }
+  .admin-root .ai-revenue-collected-row {
+    grid-template-columns: 1fr;
   }
   .admin-root .ai-revenue-cards {
     grid-template-columns: 1fr;

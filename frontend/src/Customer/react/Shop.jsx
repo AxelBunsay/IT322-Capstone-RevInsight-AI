@@ -1,80 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../../services/api';
 import heroImage from '../../assets/hero.png';
-import Header from '../../components/Header';
 import { CustomerPage } from './CustomerLayout';
+import { useCustomerPrototype } from './useCustomerPrototype';
+import { customerProducts, productCategories } from './customerData';
 import '../styles/shop.css';
 
 export default function Shop() {
-  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageCount, setPageCount] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [addingId, setAddingId] = useState('');
-  const pageSize = 10;
+  const [sort, setSort] = useState('featured');
+  const { cart, addCartItem } = useCustomerPrototype();
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-    api.getProducts(currentPage, pageSize).then((productResponse) => {
-      if (!isMounted) return;
-      setProducts(productResponse.products || productResponse.data || []);
-      setTotalProducts(productResponse.pagination?.total ?? productResponse.count ?? 0);
-      setPageCount(productResponse.pagination?.pages || 1);
-    }).catch((requestError) => {
-      if (isMounted) setError(requestError.message || 'Products could not be loaded.');
-    }).finally(() => {
-      if (isMounted) setIsLoading(false);
-    });
-    return () => { isMounted = false; };
-  }, [currentPage]);
-
-  useEffect(() => {
-    let isMounted = true;
-    api.getCart().catch(() => ({ cart: { items: [] } })).then((cartResponse) => {
-      if (isMounted) setCartCount((cartResponse.cart?.items || []).reduce((total, item) => total + item.quantity, 0));
-    });
-    return () => { isMounted = false; };
-  }, []);
-
-  const categories = ['All', 'Motorcycle Parts', 'Engine Parts', 'Accessories'];
-  const categoryTiles = categories.filter((item) => item !== 'All');
-
-  const normalizeCategoryValue = (value = '') => String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
-  const productMatchesCategory = (productCategory, selectedCategory) => {
-    if (selectedCategory === 'All') return true;
-    const targetValue = normalizeCategoryValue(selectedCategory);
-    const productValue = normalizeCategoryValue(productCategory);
-    return productValue === targetValue || productValue.includes(targetValue) || targetValue.includes(productValue);
-  };
-
-  const visibleProducts = products.filter((product) => {
+  const visibleProducts = useMemo(() => customerProducts.filter((product) => {
     const query = search.trim().toLowerCase();
-    return (!query || (product.name || '').toLowerCase().includes(query)) && productMatchesCategory(product.category, category);
-  });
-
-  const addProduct = async (product) => {
-    setAddingId(product._id);
-    setError('');
-    try {
-      const response = await api.addToCart(product._id);
-      setCartCount((response.cart?.items || []).reduce((total, item) => total + item.quantity, 0));
-    } catch (requestError) {
-      setError(requestError.message || 'Please sign in before adding items to your cart.');
-    } finally {
-      setAddingId('');
-    }
-  };
+    return (category === 'All' || product.category === category)
+      && (!query || `${product.name} ${product.description} ${product.category}`.toLowerCase().includes(query));
+  }).sort((left, right) => sort === 'price-low'
+    ? left.price - right.price
+    : sort === 'price-high'
+      ? right.price - left.price
+      : left.name.localeCompare(right.name)), [category, search, sort]);
 
   return <>
-    <Header title="Motorcycle Shop" />
-    <CustomerPage title="Motorcycle Shop" description="Browse available parts and accessories." includeHeader={false}>
+    <CustomerPage title="Motorcycle Shop" description="Browse available parts and accessories.">
       <section className="shop-market-hero" style={{ '--shop-hero-image': `url(${heroImage})` }} aria-label="Shop introduction">
         <div className="shop-promo-primary"><p>MANOY&apos;S MOTORCYCLE PARTS, ACCESSORIES &amp; SERVICES</p><h2>Everything your ride needs.</h2>
         <span>Quality parts, trusted accessories, and expert service in one place.</span>
@@ -89,11 +39,21 @@ export default function Shop() {
             </div>
             </div>
       </section>
-      <div className="shop-toolbar"><input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="Search parts, accessories..." aria-label="Search products" /><select value={category} onChange={(event) => { setCategory(event.target.value); setCurrentPage(1); }} aria-label="Filter by category"><option value="All">Default</option>{categories.filter((item) => item !== 'All').map((item) => <option key={item} value={item}>{item}</option>)}</select><Link className="cart-link" to="/customer/cart">Cart ({cartCount})</Link></div>
-      {error && <p className="customer-error" role="alert">{error}</p>}
-      {isLoading ? <p>Loading products...</p> : <div className="product-grid">{visibleProducts.map((product) => <article className="product-card" key={product._id}><div className="product-image">{product.image ? <img src={product.image} alt={product.name} /> : <span>{product.category || 'Parts'}</span>}<span className="product-badge">{product.category || 'Parts'}</span></div><div className="product-card-body"><h2>{product.name}</h2><p>Quality motorcycle parts and accessories for your ride.</p><p className="product-price">₱{Number(product.price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</p><p className={product.quantity > 0 ? 'product-stock' : 'product-stock out-of-stock'}>{product.quantity > 0 ? `${product.quantity} left` : 'Out of stock'}</p><button type="button" disabled={!product.quantity || addingId === product._id} onClick={() => addProduct(product)}>{addingId === product._id ? 'Adding...' : 'Add to cart'}</button></div></article>)}</div>}
-      {!isLoading && !visibleProducts.length && <p className="customer-empty">No products match your search.</p>}
-      {!isLoading && pageCount > 1 && <div className="service-pagination" aria-label="Product pages">{Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => <button type="button" className={page === currentPage ? 'active' : ''} key={page} onClick={() => setCurrentPage(page)}>{page}</button>)}</div>}
+      <div className="shop-toolbar"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts, accessories..." aria-label="Search products" /><select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort products"><option value="featured">Sort: Featured</option><option value="price-low">Price: Low to high</option><option value="price-high">Price: High to low</option><option value="name">Name</option></select><Link className="cart-link" to="/customer/cart">Cart ({cartCount})</Link></div>
+      <div className="customer-product-categories" role="group" aria-label="Product categories">
+        {productCategories.map((item) => <button type="button" className={category === item ? 'active' : ''} key={item} onClick={() => setCategory(item)}>{item}<small>{item === 'All' ? customerProducts.length : customerProducts.filter((product) => product.category === item).length}</small></button>)}
+      </div>
+      <div className="customer-product-results"><h2>{category === 'All' ? 'All products' : category}</h2><span>{visibleProducts.length} items</span></div>
+      <div className="product-grid">{visibleProducts.map((product) => <article className="product-card" key={product._id}>
+        <div className={`product-image product-tone-${productCategories.indexOf(product.category)}`}>
+          <Link to={`/customer/products/${product._id}`} className="product-image-link" aria-label={`View ${product.name}`}><span aria-hidden="true">{product.icon}</span></Link>
+          <span className="product-badge">{product.category}</span>
+          {product.quantity === 0 && <span className="product-stock-badge">Out of stock</span>}
+          {product.quantity > 0 && product.quantity <= 3 && <span className="product-stock-badge is-low">Only {product.quantity} left</span>}
+        </div>
+        <div className="product-card-body"><Link className="product-title-link" to={`/customer/products/${product._id}`}><h2>{product.name}</h2></Link><p>{product.description}</p><p className="product-price">₱{product.price.toLocaleString('en-PH')}</p><p className={product.quantity > 0 ? 'product-stock' : 'product-stock out-of-stock'}>{product.quantity > 0 ? `${product.quantity} in stock` : 'Currently unavailable'}</p><button type="button" disabled={!product.quantity} onClick={() => addCartItem({ kind: 'product', id: product._id, name: product.name, price: product.price, stock: product.quantity, category: product.category, icon: product.icon })}>Add to cart</button></div>
+      </article>)}</div>
+      {!visibleProducts.length && <p className="customer-empty">No products match your search.</p>}
     </CustomerPage>
   </>;
 }

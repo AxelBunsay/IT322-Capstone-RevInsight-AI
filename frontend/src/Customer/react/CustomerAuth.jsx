@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { CustomerAuthShell } from './CustomerLayout';
+import { useCustomerPrototype } from './useCustomerPrototype';
 import '../styles/auth.css';
 
 export function CustomerLogin() {
   const navigate = useNavigate();
+  const { updateProfile } = useCustomerPrototype();
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -18,6 +20,7 @@ export function CustomerLogin() {
       const response = await api.loginCustomer(credentials);
       localStorage.setItem('customerToken', response.token);
       localStorage.setItem('customerUser', JSON.stringify(response.user || {}));
+      updateProfile(response.user || {});
       navigate('/customer/shop');
     } catch (loginError) {
       setError(loginError.message || 'Unable to sign in.');
@@ -39,6 +42,7 @@ export function CustomerLogin() {
 
 export function CustomerRegister() {
   const navigate = useNavigate();
+  const { updateProfile } = useCustomerPrototype();
   const [step, setStep] = useState('register');
   const [formData, setFormData] = useState({ email: '', password: '', firstName: '', lastName: '', phoneNumber: '' });
   const [otp, setOtp] = useState('');
@@ -73,6 +77,7 @@ export function CustomerRegister() {
       const response = await api.verifyOtp(formData.email, otp);
       localStorage.setItem('customerToken', response.token);
       localStorage.setItem('customerUser', JSON.stringify(response.user || {}));
+      updateProfile(response.user || {});
       navigate('/customer/shop');
     } catch (err) {
       setError(err.message || 'Invalid or expired OTP.');

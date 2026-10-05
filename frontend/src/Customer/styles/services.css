@@ -1,22 +1,25 @@
 .services-page {
   min-height: 100vh;
-  padding: 0 28px 64px;
+  padding: 0 0 64px;
   background: #f8f5f1;
   color: #24252a;
   font-family: "Segoe UI", sans-serif;
 }
 
 .services-page > :not(.customer-header) {
-  width: min(100%, 1180px);
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding-right: clamp(16px, 3vw, 44px);
+  padding-left: clamp(16px, 3vw, 44px);
 }
 .services-page .customer-header {
   box-sizing: border-box;
-  width: calc(100% + 56px);
+  width: 100%;
   max-width: none;
-  margin: 0 -28px 28px;
-  padding: 12px max(28px, calc((100vw - 1180px) / 2)) 10px;
+  margin: 0 0 18px;
+  padding: 12px clamp(16px, 3vw, 44px);
   background: #fff;
   border-bottom: 1px solid #eadfd6;
 }
@@ -30,24 +33,10 @@
   letter-spacing: 0;
 }
 .services-page .customer-brand::before {
-  content: "⚙";
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: #ff6811;
-  color: #fff;
-  font-size: 18px;
-  box-shadow: 0 4px 10px rgba(240, 90, 40, 0.2);
+  content: none;
 }
 .services-page .customer-brand::after {
-  content: "Customer Shop";
-  position: absolute;
-  margin: 30px 0 0 51px;
-  color: #ff6811;
-  font-size: 11px;
-  font-weight: 700;
+  content: none;
 }
 .services-page .customer-nav {
   padding-top: 0;
@@ -61,8 +50,8 @@
   font-size: 14px;
 }
 .services-page .customer-nav a.active {
-  background: #ff6811;
-  color: #fff;
+  background: #fff0e4;
+  color: #e75e14;
 }
 .services-page .customer-nav .customer-cart-link {
   background: transparent;
@@ -200,7 +189,7 @@
 
 .service-card-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 20px;
 }
 .service-card {
@@ -343,7 +332,11 @@
   font-size: 17px;
 }
 .service-card-footer button,
+.service-card-footer .service-book-link,
 .service-booking-form > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 10px;
   padding: 10px 13px;
@@ -353,6 +346,7 @@
     700 12px "Segoe UI",
     sans-serif;
   cursor: pointer;
+  text-decoration: none;
 }
 .service-card-footer button:hover,
 .service-booking-form > button:hover {
@@ -449,12 +443,12 @@
 }
 @media (max-width: 640px) {
   .services-page {
-    padding: 0 16px 40px;
+    padding: 0 0 40px;
   }
   .services-page .customer-header {
-    width: calc(100% + 32px);
-    margin-left: -16px;
-    margin-right: -16px;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
     padding-left: 16px;
     padding-right: 16px;
   }
