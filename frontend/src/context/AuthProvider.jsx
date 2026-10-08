@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../services/api';
+import { adminApi } from '../admin/services/adminApi';
 import AuthContext from './authContext';
 
 function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('adminToken'));
   const [user, setUser] = useState(() => {
     const username = localStorage.getItem('adminEmail');
-    return username ? { username } : null;
+    return username ? { username, role: 'admin' } : null;
   });
 
   useEffect(() => {
@@ -21,11 +21,11 @@ function AuthProvider({ children }) {
   }, []);
 
   async function login(credentials) {
-    const result = await api.loginAdmin(credentials);
+    const result = await adminApi.loginAdmin(credentials);
     localStorage.setItem('adminToken', result.token);
     localStorage.setItem('adminEmail', result.admin?.username || credentials.username || credentials.email || '');
     setToken(result.token);
-    setUser(result.admin || { username: credentials.username || credentials.email });
+    setUser({ ...result.admin, username: result.admin?.username || credentials.username || credentials.email, role: result.admin?.role || 'admin' });
     return result;
   }
 

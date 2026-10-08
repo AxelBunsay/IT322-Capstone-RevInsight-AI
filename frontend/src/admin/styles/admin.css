@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+.admin-root {
+  --bg: #FBF4EE;
+  --surface: #FFFFFF;
+  --ink: #2B1A12;
+  --muted: #8C7A6E;
+  --brand: #F26A1B;
+  --brown: #3B1D0F;
+  --line: #EBDDD1;
+  --soft: #FFF0E5;
+  --good: #2E9E5B;
+  --bad: #D6402B;
+  --warn: #E6A100;
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-root {
+    --bg: #1C110B;
+    --surface: #28170F;
+    --ink: #F6E8DD;
+    --muted: #B39C8C;
+    --line: #3D2618;
+    --soft: #3A2014;
+    --brown: #120A06;
+  }
+}
+
+.admin-root *,
+.admin-root *::before,
+.admin-root *::after {
+  box-sizing: border-box;
+}
+
+.admin-root button,
+.admin-root input,
+.admin-root select,
+.admin-root textarea {
+  font: inherit;
+}
+
+.admin-root button {
+  color: inherit;
+}
+
+.admin-root :focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.admin-root a {
+  color: inherit;
+}
+
+.admin-root .admin-panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.admin-root .admin-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.admin-root .admin-panel__header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.admin-root .admin-empty-state {
+  display: grid;
+  min-height: 92px;
+  place-content: center;
+  gap: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.admin-root .admin-empty-state p {
+  margin: 0;
+}
+
+.admin-root .admin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-root .admin-badge--bad {
+  background: color-mix(in srgb, var(--bad) 12%, var(--surface));
+  color: var(--bad);
+}
+
+.admin-root .admin-badge--warn {
+  background: color-mix(in srgb, var(--warn) 15%, var(--surface));
+  color: #9A6500;
+}
+
+.admin-root .admin-badge--neutral {
+  background: var(--soft);
+  color: var(--muted);
+}
+
+.admin-root .admin-skeleton {
+  min-height: 20px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--soft), var(--line), var(--soft));
+  background-size: 200% 100%;
+  animation: admin-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes admin-skeleton-shimmer {
+  to { background-position: -200% 0; }
+}
+
+.admin-login {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 24px max(20px, env(safe-area-inset-right)) 24px max(20px, env(safe-area-inset-left));
+}
+
+.admin-login__card {
+  width: min(100%, 440px);
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.admin-login__mark {
+  display: grid;
+  width: 42px;
+  aspect-ratio: 1;
+  place-items: center;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.admin-login__card h1 { margin: 0; font-size: 24px; font-weight: 800; }
+.admin-login__card > p { margin: 6px 0 24px; color: var(--muted); }
+.admin-login__field { display: grid; gap: 7px; margin: 16px 0; font-weight: 600; }
+.admin-login__field input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.admin-login__submit { width: 100%; min-height: 44px; margin-top: 8px; border: 0; border-radius: 12px; background: var(--brand); color: #fff !important; font-weight: 700; cursor: pointer; }
+.admin-login__error { color: var(--bad); }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-root *,
+  .admin-root *::before,
+  .admin-root *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

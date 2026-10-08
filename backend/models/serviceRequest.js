@@ -24,6 +24,11 @@ const serviceRequestSchema = new mongoose.Schema({
     min: 0,
     default: 0
   },
+  laborFee: {
+    type: Number,
+    min: 0,
+    default: 50
+  },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'accepted', 'in-progress', 'completed', 'declined'],

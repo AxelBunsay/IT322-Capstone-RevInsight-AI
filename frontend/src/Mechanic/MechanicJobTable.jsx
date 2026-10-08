@@ -1,0 +1,42 @@
+const statusLabels = {
+  'awaiting-response': 'Awaiting your response', confirmed: 'Awaiting your response',
+  inspection: 'Inspection', accepted: 'Inspection', 'in-progress': 'In progress',
+  'waiting-parts': 'Waiting for parts', 'waiting-for-parts': 'Waiting for parts',
+  'quality-check': 'Quality check', completed: 'Completed', declined: 'Declined',
+  'ready-for-release': 'Ready for release'
+};
+
+export function StatusBadge({ status = '' }) {
+  const key = status.toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+  const label = statusLabels[key] || key.replaceAll('-', ' ');
+  return <span className={`mechanic-status status-${key}`}>{label}</span>;
+}
+
+export function JobTable({ jobs, onSelect }) {
+  if (!jobs.length) return <p className="mechanic-empty-state">No jobs match these filters.</p>;
+  return <div className="mechanic-table-scroll"><table className="mechanic-job-table">
+    <thead><tr><th>Job</th><th>Customer</th><th>Vehicle / service</th><th>Status</th><th>Due</th><th><span className="visually-hidden">Details</span></th></tr></thead>
+    <tbody>{jobs.map((job) => <tr key={job._id || job.id}>
+      <td><button className="mechanic-job-id" type="button" onClick={() => onSelect(job)}>{job.jobId || job._id || job.id}</button><span className={`mechanic-priority${job.priority?.toLowerCase() === 'high' ? ' high' : ''}`}>{job.priority || 'Normal'}</span></td>
+      <td><strong>{job.customerName || job.customer?.name || 'Customer'}</strong><span>{job.plate || job.plateNumber || job.vehiclePlate || '—'}</span></td>
+      <td>{job.vehicle || job.vehicleModel || job.vehicleName || 'Motorcycle'}<span>{job.serviceType || job.service || 'Service'}</span></td>
+      <td><StatusBadge status={job.status || 'confirmed'} /></td>
+      <td><span className={job.overdue && job.status !== 'completed' ? 'mechanic-due overdue' : 'mechanic-due'}>{job.overdue && job.status !== 'completed' ? 'Overdue · ' : ''}{job.dueTime || '—'}</span><span>{job.dueDate ? new Date(`${job.dueDate}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</span></td>
+      <td><button className="mechanic-table-action" type="button" onClick={() => onSelect(job)}>View</button></td>
+    </tr>)}</tbody>
+  </table></div>;
+}
+
+export function JobDialog({ job, onClose, actions, onAction, busy }) {
+  if (!job) return null;
+  const labels = { accept: 'Accept job', decline: 'Decline', start: 'Start work', 'waiting-parts': 'Wait for parts', 'quality-check': 'Send to quality check', complete: 'Mark complete' };
+  return <div className="mechanic-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section className="mechanic-dialog job-dialog" role="dialog" aria-modal="true" aria-labelledby="job-dialog-title">
+      <button className="mechanic-dialog-close" type="button" onClick={onClose} aria-label="Close job details">×</button>
+      <span className="mechanic-eyebrow">{job.jobId || job._id}</span><h2 id="job-dialog-title">{job.serviceType || job.service || 'Service job'}</h2>
+      <p>{job.description || 'Review the job details and update its status when work progresses.'}</p>
+      <dl className="mechanic-job-details"><div><dt>Customer</dt><dd>{job.customerName || job.customer?.name || 'Customer'}</dd></div><div><dt>Vehicle</dt><dd>{job.vehicle || job.vehicleModel || 'Motorcycle'} · {job.plate || job.plateNumber || '—'}</dd></div><div><dt>Status</dt><dd><StatusBadge status={job.status || 'confirmed'} /></dd></div><div><dt>Priority</dt><dd>{job.priority || 'Normal'}</dd></div></dl>
+      <div className="mechanic-dialog-actions job-dialog-actions">{actions.map((action) => <button className={action === 'decline' ? 'button-secondary danger' : 'button-primary'} type="button" key={action} disabled={busy} onClick={() => onAction(job, action)}>{labels[action] || action}</button>)}<button className="button-secondary" type="button" onClick={onClose}>Close</button></div>
+    </section>
+  </div>;
+}

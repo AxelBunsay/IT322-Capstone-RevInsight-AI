@@ -10,6 +10,7 @@ const userRoutes = require('./routes/user');
 const mechanicRoutes = require('./routes/mechanic');
 const adminRoutes = require('./routes/adminRoutes/admin');
 const productRoutes = require('./routes/adminRoutes/product');
+const serviceRoutes = require('./routes/adminRoutes/service');
 const dashboardRoutes = require('./routes/adminRoutes/dashboard');
 const chatRoutes = require('./routes/chat');
 
@@ -41,7 +42,12 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://localhost:5175'
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:5176'
 ].filter(Boolean);
 
 app.use(
@@ -121,6 +127,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/mechanics', mechanicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/admin/services', serviceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/cart', cartRoutes);

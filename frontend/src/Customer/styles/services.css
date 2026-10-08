@@ -1,0 +1,493 @@
+.services-page {
+  min-height: 100vh;
+  padding: 0 0 64px;
+  background: #f8f5f1;
+  color: #24252a;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.services-page > :not(.customer-header) {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding-right: clamp(16px, 3vw, 44px);
+  padding-left: clamp(16px, 3vw, 44px);
+}
+.services-page .customer-header {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 18px;
+  padding: 12px clamp(16px, 3vw, 44px);
+  background: #fff;
+  border-bottom: 1px solid #eadfd6;
+}
+.services-page .customer-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font:
+    900 15px "Segoe UI",
+    sans-serif;
+  letter-spacing: 0;
+}
+.services-page .customer-brand::before {
+  content: none;
+}
+.services-page .customer-brand::after {
+  content: none;
+}
+.services-page .customer-nav {
+  padding-top: 0;
+  gap: 10px;
+}
+.services-page .customer-nav a,
+.services-page .customer-logout,
+.services-page .customer-profile-toggle {
+  border-radius: 999px;
+  color: #777d8a;
+  font-size: 14px;
+}
+.services-page .customer-nav a.active {
+  background: #fff0e4;
+  color: #e75e14;
+}
+.services-page .customer-nav .customer-cart-link {
+  background: transparent;
+  color: #777d8a;
+}
+.services-page .customer-heading {
+  display: none;
+}
+
+.services-hero {
+  display: flex;
+  min-height: 272px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 38px;
+  padding: 44px 48px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(110deg, #281004, #451707 52%, #211b4e);
+  color: #fff;
+}
+.services-hero-eyebrow {
+  margin: 0 0 8px;
+  color: #ff8b12;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.services-hero h2 {
+  margin: 0 0 8px;
+  font-size: 36px;
+  line-height: 1.1;
+}
+.services-hero h2 span {
+  font-size: 30px;
+}
+.services-hero > div:first-child > p:not(.services-hero-eyebrow) {
+  max-width: 550px;
+  margin: 0;
+  color: #efd8ca;
+  font:
+    17px/1.45 Georgia,
+    serif;
+}
+.services-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 20px;
+}
+.services-hero-stats span {
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: rgba(178, 78, 12, 0.68);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.services-hero-wheel {
+  width: 122px;
+  height: 122px;
+  display: grid;
+  place-items: center;
+  border: 8px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.14);
+  font-size: 70px;
+}
+
+.services-toolbar {
+  margin-bottom: 34px;
+}
+.services-search {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: min(100%, 460px);
+  height: 52px;
+  padding: 0 15px;
+  border: 1px solid #e5e0dc;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(44, 35, 29, 0.08);
+  color: #a8b2c0;
+}
+.services-search span {
+  font-size: 27px;
+  line-height: 1;
+}
+.services-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #3c4048;
+  font:
+    16px "Segoe UI",
+    sans-serif;
+}
+.service-category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.service-category-pills button {
+  padding: 12px 18px;
+  border: 1px solid #ece8e4;
+  border-radius: 16px;
+  background: #fff;
+  color: #646d7b;
+  font:
+    700 14px "Segoe UI",
+    sans-serif;
+  box-shadow: 0 2px 5px rgba(44, 35, 29, 0.06);
+  cursor: pointer;
+}
+.service-category-pills button.active {
+  border-color: #ff6811;
+  background: #ff6811;
+  color: #fff;
+}
+.service-category-pills small {
+  margin-left: 6px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f1f2f4;
+  color: #a3a9b2;
+  font-size: 11px;
+}
+.service-category-pills button.active small {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.service-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 20px;
+}
+.service-card {
+  overflow: hidden;
+  border: 1px solid #eee8e2;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 4px 13px rgba(44, 35, 29, 0.07);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.service-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 11px 24px rgba(44, 35, 29, 0.13);
+}
+.service-card-art {
+  position: relative;
+  display: grid;
+  min-height: 144px;
+  place-items: center;
+}
+.tone-sun .service-card-art {
+  background: #ffeba0;
+}
+.tone-lavender .service-card-art {
+  background: #ded6ff;
+}
+.tone-mint .service-card-art {
+  background: #c9f7d9;
+}
+.tone-peach .service-card-art {
+  background: #ffd8c4;
+}
+.tone-blue .service-card-art {
+  background: #cfeaff;
+}
+.tone-rose .service-card-art {
+  background: #ffd5de;
+}
+.tone-sand .service-card-art {
+  background: #eadfcd;
+}
+.tone-sky .service-card-art {
+  background: #d4f0f5;
+}
+.tone-lemon .service-card-art {
+  background: #fff0b7;
+}
+.tone-slate .service-card-art {
+  background: #dce2eb;
+}
+.service-code,
+.service-duration {
+  position: absolute;
+  top: 15px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.48);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.service-code {
+  left: 15px;
+}
+.service-duration {
+  right: 15px;
+}
+.service-icon {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: 20px;
+  background: #ffab08;
+  color: #fff;
+  font-size: 38px;
+  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.14);
+}
+.tone-lavender .service-icon {
+  background: #8752ed;
+}
+.tone-mint .service-icon {
+  background: #1fc35d;
+}
+.tone-peach .service-icon {
+  background: #f06a3a;
+}
+.tone-blue .service-icon {
+  background: #458bd1;
+}
+.tone-rose .service-icon {
+  background: #df5674;
+}
+.tone-sand .service-icon {
+  background: #a67d4f;
+}
+.tone-sky .service-icon {
+  background: #2699a9;
+}
+.tone-lemon .service-icon {
+  background: #dda900;
+}
+.tone-slate .service-icon {
+  background: #63738d;
+}
+.service-card-body {
+  padding: 20px;
+}
+.service-category-label {
+  margin: 0 0 7px;
+  color: #ff6811;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.service-card h2 {
+  margin: 0 0 7px;
+  color: #202633;
+  font-size: 17px;
+}
+.service-card-body > p:not(.service-category-label) {
+  min-height: 42px;
+  margin: 0;
+  color: #8b94a2;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.service-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+.service-card-footer strong {
+  color: #f05a18;
+  font-size: 17px;
+}
+.service-card-footer button,
+.service-card-footer .service-book-link,
+.service-booking-form > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 13px;
+  background: #ff6811;
+  color: #fff;
+  font:
+    700 12px "Segoe UI",
+    sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+}
+.service-card-footer button:hover,
+.service-booking-form > button:hover {
+  background: #e95500;
+}
+
+.service-modal-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 16, 14, 0.55);
+}
+.service-modal {
+  position: relative;
+  width: min(100%, 500px);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 28px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.service-modal h2 {
+  margin: 0 0 5px;
+  color: #24252a;
+}
+.service-modal-price {
+  margin: 0 0 18px;
+  color: #f05a18;
+  font-weight: 700;
+}
+.service-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  border: 0;
+  background: transparent;
+  color: #7a818b;
+  font-size: 28px;
+  cursor: pointer;
+}
+.service-booking-form {
+  display: grid;
+  gap: 14px;
+}
+.service-booking-form label {
+  display: grid;
+  gap: 6px;
+  color: #48505c;
+  font-size: 13px;
+  font-weight: 700;
+}
+.service-booking-form input,
+.service-booking-form textarea,
+.service-booking-form select {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #ddd9d4;
+  border-radius: 9px;
+  background: #fff;
+  color: #24252a;
+  font:
+    14px "Segoe UI",
+    sans-serif;
+}
+.service-booking-form textarea {
+  resize: vertical;
+}
+.service-booking-form > button:disabled {
+  background: #b9b5b1;
+  cursor: wait;
+}
+.customer-error,
+.customer-success,
+.customer-empty {
+  width: 100%;
+  margin: 0 0 16px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+@media (max-width: 900px) {
+  .service-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .services-hero {
+    padding: 32px;
+  }
+  .services-hero-wheel {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .services-page {
+    padding: 0 0 40px;
+  }
+  .services-page .customer-header {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .services-page .customer-brand {
+    max-width: 145px;
+  }
+  .services-page .customer-nav {
+    gap: 2px;
+  }
+  .services-page .customer-nav a,
+  .services-page .customer-logout,
+  .services-page .customer-profile-toggle {
+    padding: 7px 6px;
+    font-size: 11px;
+  }
+  .services-hero {
+    min-height: 0;
+    margin-bottom: 24px;
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+  .services-hero-eyebrow {
+    font-size: 10px;
+  }
+  .services-hero h2 {
+    font-size: 28px;
+  }
+  .services-hero > div:first-child > p:not(.services-hero-eyebrow) {
+    font-size: 15px;
+  }
+  .service-category-pills {
+    gap: 7px;
+  }
+  .service-category-pills button {
+    padding: 9px 10px;
+    font-size: 11px;
+  }
+  .service-card-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}

@@ -1,0 +1,70 @@
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { getMechanicNotifications, logoutMechanic, markMechanicNotificationsRead } from './mechanicService';
+import './mechanic-ui.css';
+
+const links = [
+  { to: '/mechanic/dashboard', label: 'Dashboard', icon: '▥' },
+  { to: '/mechanic/jobs', label: 'Jobs', icon: '🔨' },
+  { to: '/mechanic/profile', label: 'Profile', icon: '●' }
+];
+
+export default function MechanicLayout({ title, children }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
+  const [profile, setProfile] = useState({});
+
+  useEffect(() => {
+    let active = true;
+    getMechanicNotifications().then((items) => {
+      if (active) {
+        setNotifications(items);
+        setProfile(JSON.parse(localStorage.getItem('mechanicUser') || '{}'));
+      }
+    });
+    return () => { active = false; };
+  }, [location.pathname]);
+
+  const unreadCount = notifications.filter((item) => !item.read).length;
+  const name = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || 'Mechanic';
+  const date = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
+
+  return (
+    <div className="mechanic-shell">
+      <aside className="mechanic-sidebar">
+        <Link className="mechanic-brand" to="/mechanic/dashboard" aria-label="Mechanic dashboard">🔧</Link>
+        <nav className="mechanic-navigation" aria-label="Mechanic navigation">
+          {links.map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `mechanic-nav-link${isActive ? ' active' : ''}`}><span className="mechanic-nav-icon" aria-hidden="true">{item.icon}</span><span>{item.label}</span></NavLink>)}
+        </nav>
+        <button className="mechanic-logout" type="button" onClick={() => setShowLogout(true)}><span aria-hidden="true">⇥</span><span>Logout</span></button>
+      </aside>
+
+      <div className="mechanic-workspace">
+        <header className="mechanic-header">
+          <div className="mechanic-heading"><span className="mechanic-eyebrow">Mechanic portal</span><h1>{title}</h1></div>
+          <div className="mechanic-header-tools">
+            <time>{date}</time>
+            <div className="mechanic-notification-wrap">
+              <button className="mechanic-icon-button" type="button" aria-label={`Notifications, ${unreadCount} unread`} aria-expanded={showNotifications} onClick={() => setShowNotifications((value) => !value)}>
+                <span aria-hidden="true">🔔</span>{unreadCount > 0 && <span className="mechanic-notification-count">{unreadCount}</span>}
+              </button>
+              {showNotifications && <section className="mechanic-notification-popover" aria-label="Notifications">
+                {notifications.length ? notifications.map((item) => <article className={`mechanic-notification${item.read ? '' : ' unread'}`} key={item.id}><p>{item.text}</p><time>{item.time}</time></article>) : <p className="mechanic-notification-empty">You’re all caught up.</p>}
+                {!!unreadCount && <button type="button" onClick={async () => setNotifications(await markMechanicNotificationsRead())}>Mark all as read</button>}
+              </section>}
+            </div>
+            <Link className="mechanic-user-link" to="/mechanic/profile" aria-label={`Profile: ${name}`}><span>{name.charAt(0).toUpperCase()}</span></Link>
+          </div>
+        </header>
+        <main className="mechanic-main">{children}</main>
+      </div>
+
+      {showLogout && <div className="mechanic-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowLogout(false); }}>
+        <section className="mechanic-dialog" role="dialog" aria-modal="true" aria-labelledby="logout-title"><h2 id="logout-title">Log out?</h2><p>You will need to sign in again.</p><div className="mechanic-dialog-actions"><button className="button-secondary" type="button" onClick={() => setShowLogout(false)}>Cancel</button><button className="button-primary" type="button" onClick={() => { logoutMechanic(); navigate('/mechanic/login', { replace: true }); }}>Log out</button></div></section>
+      </div>}
+    </div>
+  );
+}
