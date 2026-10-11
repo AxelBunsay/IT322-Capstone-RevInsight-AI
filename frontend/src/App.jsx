@@ -4,6 +4,7 @@ import { AdminApp } from './admin';
 import Cart from './Customer/react/Cart';
 import { CustomerLogin, CustomerRegister } from './Customer/react/CustomerAuth';
 import CustomerProfile from './Customer/react/Profile';
+import { CustomerAuthGuard } from './Customer/react/CustomerLayout';
 import Shop from './Customer/react/Shop';
 import Services from './Customer/react/Services';
 import ProductDetail from './Customer/react/ProductDetail';
@@ -30,17 +31,17 @@ function App() {
         <Route path="/customer/shop" element={<Shop />} />
         <Route path="/customer/login" element={<CustomerLogin />} />
         <Route path="/customer/register" element={<CustomerRegister />} />
-        <Route path="/customer/cart" element={<Cart />} />
+        <Route path="/customer/cart" element={<CustomerAuthGuard><Cart /></CustomerAuthGuard>} />
         <Route path="/customer/services" element={<Services />} />
         <Route path="/customer/services/:serviceId" element={<ServiceDetail />} />
         <Route path="/customer/products/:productId" element={<ProductDetail />} />
-        <Route path="/customer/orders" element={<Reservations />} />
-        <Route path="/customer/purchases" element={<Reservations />} />
-        <Route path="/customer/reservations" element={<Reservations />} />
-        <Route path="/customer/reservations/:reservationId" element={<ReservationDetail />} />
-        <Route path="/customer/checkout" element={<Checkout />} />
-        <Route path="/customer/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/customer/profile" element={<CustomerProfile />} />
+        <Route path="/customer/orders" element={<CustomerAuthGuard><Reservations /></CustomerAuthGuard>} />
+        <Route path="/customer/purchases" element={<CustomerAuthGuard><Reservations /></CustomerAuthGuard>} />
+        <Route path="/customer/reservations" element={<CustomerAuthGuard><Reservations /></CustomerAuthGuard>} />
+        <Route path="/customer/reservations/:reservationId" element={<CustomerAuthGuard><ReservationDetail /></CustomerAuthGuard>} />
+        <Route path="/customer/checkout" element={<CustomerAuthGuard><Checkout /></CustomerAuthGuard>} />
+        <Route path="/customer/order-confirmation" element={<CustomerAuthGuard><OrderConfirmation /></CustomerAuthGuard>} />
+        <Route path="/customer/profile" element={<CustomerAuthGuard><CustomerProfile /></CustomerAuthGuard>} />
         <Route path="/mechanic/login" element={<MechanicLogin />} />
         <Route path="/mechanic/dashboard" element={<MechanicAuthGuard><MechanicDashboard /></MechanicAuthGuard>} />
         <Route path="/mechanic/jobs" element={<MechanicAuthGuard><MechanicJobs /></MechanicAuthGuard>} />

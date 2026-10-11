@@ -11,6 +11,8 @@ export default function Shop() {
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('featured');
   const { cart, addCartItem } = useCustomerPrototype();
+  const customerToken = localStorage.getItem('customerToken');
+  const hasCustomerAccount = Boolean(customerToken && customerToken !== 'prototype-guest');
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   const visibleProducts = useMemo(() => customerProducts.filter((product) => {
@@ -39,7 +41,7 @@ export default function Shop() {
             </div>
             </div>
       </section>
-      <div className="shop-toolbar"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts, accessories..." aria-label="Search products" /><select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort products"><option value="featured">Sort: Featured</option><option value="price-low">Price: Low to high</option><option value="price-high">Price: High to low</option><option value="name">Name</option></select><Link className="cart-link" to="/customer/cart">Cart ({cartCount})</Link></div>
+      <div className="shop-toolbar"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts, accessories..." aria-label="Search products" /><select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort products"><option value="featured">Sort: Featured</option><option value="price-low">Price: Low to high</option><option value="price-high">Price: High to low</option><option value="name">Name</option></select>{hasCustomerAccount && <Link className="cart-link" to="/customer/cart">Cart ({cartCount})</Link>}</div>
       <div className="customer-product-categories" role="group" aria-label="Product categories">
         {productCategories.map((item) => <button type="button" className={category === item ? 'active' : ''} key={item} onClick={() => setCategory(item)}>{item}<small>{item === 'All' ? customerProducts.length : customerProducts.filter((product) => product.category === item).length}</small></button>)}
       </div>
