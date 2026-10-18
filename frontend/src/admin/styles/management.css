@@ -7,6 +7,20 @@
 .admin-root .admin-management-page h2 {
   color: var(--ink);
 }
+.admin-root .admin-management-page .admin-dialog-form textarea {
+  min-width: 0;
+  min-height: 88px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  resize: vertical;
+}
+.admin-root .admin-management-page .admin-dialog-error {
+  margin: 0;
+  color: var(--bad);
+}
 .admin-root .admin-management-page .section-content {
   min-width: 0;
 }
@@ -45,6 +59,7 @@
 .admin-root .admin-management-page .search-filter input,
 .admin-root .admin-management-page .search-filter select,
 .admin-root .admin-management-page .admin-dialog-form input,
+.admin-root .admin-management-page .admin-dialog-form textarea,
 .admin-root .admin-management-page .admin-dialog-form select,
 .admin-root .admin-management-page .transaction-details select,
 .admin-root .admin-management-page .mechanic-actions select,
@@ -118,6 +133,25 @@
 .admin-root .admin-management-page .inventory-view-toggle button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+.admin-root .admin-management-page .inventory-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.admin-root .admin-management-page .inventory-tabs-row .inventory-view-toggle {
+  margin-bottom: 0;
+}
+.admin-root .admin-management-page .inventory-toast {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--good) 35%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--good) 10%, var(--surface));
+  color: var(--good);
+  font-weight: 700;
 }
 .admin-root .admin-management-page .inventory-table,
 .admin-root .admin-management-page .transactions-table {

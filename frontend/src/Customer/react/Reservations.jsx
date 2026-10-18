@@ -23,7 +23,7 @@ export default function Reservations() {
 
   return <CustomerPage title="My Purchases" description="Review the items you bought and services you have availed.">
     <div className="customer-flow-page customer-reservations-page">
-      <div className="customer-flow-section-heading"><div><p className="customer-eyebrow">YOUR ACTIVITY</p><h2>Purchase history</h2></div><span>{purchasedItems.length + reservations.length} records</span></div>
+      <div className="customer-flow-section-heading"><div><p className="customer-eyebrow">YOUR ACTIVITY</p><h2>Purchase history</h2></div><span>{records.length} {activeTab === 'services' ? 'services' : 'items'}</span></div>
       <div className="customer-reservation-tabs" role="tablist" aria-label="Purchase history">
         <button type="button" role="tab" aria-selected={activeTab === 'items'} className={activeTab === 'items' ? 'is-active' : ''} onClick={() => setActiveTab('items')}>Items <span>{purchasedItems.length}</span></button>
         <button type="button" role="tab" aria-selected={activeTab === 'services'} className={activeTab === 'services' ? 'is-active' : ''} onClick={() => setActiveTab('services')}>Services <span>{reservations.length}</span></button>

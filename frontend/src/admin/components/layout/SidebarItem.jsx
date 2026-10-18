@@ -17,7 +17,7 @@ function Icon({ name }) {
   );
 }
 
-function SidebarItem({ item, badge, onAction }) {
+function SidebarItem({ item, badge, onAction, isCollapsed, onNavigate }) {
   const content = (
     <>
       <Icon name={item.icon} />
@@ -27,13 +27,16 @@ function SidebarItem({ item, badge, onAction }) {
   );
 
   if (item.action) {
-    return <button type="button" className="admin-sidebar-item admin-sidebar-item--action" onClick={onAction}>{content}</button>;
+    return <button type="button" className="admin-sidebar-item admin-sidebar-item--action" onClick={onAction} aria-label={item.label} title={isCollapsed ? item.label : undefined}>{content}</button>;
   }
 
   return (
     <NavLink
       to={item.path}
       end={item.id === 'dashboard'}
+      onClick={onNavigate}
+      aria-label={item.label}
+      title={isCollapsed ? item.label : undefined}
       className={({ isActive }) => `admin-sidebar-item${isActive ? ' is-active' : ''}`}
     >
       {content}
