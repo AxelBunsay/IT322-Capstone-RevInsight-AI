@@ -25,6 +25,19 @@ function Inventory() {
   const [editingRateId, setEditingRateId] = useState("");
   const [rateDraft, setRateDraft] = useState("");
   const [isSavingRate, setIsSavingRate] = useState(false);
+  const [services, setServices] = useState([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [serviceRefreshKey, setServiceRefreshKey] = useState(0);
+  const [isAddingService, setIsAddingService] = useState(false);
+  const [serviceForm, setServiceForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    mechanicFee: "",
+  });
+  const [serviceFormError, setServiceFormError] = useState("");
+  const [isSavingService, setIsSavingService] = useState(false);
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -90,6 +103,34 @@ function Inventory() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api
+      .getServices()
+      .then((response) => {
+        if (isMounted) setServices(response.services || []);
+      })
+      .catch((fetchError) => {
+        if (isMounted) {
+          setError(fetchError.message || "Failed to load services");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingServices(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [serviceRefreshKey]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timeout = window.setTimeout(() => setToast(""), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
 
   const openItemDialog = (item = null) => {
     setEditingItem(item);
@@ -176,12 +217,68 @@ function Inventory() {
     }
   };
 
+  const saveService = async (event) => {
+    event.preventDefault();
+    setIsSavingService(true);
+    setServiceFormError("");
+
+    try {
+      await api.createService({
+        name: serviceForm.name,
+        description: serviceForm.description,
+        price: Number(serviceForm.price),
+        mechanicFee: Number(serviceForm.mechanicFee),
+      });
+      setIsAddingService(false);
+      setServiceForm({ name: "", description: "", price: "", mechanicFee: "" });
+      setServiceRefreshKey((key) => key + 1);
+      setToast("Service added successfully.");
+    } catch (saveError) {
+      setServiceFormError(saveError.message || "Failed to add service");
+    } finally {
+      setIsSavingService(false);
+    }
+  };
+
+  const removeService = async (service) => {
+    if (!window.confirm(`Are you sure you want to delete ${service.name}? This can't be undone.`)) return;
+
+    try {
+      await api.deleteService(service._id);
+      setLaborRates((currentRates) =>
+        currentRates.filter(
+          (rate) =>
+            rate.serviceType.trim().toLowerCase() !==
+            service.name.trim().toLowerCase(),
+        ),
+      );
+      setServiceRefreshKey((key) => key + 1);
+      setToast("Service deleted successfully.");
+    } catch (deleteError) {
+      setError(deleteError.message || "Failed to delete service");
+    }
+  };
+
   const filteredItems = inventoryItems.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase()),
   );
   const filteredLaborRates = laborRates.filter((rate) =>
     rate.serviceType.toLowerCase().includes(search.toLowerCase()),
   );
+  const matchedLaborRateIds = new Set();
+  const serviceRows = services.map((service) => {
+    const matchingRate = laborRates.find((rate) =>
+      rate.serviceType.trim().toLowerCase() === service.name.trim().toLowerCase(),
+    );
+    if (matchingRate) matchedLaborRateIds.add(matchingRate._id);
+    return { service, rate: matchingRate || null };
+  }).filter(({ service, rate }) =>
+    `${service.name} ${service.description}`.toLowerCase().includes(search.toLowerCase())
+      || rate?.serviceType.toLowerCase().includes(search.toLowerCase()),
+  );
+  filteredLaborRates.forEach((rate) => {
+    if (!matchedLaborRateIds.has(rate._id)) serviceRows.push({ service: null, rate });
+  });
 
   const closeItemDialog = () => {
     setEditingItem(null);
@@ -192,6 +289,8 @@ function Inventory() {
     <AdminPageFrame>
       <section className="section-content active">
         <div className="inventory-container">
+          {toast && <p className="inventory-toast" role="status">{toast}</p>}
+          <div className="inventory-tabs-row">
           <div
             className="inventory-view-toggle"
             role="tablist"
@@ -219,6 +318,20 @@ function Inventory() {
             >
               Services
             </button>
+          </div>
+          {activeTab === "services" && (
+            <button
+              className="btn-primary"
+              type="button"
+              onClick={() => {
+                setServiceForm({ name: "", description: "", price: "", mechanicFee: "" });
+                setServiceFormError("");
+                setIsAddingService(true);
+              }}
+            >
+              + Add Service
+            </button>
+          )}
           </div>
           {error && (
             <p className="dashboard-error" role="alert">
@@ -329,7 +442,7 @@ function Inventory() {
                 />
               </div>
               <div className="inventory-info">
-                {isLoadingRates ? "Loading..." : filteredLaborRates.length}{" "}
+                {isLoadingRates || isLoadingServices ? "Loading..." : serviceRows.length}{" "}
                 services · default labor fee per completed service
               </div>
               <div className="inventory-table-scroll">
@@ -337,16 +450,22 @@ function Inventory() {
                   <thead>
                     <tr>
                       <th>SERVICE</th>
+                      <th>PRICE</th>
                       <th>DEFAULT LABOR FEE</th>
                       <th>ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredLaborRates.map((rate) => (
-                      <tr key={rate._id}>
-                        <td>{rate.serviceType}</td>
+                    {serviceRows.map(({ service, rate }) => (
+                      <tr key={service?._id || `labor-rate-${rate._id}`}>
+                        <td>{service?.name || rate.serviceType}</td>
                         <td className="price-text">
-                          {editingRateId === rate._id ? (
+                          {service
+                            ? `₱${Number(service.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
+                            : "—"}
+                        </td>
+                        <td className="price-text">
+                          {rate && editingRateId === rate._id ? (
                             <input
                               className="service-fee-input"
                               type="number"
@@ -358,14 +477,18 @@ function Inventory() {
                                 setRateDraft(event.target.value)
                               }
                             />
-                          ) : (
+                          ) : rate ? (
                             `₱${Number(rate.laborFee).toLocaleString("en-PH", {
+                              minimumFractionDigits: 2,
+                            })}`
+                          ) : (
+                            `₱${Number(service.mechanicFee || 0).toLocaleString("en-PH", {
                               minimumFractionDigits: 2,
                             })}`
                           )}
                         </td>
                         <td>
-                          {editingRateId === rate._id ? (
+                          {rate && editingRateId === rate._id ? (
                             <>
                               <button
                                 className="btn-small btn-edit"
@@ -388,6 +511,8 @@ function Inventory() {
                               </button>
                             </>
                           ) : (
+                            <>
+                            {rate && (
                             <button
                               className="btn-small btn-edit"
                               type="button"
@@ -398,6 +523,17 @@ function Inventory() {
                             >
                               Edit fee
                             </button>
+                            )}
+                            {service && (
+                              <button
+                                className="btn-small btn-delete"
+                                type="button"
+                                onClick={() => removeService(service)}
+                              >
+                                Delete
+                              </button>
+                            )}
+                            </>
                           )}
                         </td>
                       </tr>
@@ -471,6 +607,69 @@ function Inventory() {
               </button>
               <button className="btn-primary" type="submit" disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Item"}
+              </button>
+            </div>
+          </form>
+        </AdminDialog>
+      )}
+      {isAddingService && (
+        <AdminDialog
+          title="Add Service"
+          onClose={() => {
+            if (!isSavingService) setIsAddingService(false);
+          }}
+        >
+          <form className="admin-dialog-form" onSubmit={saveService}>
+            {serviceFormError && <p className="admin-dialog-error" role="alert">{serviceFormError}</p>}
+            <label>
+              Name
+              <input
+                required
+                value={serviceForm.name}
+                onChange={(event) => setServiceForm({ ...serviceForm, name: event.target.value })}
+              />
+            </label>
+            <label>
+              Description
+              <textarea
+                required
+                value={serviceForm.description}
+                onChange={(event) => setServiceForm({ ...serviceForm, description: event.target.value })}
+              />
+            </label>
+            <label>
+              Price
+              <input
+                required
+                min="0"
+                step="0.01"
+                type="number"
+                value={serviceForm.price}
+                onChange={(event) => setServiceForm({ ...serviceForm, price: event.target.value })}
+              />
+            </label>
+            <label>
+              Mechanic Fee
+              <input
+                required
+                min="0"
+                step="0.01"
+                type="number"
+                value={serviceForm.mechanicFee}
+                onChange={(event) => setServiceForm({ ...serviceForm, mechanicFee: event.target.value })}
+              />
+            </label>
+            <div className="admin-dialog-actions">
+              <button
+                className="btn-small"
+                type="button"
+                disabled={isSavingService}
+                onClick={() => setIsAddingService(false)}
+              >
+                Cancel
+              </button>
+              <button className="btn-primary" type="submit" disabled={isSavingService}>
+                {isSavingService ? "Saving..." : "Add Service"}
               </button>
             </div>
           </form>

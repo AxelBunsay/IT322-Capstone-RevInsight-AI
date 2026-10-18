@@ -1100,6 +1100,7 @@
 }
 
 .customer-account-panel .customer-flow-section-heading { margin: 0 0 16px; }
+.customer-account-shortcuts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .customer-account-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .customer-account-form label { display: grid; gap: 6px; color: #51463f; font-size: 10px; font-weight: 700; }
 .customer-account-form input,
