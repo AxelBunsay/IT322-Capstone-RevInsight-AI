@@ -24,7 +24,7 @@ const checkout = async (req, res) => {
     }
 
     for (const item of cart.items) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findOne({ _id: item.productId, isActive: { $ne: false } });
       if (!product) {
         return res.status(400).json({
           success: false,
@@ -77,7 +77,7 @@ const reorderOrder = async (req, res) => {
 
     const warnings = [];
     for (const orderItem of order.items) {
-      const product = await Product.findById(orderItem.productId);
+      const product = await Product.findOne({ _id: orderItem.productId, isActive: { $ne: false } });
       if (!product) {
         warnings.push(`${orderItem.productName} is no longer available and was skipped.`);
         continue;

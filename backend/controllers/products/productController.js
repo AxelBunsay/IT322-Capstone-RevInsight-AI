@@ -1,6 +1,8 @@
 const Product = require('../../models/product');
 const cloudinary = require('../../config/cloudinary');
 const mongoose = require('mongoose');
+const { validateProductInput } = require('../../utils/inventoryValidation');
+const { archiveOrDeleteProduct } = require('../../utils/safeDeleteInventoryRecord');
 
 const validateProductId = (id, res) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -30,16 +32,17 @@ const uploadToCloudinary = (file) =>
 const createProduct = async (req, res) => {
   try {
     const { name, price, quantity, category } = req.body;
+    const fieldErrors = validateProductInput(req.body);
+    if (Object.keys(fieldErrors).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please correct the highlighted fields.',
+        fieldErrors
+      });
+    }
     const uploadResult = req.file
       ? await uploadToCloudinary(req.file)
       : null;
-
-    if (!name || price === undefined || quantity === undefined || !category) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, price, quantity, and category are required'
-      });
-    }
 
     const product = await Product.create({
       name,
@@ -68,8 +71,8 @@ const getProducts = async (req, res) => {
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
     const skip = (page - 1) * limit;
     const [products, total] = await Promise.all([
-      Product.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Product.countDocuments()
+      Product.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.countDocuments({ isActive: { $ne: false } })
     ]);
 
     res.status(200).json({
@@ -98,7 +101,7 @@ const getProduct = async (req, res) => {
   try {
     if (!validateProductId(req.params.id, res)) return;
 
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({ _id: req.params.id, isActive: { $ne: false } });
 
     if (!product) {
       return res.status(404).json({
@@ -127,9 +130,17 @@ const updateProduct = async (req, res) => {
     if (!validateProductId(req.params.id, res)) return;
 
     const { name, price, quantity, category } = req.body;
+    const fieldErrors = validateProductInput(req.body);
+    if (Object.keys(fieldErrors).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please correct the highlighted fields.',
+        fieldErrors
+      });
+    }
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, price, quantity, category },
+      { name: name.trim(), price: Number(price), quantity: Number(quantity), category: category.trim() },
       { new: true, runValidators: true }
     );
 
@@ -157,7 +168,7 @@ const deleteProduct = async (req, res) => {
   try {
     if (!validateProductId(req.params.id, res)) return;
 
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -166,9 +177,11 @@ const deleteProduct = async (req, res) => {
       });
     }
 
+    const { archived } = await archiveOrDeleteProduct(product);
     res.status(200).json({
       success: true,
-      message: 'Product deleted successfully'
+      archived,
+      message: archived ? 'Product archived because it is referenced by past records' : 'Product deleted successfully'
     });
   } catch (error) {
     res.status(500).json({

@@ -32,9 +32,11 @@ function AdminSidebar({ badges, loading, isCollapsed, onToggle, onClose }) {
         <div className="sidebar-header">
           <div className="brand-row">
             <div className="brand" aria-label="REVINSIGHT Admin">
-              <span className="brand-icon">R</span>
               <div className="brand-text">
-                <span className="brand-name">REVINSIGHT</span>
+                <span className="brand-name-row">
+                  <span className="brand-name">REVINSIGHT</span>
+                  <span className="brand-ai-badge">AI</span>
+                </span>
                 <span className="brand-role">Admin</span>
               </div>
             </div>

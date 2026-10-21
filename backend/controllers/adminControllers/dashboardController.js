@@ -4,6 +4,8 @@ const User = require('../../models/user');
 const Mechanic = require('../../models/mechanic');
 const ServiceRequest = require('../../models/serviceRequest');
 const BusinessRecord = require('../../models/businessRecord');
+const { validateProductInput } = require('../../utils/inventoryValidation');
+const { archiveOrDeleteProduct } = require('../../utils/safeDeleteInventoryRecord');
 
 const revenueStatuses = ['completed', 'Paid'];
 const revenueAmount = { $ifNull: ['$totalPrice', '$totalAmount'] };
@@ -389,12 +391,12 @@ const getAllInventory = async (req, res) => {
   try {
     const { page = 1, limit = 15 } = req.query;
 
-    const inventory = await Product.find()
+    const inventory = await Product.find({ isActive: { $ne: false } })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .sort({ createdAt: -1 });
 
-    const total = await Product.countDocuments();
+    const total = await Product.countDocuments({ isActive: { $ne: false } });
 
     res.json({
       success: true,
@@ -414,7 +416,7 @@ const getAllInventory = async (req, res) => {
 // Get Inventory Item
 const getInventoryItem = async (req, res) => {
   try {
-    const item = await Product.findById(req.params.id);
+    const item = await Product.findOne({ _id: req.params.id, isActive: { $ne: false } });
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Item not found' });
@@ -433,6 +435,14 @@ const getInventoryItem = async (req, res) => {
 // Add Inventory Item
 const addInventoryItem = async (req, res) => {
   try {
+    const fieldErrors = validateProductInput(req.body);
+    if (Object.keys(fieldErrors).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please correct the highlighted fields.',
+        fieldErrors
+      });
+    }
     const item = new Product(req.body);
     await item.save();
 
@@ -450,9 +460,22 @@ const addInventoryItem = async (req, res) => {
 // Update Inventory Item
 const updateInventoryItem = async (req, res) => {
   try {
+    const fieldErrors = validateProductInput(req.body);
+    if (Object.keys(fieldErrors).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please correct the highlighted fields.',
+        fieldErrors
+      });
+    }
     const item = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      {
+        name: req.body.name.trim(),
+        price: Number(req.body.price),
+        quantity: Number(req.body.quantity),
+        category: req.body.category.trim()
+      },
       { new: true, runValidators: true }
     );
 
@@ -474,15 +497,19 @@ const updateInventoryItem = async (req, res) => {
 // Delete Inventory Item
 const deleteInventoryItem = async (req, res) => {
   try {
-    const item = await Product.findByIdAndDelete(req.params.id);
+    const item = await Product.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Item not found' });
     }
 
+    const { archived } = await archiveOrDeleteProduct(item);
     res.json({
       success: true,
-      message: 'Inventory item deleted successfully'
+      archived,
+      message: archived
+        ? 'Inventory item archived because it is referenced by past records'
+        : 'Inventory item deleted successfully'
     });
   } catch (error) {
     console.error('[deleteInventoryItem] error', error);

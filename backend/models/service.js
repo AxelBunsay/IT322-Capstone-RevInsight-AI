@@ -5,25 +5,37 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Service name is required'],
     minlength: 2,
-    maxlength: 100,
+    maxlength: 80,
     trim: true,
     unique: true
   },
   description: {
     type: String,
-    required: [true, 'Service description is required'],
+    default: '',
     trim: true,
-    maxlength: 500
+    maxlength: 300
   },
   price: {
     type: Number,
     required: [true, 'Service price is required'],
-    min: 0
+    min: 0.01,
+    max: 999999.99
   },
   mechanicFee: {
     type: Number,
     min: 0,
-    default: 0
+    max: 999999.99,
+    default: 0,
+    validate: {
+      validator(value) {
+        return value <= this.price;
+      },
+      message: 'Mechanic fee cannot be greater than the service price.'
+    }
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, { timestamps: true });
 

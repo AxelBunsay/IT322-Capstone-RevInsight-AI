@@ -198,6 +198,7 @@ export const adminApi = {
   updateServiceLaborRate: (id, laborFee) => request(`/api/service-requests/labor-rates/${id}`, { method: 'PUT', body: JSON.stringify({ laborFee }) }),
   getServices: () => request('/api/admin/services'),
   createService: (service) => request('/api/admin/services', { method: 'POST', body: JSON.stringify(service) }),
+  updateService: (id, service) => request(`/api/admin/services/${id}`, { method: 'PUT', body: JSON.stringify(service) }),
   deleteService: (id) => request(`/api/admin/services/${id}`, { method: 'DELETE' }),
   updateServiceRequestLaborFee: (requestId, laborFee) => request('/api/service-requests/labor-fee', { method: 'PUT', body: JSON.stringify({ requestId, laborFee }) }),
   confirmServiceRequest: (requestId, mechanicId) => request('/api/service-requests/assign', { method: 'PUT', body: JSON.stringify({ requestId, mechanicId }) }),

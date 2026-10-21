@@ -22,7 +22,7 @@ const addToCart = async (req, res) => {
       });
     }
 
-    const product = await Product.findById(productId);
+    const product = await Product.findOne({ _id: productId, isActive: { $ne: false } });
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -163,7 +163,7 @@ const updateCartQuantity = async (req, res) => {
       });
     }
 
-    const product = await Product.findById(productId);
+    const product = await Product.findOne({ _id: productId, isActive: { $ne: false } });
     if (!product) {
       return res.status(404).json({
         success: false,

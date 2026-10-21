@@ -70,10 +70,8 @@
 }
 
 .admin-root .brand {
-  display: flex;
+  display: block;
   min-width: 0;
-  align-items: center;
-  gap: 12px;
   overflow: hidden;
 }
 
@@ -96,7 +94,25 @@
   white-space: nowrap;
 }
 
-.admin-root .brand-name { color: #fff; font-size: 13px; font-weight: 800; }
+.admin-root .brand-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-root .brand-name { color: #fff; font-size: 13px; font-weight: 800; letter-spacing: .04em; }
+.admin-root .brand-ai-badge {
+  display: inline-grid;
+  min-width: 21px;
+  min-height: 17px;
+  place-items: center;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #e8630f, #ff9d4d);
+  color: #2a1204;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
 .admin-root .brand-role { margin-top: 2px; color: var(--brand); font-size: 11px; font-weight: 600; }
 
 .admin-root .sidebar-nav {

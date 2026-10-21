@@ -20,7 +20,7 @@ const createPaymentIntent = async (req, res) => {
     }
 
     for (const item of cart.items) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findOne({ _id: item.productId, isActive: { $ne: false } });
       if (!product) {
         return res.status(400).json({
           success: false,
@@ -90,7 +90,7 @@ const confirmPayment = async (req, res) => {
     }
 
     for (const item of cartItems) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findOne({ _id: item.productId, isActive: { $ne: false } });
       if (!product) {
         console.error(`Product ${item.productId} not found during order creation`);
         continue;
@@ -104,7 +104,7 @@ const confirmPayment = async (req, res) => {
     }
 
     for (const item of cartItems) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findOne({ _id: item.productId, isActive: { $ne: false } });
       if (product) {
         product.quantity -= item.quantity;
         await product.save();

@@ -12,6 +12,10 @@ const serviceLaborRateSchema = new mongoose.Schema({
     required: true,
     min: 0,
     default: 50
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 });
 

@@ -35,6 +35,7 @@ export async function request(path, options = {}) {
     const message = typeof body === 'string' ? body : body?.message;
     const requestError = new Error(message || `Request failed with status ${response.status}`);
     requestError.status = response.status;
+    requestError.fieldErrors = body?.fieldErrors || {};
     throw requestError;
   }
 

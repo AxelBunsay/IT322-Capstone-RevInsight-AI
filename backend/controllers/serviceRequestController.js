@@ -3,6 +3,7 @@ const ServiceLaborRate = require("../models/serviceLaborRate");
 const Mechanic = require("../models/mechanic");
 const BusinessRecord = require("../models/businessRecord");
 const User = require("../models/user");
+const Service = require("../models/service");
 
 const offeredServiceTypes = [
   "Foam Seat Repair",
@@ -131,7 +132,7 @@ const getServiceLaborRates = async (req, res) => {
       })),
     );
 
-    const rates = await ServiceLaborRate.find().sort({ serviceType: 1 });
+    const rates = await ServiceLaborRate.find({ isActive: { $ne: false } }).sort({ serviceType: 1 });
     res.status(200).json({ rates });
   } catch (error) {
     console.error("[getServiceLaborRates] error", error);
@@ -248,16 +249,24 @@ const createServiceRequest = async (req, res) => {
         .json({ message: "Scheduled date cannot be in the past" });
     }
 
+    const serviceNamePattern = new RegExp(`^\\s*${serviceType.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i");
+    const configuredService = await Service.findOne({ name: serviceNamePattern }).lean();
+    if (configuredService?.isActive === false) {
+      return res.status(400).json({ message: "This service is no longer available" });
+    }
     const serviceLaborRate = await ServiceLaborRate.findOne({
-      serviceType,
+      serviceType: serviceNamePattern,
     }).lean();
+    if (serviceLaborRate?.isActive === false) {
+      return res.status(400).json({ message: "This service is no longer available" });
+    }
     const serviceRequest = await ServiceRequest.create({
       user: userId,
       serviceType,
       description,
       mechanic: mechanicId,
       estimatedPrice: Number(estimatedPrice) || 0,
-      laborFee: serviceLaborRate?.laborFee ?? 50,
+      laborFee: configuredService?.mechanicFee ?? serviceLaborRate?.laborFee ?? 50,
       scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
     });
 
