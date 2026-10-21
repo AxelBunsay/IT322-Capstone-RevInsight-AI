@@ -47,9 +47,10 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   overflow: hidden;
   margin-bottom: 14px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--surface);
+  border: 1px solid #f6d3b0;
+  border-radius: 16px;
+  background: #fff1e1;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
 }
 .admin-root .admin-stat-cell {
   display: flex;
@@ -57,7 +58,7 @@
   min-height: 144px;
   flex-direction: column;
   padding: 16px 18px 10px;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid #f3dcc3;
 }
 .admin-root .admin-stat-cell:last-child {
   border-right: 0;
@@ -116,15 +117,11 @@
   overflow: hidden;
   margin-bottom: 14px;
   padding: 22px 24px 18px;
-  border: 0;
-  border-radius: 28px;
-  background-color: var(--brown);
-  background-image: radial-gradient(
-    circle at 94% 0%,
-    rgba(242, 106, 27, 0.13),
-    transparent 31%
-  );
-  color: #f6e8dd;
+  border: 1px solid #f6d3b0;
+  border-radius: 16px;
+  background: #fff1e1;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
+  color: #1c140d;
 }
 .admin-root .admin-sales-hero .admin-panel__header {
   display: none;
@@ -141,22 +138,23 @@
   gap: 0;
 }
 .admin-root .admin-sales-summary__total > span {
-  color: #e6ccb8;
+  color: #6b5440;
   font-size: 13px;
   font-weight: 600;
 }
 .admin-root .admin-sales-summary__total > strong {
+  color: #1c140d;
   font-size: 38px;
   font-weight: 800;
   line-height: 1.16;
 }
 .admin-root .admin-sales-summary__total > small {
-  color: #e6ccb8;
+  color: #6b5440;
   font-size: 12px;
   font-weight: 500;
 }
 .admin-root .admin-sales-summary__total > small::first-letter {
-  color: #fff;
+  color: #1c140d;
 }
 .admin-root .admin-period-toggle {
   display: flex;
@@ -164,7 +162,8 @@
   gap: 3px;
   padding: 4px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid #f6d3b0;
+  background: rgba(232, 99, 15, .10);
 }
 .admin-root .admin-period-toggle button {
   min-width: 58px;
@@ -173,17 +172,17 @@
   border: 0;
   border-radius: 11px;
   background: transparent;
-  color: #e6ccb8;
+  color: #6b5440;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 .admin-root .admin-period-toggle button:hover {
-  color: #fff;
+  color: #1c140d;
 }
 .admin-root .admin-period-toggle button.is-active {
-  background: var(--brand);
-  color: #fff;
+  background: #e8630f;
+  color: #1c140d;
 }
 .admin-root .admin-sales-chart {
   min-width: 0;
@@ -194,22 +193,24 @@
   align-items: center;
   gap: 8px;
   margin: -9px 0 2px;
-  color: #e6ccb8;
+  color: #6b5440;
   font-size: 11px;
 }
 .admin-root .admin-sales-chart__readout strong {
-  color: #fff;
+  color: #1c140d;
   font-size: 12px;
   font-weight: 700;
 }
 .admin-root .admin-sales-chart__updating {
   margin-left: auto;
-  color: #e6ccb8;
+  color: #6b5440;
 }
 .admin-root .admin-sales-chart__canvas {
   position: relative;
   width: 100%;
   height: clamp(220px, 28vw, 315px);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .6);
 }
 .admin-root .admin-sales-chart__canvas canvas {
   display: block;
@@ -219,18 +220,13 @@
 .admin-root .admin-sales-chart__skeleton {
   height: clamp(220px, 28vw, 315px);
   border-radius: 12px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.035),
-    rgba(255, 255, 255, 0.09),
-    rgba(255, 255, 255, 0.035)
-  );
+  background: linear-gradient(90deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, .65), rgba(255, 255, 255, .35));
   background-size: 200% 100%;
   animation: admin-skeleton-shimmer 1.4s ease-in-out infinite;
 }
 .admin-root .admin-sales-hero .admin-empty-state {
   min-height: 230px;
-  color: #e6ccb8;
+  color: #6b5440;
 }
 .admin-root .admin-sales-hero .admin-inline-error {
   margin-top: 12px;
@@ -283,7 +279,7 @@
   height: 9px;
   overflow: hidden;
   border-radius: 99px;
-  background: var(--soft);
+  background: #f3dcc3;
 }
 .admin-root .admin-category-track span {
   display: block;
@@ -297,7 +293,7 @@
   height: 12px;
   overflow: hidden;
   border-radius: 99px;
-  background: var(--soft);
+  background: #f3dcc3;
 }
 .admin-root .admin-stock-bar__segment.is-inStock,
 .admin-root .admin-stock-legend__dot.is-inStock {
@@ -346,7 +342,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid #f3dcc3;
 }
 .admin-root .admin-low-stock__row > span:first-child {
   overflow: hidden;
@@ -354,6 +350,10 @@
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.admin-root .admin-low-stock .admin-badge {
+  background: #ffe0c2;
+  color: #9a4308;
 }
 .admin-root .admin-panel-skeleton {
   min-height: 235px;
@@ -364,9 +364,10 @@
 .admin-root .ai-revenue-analysis {
   margin-top: 14px;
   padding: 18px 20px 24px;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: var(--surface);
+  border: 1px solid #f6d3b0;
+  border-radius: 16px;
+  background: #fff1e1;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
 }
 .admin-root .ai-revenue-analysis__header {
   display: flex;
@@ -386,8 +387,8 @@
   height: 30px;
   place-items: center;
   border-radius: 9px;
-  background: var(--brand);
-  color: #fff;
+  background: #ffe0c2;
+  color: #d4540a;
   font-size: 18px;
 }
 .admin-root .ai-revenue-analysis h2 {
@@ -439,7 +440,7 @@
 }
 .admin-root .ai-revenue-tabs button.is-active {
   background: var(--brand);
-  color: #fff;
+  color: #1c140d;
 }
 .admin-root .ai-revenue-completeness-banner {
   display: flex;
@@ -460,9 +461,10 @@
   gap: 30px;
   margin-bottom: 12px;
   padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-radius: 17px;
-  background: #1d0a0a;
+  border: 1px solid #f6d3b0;
+  border-radius: 16px;
+  background: #fff1e1;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
 }
 .admin-root .ai-revenue-summary > div:first-child {
   display: flex;
@@ -472,30 +474,31 @@
 }
 .admin-root .ai-revenue-summary > div:first-child > span {
   flex-basis: 100%;
-  color: var(--muted);
+  color: #6b5440;
   font-size: 11px;
 }
 .admin-root .ai-revenue-summary strong {
-  color: var(--ink);
-  font-size: 28px;
+  color: #1c140d;
+  font-size: 40px;
+  font-weight: 800;
   line-height: 1.1;
 }
 .admin-root .ai-revenue-summary em {
   padding: 4px 8px;
   border-radius: 99px;
-  background: #e5f6ee;
-  color: var(--good);
+  background: #dff3e6;
+  color: #1f7a3d;
   font-size: 10px;
   font-style: normal;
   font-weight: 800;
 }
 .admin-root .ai-revenue-summary em.is-negative {
-  background: #fde9e6;
-  color: var(--bad);
+  background: #fbd9d3;
+  color: #a3271b;
 }
 .admin-root .ai-revenue-summary small {
   flex-basis: 100%;
-  color: var(--muted);
+  color: #6b5440;
   font-size: 11px;
 }
 .admin-root .ai-revenue-collected-row {
@@ -534,8 +537,72 @@
 .admin-root .ai-revenue-chart__labels {
   display: flex;
   justify-content: space-between;
-  color: var(--muted);
+  color: #6b5440;
   font-size: 9px;
+}
+.admin-root .ai-revenue-chart__estimate-line {
+  stroke: #e8630f;
+  stroke-dasharray: 7 6;
+  stroke-width: 3;
+}
+.admin-root .ai-revenue-chart__estimate-dot {
+  fill: #fff1e1;
+  stroke: #e8630f;
+  stroke-width: 3;
+}
+.admin-root .ai-revenue-chart.has-estimate .ai-revenue-chart__labels span:last-child {
+  color: #9a4308;
+  font-weight: 800;
+}
+.admin-root .ai-revenue-summary__chart {
+  min-width: 0;
+}
+.admin-root .ai-revenue-estimate-note {
+  margin: 5px 0 0;
+  color: #6b5440;
+  font-size: 10px;
+  text-align: right;
+}
+.admin-root .ai-revenue-estimate-legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 5px;
+  color: #6b5440;
+  font-size: 10px;
+}
+.admin-root .ai-revenue-estimate-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.admin-root .ai-revenue-estimate-legend i {
+  width: 9px;
+  height: 9px;
+  border: 2px solid #e8630f;
+  border-radius: 50%;
+}
+.admin-root .ai-revenue-estimate-legend i.is-actual {
+  background: #e8630f;
+}
+.admin-root .ai-revenue-estimate-legend i.is-estimate {
+  background: #fff1e1;
+}
+.admin-root .ai-revenue-summary .ai-revenue-chart polyline {
+  stroke: #e8630f !important;
+}
+.admin-root .ai-revenue-summary .ai-revenue-chart stop {
+  stop-color: #ff9d4d !important;
+}
+.admin-root .ai-revenue-summary .ai-revenue-chart stop:first-child {
+  stop-opacity: .35 !important;
+}
+.admin-root .ai-revenue-summary .ai-revenue-chart stop:last-child {
+  stop-opacity: 0 !important;
+}
+.admin-root .ai-revenue-summary .ai-revenue-chart circle {
+  fill: #fff;
+  stroke: #e8630f;
 }
 .admin-root .ai-revenue-cards {
   display: grid;
@@ -545,9 +612,10 @@
 .admin-root .ai-revenue-card {
   min-width: 0;
   padding: 15px 16px 16px;
-  border: 1px solid var(--line);
+  border: 1px solid #f6d3b0;
   border-radius: 16px;
-  background: #1d0a0a;
+  background: #fff1e1;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
   text-align: left;
   cursor: pointer;
   transition:
@@ -571,55 +639,59 @@
 }
 .admin-root .ai-revenue-card__icon {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   border-radius: 9px;
-  background: var(--soft);
-  color: var(--brand);
+  background: #ffe0c2;
+  color: #d4540a;
   font-size: 17px;
   font-weight: 800;
 }
 .admin-root .ai-revenue-card > strong {
   display: block;
   overflow: hidden;
-  color: var(--ink);
-  font-size: 12px;
+  color: #6b5440;
+  font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .admin-root .ai-revenue-card > b {
   display: block;
   margin-top: 4px;
-  color: var(--ink);
-  font-size: 18px;
+  color: #1c140d;
+  font-size: 22px;
   line-height: 1.2;
 }
 .admin-root .ai-revenue-card > small {
   display: block;
   min-height: 29px;
   margin-top: 5px;
-  color: var(--muted);
-  font-size: 10px;
+  color: #6b5440;
+  font-size: 12.5px;
   line-height: 1.4;
 }
 .admin-root .ai-revenue-pill {
   padding: 4px 7px;
   border-radius: 99px;
-  background: #e5f6ee;
-  color: var(--good);
+  background: #dff3e6;
+  color: #1f7a3d;
   font-size: 9px;
   font-style: normal;
   font-weight: 800;
   white-space: nowrap;
 }
 .admin-root .ai-revenue-pill.is-warn {
-  background: #fff1d8;
-  color: #b66b00;
+  background: #fde9b8;
+  color: #7a4f00;
 }
 .admin-root .ai-revenue-pill.is-bad {
-  background: #fde9e6;
-  color: var(--bad);
+  background: #fbd9d3;
+  color: #a3271b;
+}
+.admin-root .ai-revenue-pill.is-neutral {
+  background: #ffe0c2;
+  color: #9a4308;
 }
 .admin-root .ai-revenue-modal-layer {
   position: fixed;

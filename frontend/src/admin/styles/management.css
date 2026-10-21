@@ -26,16 +26,33 @@
 }
 .admin-root .admin-management-page .inventory-container,
 .admin-root .admin-management-page .transactions-container,
-.admin-root .admin-management-page .mechanics-container,
 .admin-root .admin-management-page .chart-card,
 .admin-root .admin-management-page .stat-card,
 .admin-root .admin-management-page .risk-card,
 .admin-root .admin-management-page .ai-card {
   min-width: 0;
   padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--surface);
+  border: 1px solid #ecdfd2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
+}
+.admin-root .admin-management-page .mechanics-container {
+  --surface: #fff1e1;
+  --ink: #1c140d;
+  --muted: #6b5440;
+  --brand: #e8630f;
+  --line: #f3dcc3;
+  --soft: #ffe0c2;
+  --good: #1f7a3d;
+  --bad: #b3261e;
+  --warn: #7a4f00;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #f6d3b0;
+  border-radius: 16px;
+  background: #fff1e1;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
 }
 .admin-root .admin-management-page .inventory-header,
 .admin-root .admin-management-page .transactions-header,
@@ -105,6 +122,58 @@
 .admin-root .admin-management-page .stat-subtitle,
 .admin-root .admin-management-page .risk-description {
   color: var(--muted);
+}
+.admin-root .admin-management-page .inventory-info {
+  margin-bottom: 8px;
+}
+.admin-root .admin-management-page .inventory-table td .inventory-service-description {
+  display: block;
+  max-width: 320px;
+  overflow: hidden;
+  color: #6b5440;
+  font-size: 12.5px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-root .admin-management-page .inventory-table td .inventory-service-description[title] {
+  cursor: help;
+}
+.admin-root .admin-management-page .inventory-table td .btn-edit {
+  border-color: #dccab8;
+  background: #fff;
+  color: #1c140d;
+}
+.admin-root .admin-management-page .inventory-table td .btn-delete {
+  border-color: #f5c9c3;
+  background: #fff;
+  color: #b3261e;
+}
+.admin-root .admin-management-page .inventory-table td .btn-edit + .btn-delete {
+  margin-left: 8px;
+}
+.admin-root .admin-management-page .inventory-field-error {
+  color: #b3261e;
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-root .admin-management-page .inventory-description-count {
+  color: #6b5440;
+  font-size: 11px;
+  text-align: right;
+}
+.admin-root .admin-management-page .admin-dialog-form [aria-invalid="true"] {
+  border-color: #b3261e;
+}
+.admin-root .admin-management-page .inventory-delete-message {
+  margin: 0 0 18px;
+  color: var(--ink);
+}
+.admin-root .admin-management-page .inventory-container .inventory-header {
+  margin-bottom: 12px;
+}
+.admin-root .admin-management-page .inventory-container .inventory-header input {
+  width: 100%;
 }
 .admin-root .admin-management-page .inventory-view-toggle {
   display: inline-flex;
@@ -193,6 +262,9 @@
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
+.admin-root .admin-management-page .inventory-table tbody tr {
+  height: 68px;
+}
 .admin-root .admin-management-page .price-text {
   font-weight: 700;
 }
@@ -243,16 +315,38 @@
   margin: 14px 0;
 }
 .admin-root .admin-management-page .stat-box,
-.admin-root .admin-management-page .mechanic-stat,
 .admin-root .admin-management-page .mechanic-card {
   min-width: 0;
   padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: #160a04;
+  border: 1px solid #f6d3b0;
+  border-radius: 16px;
+  background: #fff1e1;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
+}
+.admin-root .admin-management-page .stat-number {
+  color: #1c140d;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.admin-root .admin-management-page .stat-label {
+  color: #6b5440;
+  font-size: 13px;
 }
 .admin-root .admin-management-page .mechanic-card {
   margin-top: 12px;
+}
+.admin-root .admin-management-page .mechanic-stat {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #f6d3b0;
+  border-radius: 12px;
+  background: #fff1e1;
+}
+.admin-root .admin-management-page .mechanic-stat-number {
+  color: #1c140d;
+  font-size: 18px;
+  font-weight: 800;
 }
 .admin-root .admin-management-page .mechanic-avatar {
   display: grid;
@@ -260,8 +354,8 @@
   height: 40px;
   place-items: center;
   border-radius: 50%;
-  background: var(--soft);
-  color: var(--brand);
+  background: #e8630f;
+  color: #fff;
   font-weight: 800;
 }
 .admin-root .admin-management-page .mechanic-info {
@@ -276,8 +370,30 @@
 .admin-root .admin-management-page .mechanic-email,
 .admin-root .admin-management-page .mechanic-stat-label,
 .admin-root .admin-management-page .stat-label {
-  color: var(--muted);
+  color: #6b5440;
   font-size: 12px;
+}
+.admin-root .admin-management-page .mechanic-name {
+  color: #1c140d;
+  font-size: 16px;
+  font-weight: 800;
+}
+.admin-root .admin-management-page .stat-label {
+  color: #6b5440;
+  font-size: 13px;
+}
+.admin-root .admin-management-page .mechanic-actions .btn-edit {
+  border-color: #dccab8;
+  background: #fff;
+  color: #1c140d;
+}
+.admin-root .admin-management-page .mechanics-header .btn-primary {
+  color: #1c140d;
+}
+.admin-root .admin-management-page .mechanic-actions .btn-delete {
+  border-color: #fde7e4;
+  background: #fde7e4;
+  color: #b3261e;
 }
 .admin-root .admin-management-page .status-badge {
   display: inline-flex;
@@ -412,59 +528,4 @@
   .admin-root .admin-management-page .mechanic-actions {
     flex-wrap: wrap;
   }
-}
-.admin-root .admin-management-page .inventory-info {
-  margin-bottom: 8px;
-}
-.admin-root .admin-management-page .inventory-table td .inventory-service-description {
-  display: block;
-  max-width: 320px;
-  overflow: hidden;
-  color: #6b5440;
-  font-size: 12.5px;
-  font-weight: 400;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.admin-root .admin-management-page .inventory-table td .inventory-service-description[title] {
-  cursor: help;
-}
-.admin-root .admin-management-page .inventory-table td .btn-edit {
-  border-color: #dccab8;
-  background: #fff;
-  color: #1c140d;
-}
-.admin-root .admin-management-page .inventory-table td .btn-delete {
-  border-color: #f5c9c3;
-  background: #fff;
-  color: #b3261e;
-}
-.admin-root .admin-management-page .inventory-table td .btn-edit + .btn-delete {
-  margin-left: 8px;
-}
-.admin-root .admin-management-page .inventory-field-error {
-  color: #b3261e;
-  font-size: 12px;
-  font-weight: 600;
-}
-.admin-root .admin-management-page .inventory-description-count {
-  color: #6b5440;
-  font-size: 11px;
-  text-align: right;
-}
-.admin-root .admin-management-page .admin-dialog-form [aria-invalid="true"] {
-  border-color: #b3261e;
-}
-.admin-root .admin-management-page .inventory-delete-message {
-  margin: 0 0 18px;
-  color: var(--ink);
-}
-.admin-root .admin-management-page .inventory-container .inventory-header {
-  margin-bottom: 12px;
-}
-.admin-root .admin-management-page .inventory-container .inventory-header input {
-  width: 100%;
-}
-.admin-root .admin-management-page .inventory-table tbody tr {
-  height: 68px;
 }
