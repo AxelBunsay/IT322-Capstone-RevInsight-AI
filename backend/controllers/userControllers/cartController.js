@@ -41,10 +41,11 @@ const addToCart = async (req, res) => {
 
     const existingItem = cart.items.find(item => item.productId.toString() === productId);
     const requestedQuantity = (existingItem?.quantity || 0) + Number(quantity);
-    if (product.quantity < requestedQuantity) {
+    const availableQuantity = Math.max(0, product.quantity - Number(product.reservedQty || 0));
+    if (availableQuantity < requestedQuantity) {
       return res.status(400).json({
         success: false,
-        message: `Not enough stock for ${product.name}. Only ${product.quantity} available.`
+        message: `Not enough stock for ${product.name}. Only ${availableQuantity} available.`
       });
     }
 
@@ -171,10 +172,11 @@ const updateCartQuantity = async (req, res) => {
       });
     }
 
-    if (product.quantity < Number(quantity)) {
+    const availableQuantity = Math.max(0, product.quantity - Number(product.reservedQty || 0));
+    if (availableQuantity < Number(quantity)) {
       return res.status(400).json({
         success: false,
-        message: `Not enough stock for ${product.name}. Only ${product.quantity} available.`
+        message: `Not enough stock for ${product.name}. Only ${availableQuantity} available.`
       });
     }
 

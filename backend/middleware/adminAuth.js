@@ -20,6 +20,12 @@ const protect = (req, res, next ) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+      if (decoded.role !== 'admin' || !decoded.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Administrator access required'
+        });
+      }
       req.admin = { id: decoded.id };
       next();
     } catch (error) {

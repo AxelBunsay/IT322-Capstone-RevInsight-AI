@@ -39,7 +39,7 @@ export default function Services() {
             Mechanic Services <span aria-hidden="true">🔧</span>
           </h2>
           <p>
-            Book a service by adding it to your cart. Our skilled mechanics will
+            Book a service by adding it to your Reservation Cart. Our skilled mechanics will
             handle the rest.
           </p>
           <div className="services-hero-stats">

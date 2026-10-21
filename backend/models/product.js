@@ -26,6 +26,17 @@ const productSchema = new mongoose.Schema({
       message: 'Stock must be a whole number'
     }
   },
+
+  reservedQty: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 99999,
+    validate: {
+      validator: Number.isInteger,
+      message: 'Reserved stock must be a whole number'
+    }
+  },
   
   category: {
     type: String,

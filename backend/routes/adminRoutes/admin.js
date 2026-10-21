@@ -3,6 +3,7 @@ const router = express.Router();
 const { login, getAdmin } = require('../../controllers/adminControllers/adminController');
 const mechanicController = require('../../controllers/mechanic');
 const { protect } = require('../../middleware/adminAuth');
+const reservations = require('../../controllers/reservationController');
 
 
 // Public login route; administrator accounts are provisioned out of band.
@@ -10,6 +11,14 @@ router.post('/login', login);
 
 // Protected routes
 router.get('/admin', protect, getAdmin);
+router.get('/reservations/settings', protect, reservations.getPublicSettings);
+router.put('/reservations/settings', protect, reservations.updateSettings);
+router.get('/reservations', protect, reservations.getAdminReservations);
+router.post('/reservations/:id/confirm', protect, reservations.confirmReservation);
+router.post('/reservations/:id/reject', protect, reservations.rejectReservation);
+router.post('/reservations/:id/complete', protect, reservations.completeReservation);
+router.post('/reservations/:id/cancel', protect, reservations.cancelAdminReservation);
+router.post('/reservations/:id/refund-decision', protect, reservations.decideExpiredRefund);
 
 // Admin: delete mechanic via admin API
 router.delete('/mechanics/:id', protect, mechanicController.deleteMechanic);

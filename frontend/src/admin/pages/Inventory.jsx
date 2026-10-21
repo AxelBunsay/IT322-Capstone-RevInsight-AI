@@ -96,6 +96,9 @@ function Inventory() {
                   minimumFractionDigits: 2,
                 })}`,
                 stock: item.quantity,
+                reserved: Number(item.reservedQty || 0),
+                available: Number(item.available ?? (item.quantity - Number(item.reservedQty || 0))),
+                hasActiveReservation: Boolean(item.hasActiveReservation),
               })),
             );
             setTotalPages(response.pagination?.totalPages || 1);
@@ -380,6 +383,8 @@ function Inventory() {
                       <th>CATEGORY</th>
                       <th>PRICE</th>
                       <th>STOCK</th>
+                      <th>RESERVED</th>
+                      <th>AVAILABLE</th>
                       <th>ACTIONS</th>
                     </tr>
                   </thead>
@@ -396,6 +401,10 @@ function Inventory() {
                         >
                           {item.stock}
                         </td>
+                        <td>{item.reserved}</td>
+                        <td className={item.available <= 5 ? "stock-text low" : "stock-text"}>
+                          {item.available}
+                        </td>
                         <td>
                           <button
                             className="btn-small btn-edit"
@@ -407,10 +416,15 @@ function Inventory() {
                           <button
                             className="btn-small btn-delete"
                             type="button"
+                            disabled={item.hasActiveReservation}
+                            title={item.hasActiveReservation ? "Cannot delete an item with an active reservation." : undefined}
                             onClick={() => openDeleteDialog({ type: "item", id: item.id, name: item.name })}
                           >
                             Delete
                           </button>
+                          {item.hasActiveReservation && (
+                            <small className="inventory-field-error">Active reservation</small>
+                          )}
                         </td>
                       </tr>
                     ))}

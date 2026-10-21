@@ -6,7 +6,7 @@ export async function request(path, options = {}) {
   delete requestOptions.tokenKey;
   const headers = new Headers(options.headers);
 
-  if (options.body && !headers.has('Content-Type')) {
+  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -63,7 +63,8 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ email })
   }),
-  getProducts: (page = 1, limit = 10) => request(`/api/products?page=${page}&limit=${limit}`, { tokenKey: 'customerToken' }),
+  getProducts: (page = 1, limit = 50) => request(`/api/products?page=${page}&limit=${limit}`, { tokenKey: 'customerToken' }),
+  getProduct: (productId) => request(`/api/products/${productId}`),
   getCart: () => request('/api/cart', { tokenKey: 'customerToken' }),
   addToCart: (productId, quantity = 1) => request('/api/cart/add', { method: 'POST', body: JSON.stringify({ productId, quantity }), tokenKey: 'customerToken' }),
   updateCart: (productId, quantity) => request(`/api/cart/update/${productId}`, { method: 'PUT', body: JSON.stringify({ quantity }), tokenKey: 'customerToken' }),
@@ -73,6 +74,17 @@ export const api = {
   createPaymentIntent: () => request('/api/payments/create-payment-intent', { method: 'POST', tokenKey: 'customerToken' }),
   confirmPayment: (paymentIntentId) => request('/api/payments/confirm-payment', { method: 'POST', body: JSON.stringify({ paymentIntentId }), tokenKey: 'customerToken' }),
   getCustomerOrders: () => request('/api/orders', { tokenKey: 'customerToken' }),
+  getReservationSettings: () => request('/api/reservations/settings', { tokenKey: 'customerToken' }),
+  createReservation: (items) => request('/api/reservations', { method: 'POST', body: JSON.stringify({ items }), tokenKey: 'customerToken' }),
+  getCustomerReservations: () => request('/api/reservations', { tokenKey: 'customerToken' }),
+  getCustomerReservation: (reservationId) => request(`/api/reservations/${reservationId}`, { tokenKey: 'customerToken' }),
+  submitReservationPayment: (reservationId, payment) => {
+    const body = new FormData();
+    body.append('reference', payment.reference);
+    if (payment.proof) body.append('proof', payment.proof);
+    return request(`/api/reservations/${reservationId}/payment`, { method: 'POST', body, tokenKey: 'customerToken' });
+  },
+  cancelCustomerReservation: (reservationId, reason) => request(`/api/reservations/${reservationId}/cancel`, { method: 'POST', body: JSON.stringify({ reason }), tokenKey: 'customerToken' }),
   reorder: (orderId) => request(`/api/orders/${orderId}/reorder`, { method: 'POST', tokenKey: 'customerToken' }),
   createServiceRequest: (serviceRequest) => request('/api/service-requests', { method: 'POST', body: JSON.stringify(serviceRequest), tokenKey: 'customerToken' }),
   getCustomerServiceRequests: () => request('/api/service-requests/my', { tokenKey: 'customerToken' }),

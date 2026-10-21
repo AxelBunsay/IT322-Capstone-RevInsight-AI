@@ -5,8 +5,14 @@ const Product = require('../models/product');
 const ServiceRequest = require('../models/serviceRequest');
 const Service = require('../models/service');
 const ServiceLaborRate = require('../models/serviceLaborRate');
+const Reservation = require('../models/orderingModels/reservation');
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const hasActiveProductReservation = (productId) => Reservation.exists({
+  code: { $exists: true },
+  status: { $in: ['Pending Down Payment', 'Payment Submitted', 'Reserved'] },
+  'items.productId': productId
+});
 
 const deactivateServiceLaborRate = async (service) => {
   const serviceTypePattern = new RegExp(`^\\s*${escapeRegex(service.name)}\\s*$`, 'i');
@@ -26,7 +32,7 @@ const deactivateServiceLaborRate = async (service) => {
 
 const archiveOrDeleteProduct = async (product) => {
   const itemNamePattern = new RegExp(`(^|,\\s*)${escapeRegex(product.name)}(\\s*,|$)`, 'i');
-  const [order, cart, businessRecord] = await Promise.all([
+  const [order, cart, businessRecord, reservation] = await Promise.all([
     Order.exists({
       $or: [
         { 'items.productId': product._id },
@@ -40,10 +46,11 @@ const archiveOrDeleteProduct = async (product) => {
         { sourceId: product._id },
         { itemName: itemNamePattern }
       ]
-    })
+    }),
+    Reservation.exists({ 'items.productId': product._id })
   ]);
 
-  if (order || cart || businessRecord) {
+  if (order || cart || businessRecord || reservation) {
     product.isActive = false;
     await product.save();
     return { archived: true };
@@ -77,4 +84,4 @@ const archiveOrDeleteService = async (service) => {
   return { archived: false };
 };
 
-module.exports = { archiveOrDeleteProduct, archiveOrDeleteService };
+module.exports = { archiveOrDeleteProduct, archiveOrDeleteService, hasActiveProductReservation };

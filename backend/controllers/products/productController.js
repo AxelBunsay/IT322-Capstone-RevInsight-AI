@@ -2,7 +2,7 @@ const Product = require('../../models/product');
 const cloudinary = require('../../config/cloudinary');
 const mongoose = require('mongoose');
 const { validateProductInput } = require('../../utils/inventoryValidation');
-const { archiveOrDeleteProduct } = require('../../utils/safeDeleteInventoryRecord');
+const { archiveOrDeleteProduct, hasActiveProductReservation } = require('../../utils/safeDeleteInventoryRecord');
 
 const validateProductId = (id, res) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -110,6 +110,13 @@ const getProduct = async (req, res) => {
       });
     }
 
+    if (await hasActiveProductReservation(product._id)) {
+      return res.status(409).json({
+        success: false,
+        message: 'This item cannot be deleted while it has an active reservation.'
+      });
+    }
+
     res.status(200).json({
       success: true,
       product: {
@@ -138,16 +145,38 @@ const updateProduct = async (req, res) => {
         fieldErrors
       });
     }
+    const currentProduct = await Product.findById(req.params.id);
+
+    if (!currentProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    if (Number(quantity) < Number(currentProduct.reservedQty || 0)) {
+      return res.status(400).json({
+        success: false,
+        message: `Stock cannot be lower than the ${currentProduct.reservedQty} units currently reserved.`
+      });
+    }
+
     const product = await Product.findByIdAndUpdate(
-      req.params.id,
+      {
+        _id: req.params.id,
+        $or: [
+          { reservedQty: { $lte: Number(quantity) } },
+          { reservedQty: { $exists: false } }
+        ]
+      },
       { name: name.trim(), price: Number(price), quantity: Number(quantity), category: category.trim() },
       { new: true, runValidators: true }
     );
 
     if (!product) {
-      return res.status(404).json({
+      return res.status(409).json({
         success: false,
-        message: 'Product not found'
+        message: 'Stock changed while saving. It cannot be set below the quantity currently reserved.'
       });
     }
 

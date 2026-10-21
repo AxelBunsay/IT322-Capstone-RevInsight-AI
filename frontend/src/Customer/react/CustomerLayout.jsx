@@ -79,7 +79,7 @@ export function CustomerAuthShell({ activeTab, children }) {
         <p>Browse genuine motorcycle parts and accessories. Fast, reliable, and trusted by riders.</p>
         <ul>
           <li><span>▤</span><span><strong>Wide product selection</strong><small>Parts, accessories &amp; more</small></span></li>
-          <li><span>▣</span><span><strong>Track your reservations</strong><small>Booking and order progress</small></span></li>
+          <li><span>▣</span><span><strong>Track your reservations</strong><small>Item and service reservation progress</small></span></li>
           <li><span>⌁</span><span><strong>Trusted service</strong><small>Quality parts and expert mechanics</small></span></li>
         </ul>
       </div>

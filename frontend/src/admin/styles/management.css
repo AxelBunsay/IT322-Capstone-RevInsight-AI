@@ -501,6 +501,163 @@
 .admin-root .admin-management-page .dashboard-error {
   color: var(--bad);
 }
+.admin-root .admin-management-page .transactions-tabs {
+  display: inline-flex;
+  gap: 3px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--soft);
+}
+.admin-root .admin-management-page .transactions-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.admin-root .admin-management-page .transactions-tabs-row .transactions-tabs {
+  margin-bottom: 0;
+}
+.admin-root .admin-management-page .transactions-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-root .admin-management-page .transaction-review-count {
+  display: inline-grid;
+  min-width: 19px;
+  height: 19px;
+  margin-left: 6px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 99px;
+  background: #fde9b8;
+  color: #7a4f00;
+  font-size: 11px;
+}
+.admin-root .admin-management-page .transactions-tabs button {
+  min-width: 80px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-root .admin-management-page .transactions-tabs button.is-active {
+  background: var(--brand);
+  color: #fff;
+}
+.admin-root .admin-management-page .transactions-tabs button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.admin-root .admin-management-page .transactions-container .transactions-header {
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+.admin-root .admin-management-page .transactions-container .search-filter input {
+  width: 100%;
+}
+.admin-root .admin-management-page .transaction-type-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.admin-root .admin-management-page .transaction-type-badge.is-item {
+  background: #ffe0c2;
+  color: #9a4308;
+}
+.admin-root .admin-management-page .transaction-type-badge.is-service {
+  background: #e8edf2;
+  color: #44566a;
+}
+.admin-root .admin-management-page .status-pending-down-payment {
+  background: #fde9b8;
+  color: #7a4f00;
+}
+.admin-root .admin-management-page .status-payment-submitted {
+  background: #e8edf2;
+  color: #44566a;
+}
+.admin-root .admin-management-page .status-reserved {
+  background: #dff3e6;
+  color: #1f7a3d;
+}
+.admin-root .admin-management-page .status-completed {
+  background: #ccebd5;
+  color: #155d2d;
+}
+.admin-root .admin-management-page .status-cancelled,
+.admin-root .admin-management-page .status-expired {
+  background: #ece8e4;
+  color: #5d5148;
+}
+.admin-root .admin-management-page .reservation-payment-proof {
+  display: block;
+  max-width: min(100%, 340px);
+  max-height: 280px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  object-fit: contain;
+}
+.admin-root .admin-management-page .reservation-balance-confirm,
+.admin-root .admin-management-page .reservation-refund-choice label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-root .admin-management-page .reservation-refund-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.admin-root .admin-management-page .reservation-refund-choice legend {
+  padding: 0 5px;
+  font-weight: 700;
+}
+.admin-root .admin-management-page .reservation-transaction-action p {
+  margin: 0;
+}
+.admin-root .admin-management-page .transaction-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-root .admin-management-page .transactions-empty {
+  padding: 28px 12px;
+  color: var(--muted);
+  text-align: center;
+  white-space: normal;
+}
+.admin-root .admin-management-page .transactions-skeleton-row td {
+  padding: 12px 10px;
+}
+.admin-root .admin-management-page .transactions-skeleton {
+  display: block;
+  width: 100%;
+  height: 18px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eee8e1 25%, #f7f3ef 50%, #eee8e1 75%);
+  background-size: 200% 100%;
+  animation: transactions-skeleton-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes transactions-skeleton-shimmer {
+  to { background-position: -200% 0; }
+}
 
 @media (max-width: 700px) {
   .admin-root .admin-management-page .inventory-container,
@@ -527,5 +684,274 @@
   }
   .admin-root .admin-management-page .mechanic-actions {
     flex-wrap: wrap;
+  }
+  .admin-root .admin-management-page .transactions-tabs {
+    display: flex;
+    width: 100%;
+  }
+  .admin-root .admin-management-page .transactions-tabs-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .admin-root .admin-management-page .transactions-tabs button {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+.admin-root .admin-management-page .reservation-settings-card,
+.admin-root .admin-management-page .reservation-list-card {
+  margin-bottom: 18px;
+  padding: 20px;
+  border: 1px solid #ecdfd2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(60, 35, 10, .06), 0 10px 28px -14px rgba(60, 35, 10, .18);
+}
+
+.reservation-admin-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.reservation-admin-section-heading h2 {
+  margin: 0 0 4px;
+  color: #1c140d;
+  font-size: 17px;
+}
+
+.reservation-admin-section-heading p,
+.reservation-admin-item small,
+.reservation-admin-customer,
+.reservation-admin-payment {
+  margin: 0;
+  color: #6f5f4e;
+  font-size: 12px;
+}
+
+.reservation-settings-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.reservation-settings-form label,
+.reservation-admin-dialog-form label {
+  display: grid;
+  gap: 5px;
+  color: #4f4033;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reservation-settings-form input,
+.reservation-settings-form textarea,
+.reservation-admin-filters input,
+.reservation-admin-filters select,
+.reservation-admin-dialog-form textarea,
+.reservation-admin-dialog-form select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #dccab8;
+  border-radius: 8px;
+  background: #fff;
+  color: #1c140d;
+  font: inherit;
+}
+
+.reservation-settings-wide {
+  grid-column: span 2;
+}
+
+.reservation-settings-form button {
+  align-self: end;
+  min-height: 38px;
+}
+
+.reservation-admin-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.reservation-admin-filters input {
+  flex: 1;
+}
+
+.reservation-admin-filters select {
+  width: min(240px, 35%);
+}
+
+.reservation-admin-list {
+  display: grid;
+  gap: 12px;
+}
+
+.reservation-admin-item {
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid #ecdfd2;
+  border-radius: 12px;
+  background: #fffdfa;
+}
+
+.reservation-admin-item-heading,
+.reservation-admin-item-heading > div,
+.reservation-admin-summary,
+.reservation-admin-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reservation-admin-item-heading strong {
+  color: #1c140d;
+  font-size: 15px;
+}
+
+.reservation-admin-item-heading > div > span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff1e1;
+  color: #9a4308;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reservation-admin-item ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: #4f4033;
+  font-size: 12px;
+}
+
+.reservation-admin-summary {
+  justify-content: flex-start;
+  color: #6f5f4e;
+  font-size: 12px;
+}
+
+.reservation-admin-summary span {
+  padding-right: 12px;
+  border-right: 1px solid #ecdfd2;
+}
+
+.reservation-admin-summary span:last-child {
+  border-right: 0;
+}
+
+.reservation-admin-summary strong {
+  margin-left: 3px;
+  color: #1c140d;
+}
+
+.reservation-admin-payment {
+  overflow-wrap: anywhere;
+}
+
+.reservation-admin-payment a {
+  color: #b84d0c;
+  font-weight: 700;
+}
+
+.reservation-admin-actions {
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+
+.reservation-admin-dialog-form {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  color: #1c140d;
+}
+
+.reservation-admin-dialog-form p {
+  margin: 0;
+  color: #6f5f4e;
+}
+
+.reservation-admin-dialog-form small {
+  color: #6f5f4e;
+  font-weight: 400;
+}
+
+.reservation-admin-toast {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #e6f6ec;
+  color: #1f7a3d;
+  font-weight: 700;
+}
+
+.admin-root .admin-management-page .reservation-settings-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-root .admin-management-page .reservation-settings-form .admin-dialog-error,
+.admin-root .admin-management-page .reservation-settings-form .admin-dialog-actions {
+  grid-column: 1 / -1;
+}
+
+.admin-root .admin-management-page .transaction-reservation-cell {
+  min-width: 145px;
+  white-space: normal;
+}
+
+.admin-root .admin-management-page .transaction-reservation-detail,
+.admin-root .admin-management-page .transaction-reservation-item {
+  display: block;
+  max-width: 240px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.admin-root .admin-management-page .transaction-reservation-item {
+  color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .reservation-settings-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-root .admin-management-page .reservation-settings-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-root .admin-management-page .reservation-settings-card,
+  .admin-root .admin-management-page .reservation-list-card {
+    padding: 14px;
+  }
+
+  .reservation-settings-form,
+  .reservation-admin-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .reservation-settings-wide,
+  .reservation-admin-filters select {
+    width: 100%;
+    grid-column: auto;
+  }
+
+  .reservation-admin-item-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

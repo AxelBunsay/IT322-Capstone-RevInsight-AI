@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { CustomerPrototypeContext } from './CustomerPrototypeContext';
 
 const STORAGE_KEY = 'revinsightCustomerPrototype';
@@ -43,9 +43,16 @@ export function CustomerPrototypeProvider({ children }) {
   const updateCartItem = (key, quantity) => setState((current) => ({
     ...current,
     cart: current.cart.map((item) => item.key === key
-      ? { ...item, quantity: Math.max(1, Math.min(Number(quantity) || 1, item.kind === 'service' ? 1 : item.stock ?? Infinity)) }
+      ? { ...item, quantity: item.kind === 'service' ? 1 : item.stock === 0 ? 0 : Math.max(1, Math.min(Number(quantity) || 1, item.stock ?? Infinity)) }
       : item)
   }));
+
+  const setCartItemStock = useCallback((key, stock, price, name) => setState((current) => ({
+    ...current,
+    cart: current.cart.map((item) => item.key === key
+      ? { ...item, stock, ...(Number.isFinite(price) ? { price } : {}), ...(name ? { name } : {}), quantity: Math.min(item.quantity, stock) }
+      : item)
+  })), []);
 
   const removeCartItem = (key) => setState((current) => ({ ...current, cart: current.cart.filter((item) => item.key !== key) }));
   const applyPromoCode = (code) => {
@@ -93,7 +100,7 @@ export function CustomerPrototypeProvider({ children }) {
   const addAddress = (address) => setState((current) => ({ ...current, addresses: [...current.addresses, { ...address, id: `ADDR-${Date.now()}` }] }));
 
   return (
-    <CustomerPrototypeContext.Provider value={{ ...state, addCartItem, updateCartItem, removeCartItem, applyPromoCode, toggleWishlist, placeOrder, updateProfile, addVehicle, addAddress }}>
+    <CustomerPrototypeContext.Provider value={{ ...state, addCartItem, updateCartItem, setCartItemStock, removeCartItem, applyPromoCode, toggleWishlist, placeOrder, updateProfile, addVehicle, addAddress }}>
       {children}
     </CustomerPrototypeContext.Provider>
   );

@@ -98,7 +98,7 @@ function makeSeries(orders, period) {
 }
 
 async function getOrders() {
-  return getAllPages((page, limit) => request(`/api/dashboard/transactions?page=${page}&limit=${limit}`));
+  return getAllPages((page, limit) => request(`/api/dashboard/transactions?view=orders&page=${page}&limit=${limit}`));
 }
 
 async function getInventoryItems() {
@@ -147,7 +147,9 @@ function makeDashboardData(stats, orders, inventory) {
         value: Number(stats.totalRevenue ?? confirmedOrders.reduce((sum, order) => sum + getOrderRevenue(order), 0)),
         change: getChange(confirmedOrders, getOrderRevenue),
         sparkline: []
-      }
+      },
+      collected: Number(stats.collected || 0),
+      outstanding: Number(stats.outstanding || 0)
     },
     badges: {
       pendingTransactions: orders.filter((order) => String(order.status).toLowerCase() === 'pending').length,
@@ -161,6 +163,14 @@ function makeDashboardData(stats, orders, inventory) {
 export const adminApi = {
   loginAdmin: (credentials) => request('/api/admin/login', { method: 'POST', body: JSON.stringify(credentials) }),
   getDashboardStats: () => request('/api/dashboard/dashboard'),
+  getSalesReport: (query = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params.append(key, String(value));
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return request(`/api/dashboard/reports/sales${suffix}`);
+  },
   getDailySales: () => request('/api/dashboard/dashboard/daily'),
   getQuarterlySales: () => request('/api/dashboard/dashboard/quarterly'),
   getRevenueConcentration: () => request('/api/dashboard/analytics/revenue-concentration'),
@@ -186,7 +196,14 @@ export const adminApi = {
     const suffix = params.toString() ? `?${params.toString()}` : '';
     return request(`/api/dashboard/business-records${suffix}`);
   },
-  getTransactions: (page = 1, limit = 10, status = '') => request(`/api/dashboard/transactions?page=${page}&limit=${limit}${status ? `&status=${encodeURIComponent(status)}` : ''}`),
+  getTransactions: (query = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params.append(key, String(value));
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return request(`/api/dashboard/transactions${suffix}`);
+  },
   getTransaction: (id) => request(`/api/dashboard/transactions/${id}`),
   updateTransaction: (id, transaction) => request(`/api/dashboard/transactions/${id}`, { method: 'PUT', body: JSON.stringify(transaction) }),
   getMechanics: () => request('/api/mechanics/all'),
@@ -197,6 +214,21 @@ export const adminApi = {
   getServiceLaborRates: () => request('/api/service-requests/labor-rates'),
   updateServiceLaborRate: (id, laborFee) => request(`/api/service-requests/labor-rates/${id}`, { method: 'PUT', body: JSON.stringify({ laborFee }) }),
   getServices: () => request('/api/admin/services'),
+  getReservationSettings: () => request('/api/admin/reservations/settings'),
+  updateReservationSettings: (settings) => request('/api/admin/reservations/settings', { method: 'PUT', body: JSON.stringify(settings) }),
+  getReservations: (query = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params.append(key, String(value));
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return request(`/api/admin/reservations${suffix}`);
+  },
+  confirmReservation: (id) => request(`/api/admin/reservations/${id}/confirm`, { method: 'POST' }),
+  rejectReservation: (id, reason) => request(`/api/admin/reservations/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  completeReservation: (id) => request(`/api/admin/reservations/${id}/complete`, { method: 'POST' }),
+  cancelReservation: (id, reason, refundDecision) => request(`/api/admin/reservations/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason, refundDecision }) }),
+  decideExpiredReservationRefund: (id, refundDecision) => request(`/api/admin/reservations/${id}/refund-decision`, { method: 'POST', body: JSON.stringify({ refundDecision }) }),
   createService: (service) => request('/api/admin/services', { method: 'POST', body: JSON.stringify(service) }),
   updateService: (id, service) => request(`/api/admin/services/${id}`, { method: 'PUT', body: JSON.stringify(service) }),
   deleteService: (id) => request(`/api/admin/services/${id}`, { method: 'DELETE' }),

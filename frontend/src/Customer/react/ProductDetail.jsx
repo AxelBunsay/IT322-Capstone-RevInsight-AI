@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CustomerPage } from './CustomerLayout';
 import { useCustomerPrototype } from './useCustomerPrototype';
-import { customerProducts } from './customerData';
+import { api } from '../../services/api';
 import '../styles/customer-flow.css';
 
 export default function ProductDetail() {
@@ -10,14 +10,27 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { wishlist, toggleWishlist, addCartItem } = useCustomerPrototype();
   const [quantity, setQuantity] = useState(1);
-  const product = customerProducts.find((item) => item._id === productId);
+  const [product, setProduct] = useState(null);
+  const [error, setError] = useState('');
 
-  if (!product) return <CustomerPage title="Product unavailable" description="This item could not be found."><Link to="/customer/shop">Back to Shop</Link></CustomerPage>;
+  useEffect(() => {
+    let isMounted = true;
+    api.getProduct(productId).then((response) => {
+      if (isMounted) {
+        const item = response.product;
+        setProduct({ ...item, quantity: Math.max(0, Number(item.quantity || 0) - Number(item.reservedQty || 0)) });
+      }
+    }).catch((requestError) => {
+      if (isMounted) setError(requestError.message || 'This item could not be loaded.');
+    });
+    return () => { isMounted = false; };
+  }, [productId]);
 
-  const related = customerProducts.filter((item) => item.category === product.category && item._id !== product._id).slice(0, 3);
+  if (!product) return <CustomerPage title={error ? 'Product unavailable' : 'Loading product'} description={error || 'Loading product details.'}><Link to="/customer/shop">Back to Shop</Link></CustomerPage>;
+
   const addProduct = (goToCart = false) => {
     addCartItem({ kind: 'product', id: product._id, name: product.name, price: product.price, stock: product.quantity, category: product.category, icon: product.icon, quantity });
-    if (goToCart) navigate('/customer/cart', { state: { message: `${product.name} added to your cart.` } });
+    if (goToCart) navigate('/customer/cart', { state: { message: `${product.name} added to your Reservation Cart.` } });
   };
 
   return <CustomerPage title={product.name} description="Product details and availability.">
@@ -30,15 +43,14 @@ export default function ProductDetail() {
           <h1>{product.name}</h1>
           <p>{product.description}</p>
           <strong className="customer-detail-price">₱{product.price.toLocaleString('en-PH')}</strong>
-          <p className={product.quantity > 0 ? 'customer-stock' : 'customer-stock is-out'}>{product.quantity > 0 ? `${product.quantity} available` : 'Currently out of stock'}</p>
+          <p className={product.quantity > 0 ? 'customer-stock' : 'customer-stock is-out'}>{product.quantity > 0 ? `Available: ${product.quantity}` : 'Currently unavailable'}</p>
           {product.quantity > 0 && <>
             <div className="customer-quantity-control"><span>Quantity</span><div><button type="button" aria-label="Decrease quantity" disabled={quantity <= 1} onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button><output>{quantity}</output><button type="button" aria-label="Increase quantity" disabled={quantity >= product.quantity} onClick={() => setQuantity((value) => Math.min(product.quantity, value + 1))}>+</button></div></div>
-            <div className="customer-detail-actions"><button type="button" className="customer-primary-button" onClick={() => addProduct()}>Add to cart</button><button type="button" className="customer-secondary-button" onClick={() => addProduct(true)}>Buy now</button></div>
+            <div className="customer-detail-actions"><button type="button" className="customer-primary-button" onClick={() => addProduct()}>Reserve</button><button type="button" className="customer-secondary-button" onClick={() => addProduct(true)}>Reserve now</button></div>
           </>}
           <button type="button" className={`customer-wishlist-action${wishlist.includes(product._id) ? ' is-saved' : ''}`} aria-pressed={wishlist.includes(product._id)} onClick={() => toggleWishlist(product._id)}>{wishlist.includes(product._id) ? '♥ Saved to wishlist' : '♡ Save to wishlist'}</button>
         </div>
       </section>
-      {!!related.length && <section className="customer-related-section"><div className="customer-flow-section-heading"><h2>Related products</h2><Link to="/customer/shop">View all</Link></div><div className="customer-related-grid">{related.map((item) => <Link className="customer-related-product" to={`/customer/products/${item._id}`} key={item._id}><span aria-hidden="true">{item.icon}</span><strong>{item.name}</strong><small>₱{item.price.toLocaleString('en-PH')}</small></Link>)}</div></section>}
     </div>
   </CustomerPage>;
 }

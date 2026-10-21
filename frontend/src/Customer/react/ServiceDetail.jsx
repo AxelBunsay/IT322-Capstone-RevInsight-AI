@@ -43,7 +43,7 @@ export default function ServiceDetail() {
   const submitBooking = (event) => {
     event.preventDefault();
     addCartItem({ kind: 'service', id: service.id, name: service.name, price: service.price, category: service.category, duration: service.duration, icon: service.icon, bookingDate, timeSlot, vehicle: vehicle.trim() || 'Motorcycle details to confirm', notes });
-    navigate('/customer/cart', { state: { message: `${service.name} booking added to your cart.` } });
+    navigate('/customer/cart', { state: { message: `${service.name} booking added to your Reservation Cart.` } });
   };
 
   return <CustomerPage title={service.name} description="Service details and reservation availability.">

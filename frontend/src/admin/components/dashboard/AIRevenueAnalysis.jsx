@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
+import { adminApi } from '../../services/adminApi';
 
 const peso = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
 
@@ -239,9 +240,13 @@ function AIRevenueAnalysis({ dashboardData }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportMonth, setReportMonth] = useState(null);
+  const [forfeitedDownPayments, setForfeitedDownPayments] = useState(0);
+  const [reportError, setReportError] = useState('');
   const [transactionDrilldown, setTransactionDrilldown] = useState(null);
   const [thresholds, setThresholds] = useState(defaultThresholds);
   const liveRevenue = Number(dashboardData?.stats?.revenue?.value || 0);
+  const collectedAmount = Number(dashboardData?.stats?.collected || 0);
+  const outstandingAmount = Number(dashboardData?.stats?.outstanding || 0);
   const revenue = useMemo(() => baseRevenue.map((value, index) => index === baseRevenue.length - 1 && liveRevenue ? liveRevenue : value), [liveRevenue]);
   const currentRevenue = revenue[qIdx];
   const previousRevenue = revenue[qIdx - 1] || revenue[qIdx];
@@ -277,6 +282,26 @@ function AIRevenueAnalysis({ dashboardData }) {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [modalId]);
+
+  useEffect(() => {
+    if (!reportOpen) return undefined;
+    let active = true;
+    const monthOffset = reportMonth ?? 0;
+    const start = new Date(reportYear, reportStartMonth + monthOffset, 1);
+    const end = new Date(reportYear, reportStartMonth + (reportMonth === null ? 3 : monthOffset + 1), 0);
+    const dateOnly = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    adminApi.getSalesReport({ startDate: dateOnly(start), endDate: dateOnly(end) })
+      .then((response) => {
+        if (active) {
+          setForfeitedDownPayments(Number(response.data?.forfeitedDownPayments || 0));
+          setReportError('');
+        }
+      })
+      .catch((error) => {
+        if (active) setReportError(error.message || 'Forfeited down payments could not be loaded.');
+      });
+    return () => { active = false; };
+  }, [reportMonth, reportOpen, reportStartMonth, reportYear]);
 
   function renderTrendModal() {
     if (modalId === 'revenue') return { headline: `${percentChange(currentRevenue, previousRevenue).toFixed(1)}% QoQ`, detail: 'Revenue trend across the last eight quarters', chart: <LineChart values={revenue} labels={quarterLabels} />, callout: 'Revenue is moving upward with a healthy quarter-over-quarter signal.', recs: ['Keep the strongest service and parts bundles visible to repeat customers.', 'Compare the next quarter against the same quarter last year.', 'Investigate any two-quarter decline before it becomes a pattern.'] };
@@ -350,9 +375,9 @@ function AIRevenueAnalysis({ dashboardData }) {
         </div>
       </div>
       <div className="ai-revenue-collected-row">
-        <div><span>Collected</span><strong>{peso.format(currentRevenue * 0.82)}</strong></div>
-        <div><span>Outstanding</span><strong>{peso.format(currentRevenue * 0.18)}</strong></div>
-        <div><span>Collection</span><strong>{Math.round((currentRevenue * 0.82 / currentRevenue) * 100)}%</strong></div>
+        <div><span>Collected</span><strong>{peso.format(collectedAmount)}</strong></div>
+        <div><span>Outstanding</span><strong>{peso.format(outstandingAmount)}</strong></div>
+        <div><span>Collection</span><strong>{collectedAmount + outstandingAmount ? Math.round((collectedAmount / (collectedAmount + outstandingAmount)) * 100) : 0}%</strong></div>
       </div>
       <div className="ai-revenue-cards">
         {cardDefinitions.map((card) => {
@@ -443,6 +468,8 @@ function AIRevenueAnalysis({ dashboardData }) {
             <div className="ai-revenue-report__summary">
               <strong>{reportMonthName ? `${reportMonthName} ${reportYear}` : quarterNames[qIdx]} Sales Report</strong>
               <span>Generated {new Date().toLocaleDateString('en-PH', { day: 'numeric', month: 'long', year: 'numeric' })} · Total: {peso.format(reportTotal)} ({peso.format(reportPaid)} paid, {peso.format(reportOutstanding)} outstanding)</span>
+              <span>Forfeited down payments: {peso.format(forfeitedDownPayments)} <em>(reported separately; not sales revenue)</em></span>
+              {reportError && <span className="ai-revenue-report__error" role="alert">{reportError}</span>}
             </div>
             <div className="ai-revenue-report__month-tabs" role="group" aria-label="Filter report by month">
               <button type="button" className={reportMonth === null ? 'is-active' : ''} aria-pressed={reportMonth === null} onClick={() => setReportMonth(null)}>Full quarter</button>
