@@ -210,12 +210,23 @@ export const adminApi = {
   createMechanic: (mechanic) => request('/api/mechanics/create', { method: 'POST', body: JSON.stringify(mechanic) }),
   updateMechanic: (id, mechanic) => request(`/api/mechanics/${id}`, { method: 'PUT', body: JSON.stringify(mechanic) }),
   deleteMechanic: (id) => request(`/api/mechanics/${id}`, { method: 'DELETE' }),
+  getMechanicsSummary: () => request('/api/admin/mechanics/summary'),
+  getNotifications: () => request('/api/admin/notifications'),
+  markNotificationRead: (id) => request(`/api/admin/notifications/${id}/read`, { method: 'POST' }),
+  markAllNotificationsRead: () => request('/api/admin/notifications/read-all', { method: 'POST' }),
   getAdminServiceRequests: () => request('/api/service-requests'),
   getServiceLaborRates: () => request('/api/service-requests/labor-rates'),
   updateServiceLaborRate: (id, laborFee) => request(`/api/service-requests/labor-rates/${id}`, { method: 'PUT', body: JSON.stringify({ laborFee }) }),
-  getServices: () => request('/api/admin/services'),
+  getServices: () => request('/api/admin/services', { cache: 'no-store' }),
   getReservationSettings: () => request('/api/admin/reservations/settings'),
   updateReservationSettings: (settings) => request('/api/admin/reservations/settings', { method: 'PUT', body: JSON.stringify(settings) }),
+  uploadGcashQr: (file) => {
+    const body = new FormData();
+    body.append('qr', file);
+    return request('/api/admin/reservations/settings/gcash-qr', { method: 'POST', body });
+  },
+  getBookingSchedule: () => request('/api/admin/reservations/booking-schedule'),
+  updateBookingSchedule: (schedule) => request('/api/admin/reservations/booking-schedule', { method: 'PUT', body: JSON.stringify(schedule) }),
   getReservations: (query = {}) => {
     const params = new URLSearchParams();
     Object.entries(query).forEach(([key, value]) => {
@@ -226,6 +237,8 @@ export const adminApi = {
   },
   confirmReservation: (id) => request(`/api/admin/reservations/${id}/confirm`, { method: 'POST' }),
   rejectReservation: (id, reason) => request(`/api/admin/reservations/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  confirmServicePayment: (id) => request(`/api/admin/service-requests/${id}/confirm-payment`, { method: 'POST' }),
+  rejectServicePayment: (id, reason) => request(`/api/admin/service-requests/${id}/reject-payment`, { method: 'POST', body: JSON.stringify({ reason }) }),
   completeReservation: (id) => request(`/api/admin/reservations/${id}/complete`, { method: 'POST' }),
   cancelReservation: (id, reason, refundDecision) => request(`/api/admin/reservations/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason, refundDecision }) }),
   decideExpiredReservationRefund: (id, refundDecision) => request(`/api/admin/reservations/${id}/refund-decision`, { method: 'POST', body: JSON.stringify({ refundDecision }) }),

@@ -23,6 +23,7 @@ export default function ReservationDetail() {
   const { reservations } = useCustomerPrototype();
   const serviceReservation = reservations.find((item) => item.id === reservationId);
   const [reservation, setReservation] = useState(null);
+  const [serviceBooking, setServiceBooking] = useState(null);
   const [settings, setSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(!serviceReservation);
   const [isSaving, setIsSaving] = useState(false);
@@ -36,12 +37,22 @@ export default function ReservationDetail() {
   useEffect(() => {
     if (serviceReservation) return undefined;
     let isMounted = true;
-    Promise.all([api.getCustomerReservation(reservationId), api.getReservationSettings()]).then(([reservationResponse, settingsResponse]) => {
+    Promise.allSettled([
+      api.getCustomerReservation(reservationId),
+      api.getReservationSettings(),
+      api.getCustomerServiceRequests()
+    ]).then(([reservationResult, settingsResult, bookingResult]) => {
       if (!isMounted) return;
-      setReservation(reservationResponse.reservation);
-      setSettings(settingsResponse.settings);
-    }).catch((requestError) => {
-      if (isMounted) setError(requestError.message || 'Reservation could not be loaded.');
+      if (settingsResult.status === 'fulfilled') setSettings(settingsResult.value.settings);
+      if (reservationResult.status === 'fulfilled') {
+        setReservation(reservationResult.value.reservation);
+        return;
+      }
+      const serviceRequest = bookingResult.status === 'fulfilled'
+        ? (bookingResult.value.requests || []).find((booking) => booking._id === reservationId)
+        : null;
+      if (serviceRequest) setServiceBooking(serviceRequest);
+      else setError(reservationResult.reason?.message || 'Reservation could not be loaded.');
     }).finally(() => {
       if (isMounted) setIsLoading(false);
     });
@@ -71,10 +82,17 @@ export default function ReservationDetail() {
     setMessage('');
     setIsSaving(true);
     try {
+      if (serviceBooking) {
+        const response = await api.submitServiceRequestPayment(serviceBooking._id, { reference, proof });
+        setServiceBooking(response.serviceRequest);
+        setShowPaymentForm(false);
+        setMessage('Payment sent. The shop will check it shortly.');
+        return;
+      }
       const response = await api.submitReservationPayment(reservation._id, { reference, proof });
       setReservation(response.reservation);
       setShowPaymentForm(false);
-      setMessage('Payment submitted for review. Your items will be reserved after the shop confirms your down payment.');
+      setMessage('Payment sent. The shop will check it shortly.');
     } catch (requestError) {
       setError(requestError.message || 'Payment could not be submitted.');
     } finally {
@@ -100,13 +118,39 @@ export default function ReservationDetail() {
 
   if (isLoading) return <CustomerPage title="Reservation" description="Loading reservation details."><p>Loading...</p></CustomerPage>;
 
-  if (serviceReservation) return <CustomerPage title="Reservation details" description="Follow your service reservation from confirmation to pickup.">
-    <div className="customer-flow-page"><nav className="customer-breadcrumbs" aria-label="Breadcrumb"><Link to="/customer/reservations">My Purchases</Link><span>/</span><span>{serviceReservation.id}</span></nav>
-      <section className="customer-reservation-detail-card"><div className="customer-reservation-card-top"><div><p className="customer-eyebrow">SERVICE RESERVATION · {serviceReservation.id}</p><h1>{serviceReservation.name}</h1><p>{serviceReservation.bookingDate} at {serviceReservation.timeSlot} · {serviceReservation.vehicle}</p></div><span className="customer-status-pill">{serviceReservation.status}</span></div><div className="customer-reservation-detail-meta"><div><span>Estimated total</span><strong>{money(serviceReservation.price)}</strong></div><div><span>Duration</span><strong>{serviceReservation.duration}</strong></div><div><span>Reservation reference</span><strong>{serviceReservation.orderId}</strong></div></div><h2>Reservation progress</h2><ol className="customer-reservation-timeline">{serviceReservation.timeline.map((event) => <li className={event.complete ? 'is-complete' : ''} key={event.label}><span className="customer-timeline-marker">{event.complete ? '✓' : ''}</span><div><strong>{event.label}</strong><small>{event.complete ? new Date(event.date).toLocaleString('en-PH') : 'Pending update'}</small></div></li>)}</ol><Link className="customer-secondary-button" to="/customer/services">Book another service</Link></section>
+  if (serviceReservation) return <CustomerPage title="Booking details" description="Follow your service booking from confirmation to pickup.">
+    <div className="customer-flow-page"><nav className="customer-breadcrumbs" aria-label="Breadcrumb"><Link to="/customer/purchases">My bookings</Link><span>/</span><span>{serviceReservation.id}</span></nav>
+      <section className="customer-reservation-detail-card"><div className="customer-reservation-card-top"><div><p className="customer-eyebrow">SERVICE BOOKING · {serviceReservation.id}</p><h1>{serviceReservation.name}</h1><p>{serviceReservation.bookingDate} at {serviceReservation.timeSlot} · {serviceReservation.vehicle}</p></div><span className="customer-status-pill">{serviceReservation.status}</span></div><div className="customer-reservation-detail-meta"><div><span>Estimated total</span><strong>{money(serviceReservation.price)}</strong></div><div><span>Duration</span><strong>{serviceReservation.duration}</strong></div><div><span>Booking reference</span><strong>{serviceReservation.orderId}</strong></div></div><h2>Booking progress</h2><ol className="customer-reservation-timeline">{serviceReservation.timeline.map((event) => <li className={event.complete ? 'is-complete' : ''} key={event.label}><span className="customer-timeline-marker">{event.complete ? '✓' : ''}</span><div><strong>{event.label}</strong><small>{event.complete ? new Date(event.date).toLocaleString('en-PH') : 'Pending update'}</small></div></li>)}</ol><Link className="customer-secondary-button" to="/customer/services">Book another service</Link></section>
     </div>
   </CustomerPage>;
 
-  if (!reservation) return <CustomerPage title="Reservation not found" description={error || 'This reservation is not in your account.'}>{error && <p className="customer-error" role="alert">{error}</p>}<Link to="/customer/purchases">Back to My Purchases</Link></CustomerPage>;
+  if (serviceBooking) {
+    const paymentPending = (serviceBooking.paymentStatus || 'Payment Pending') === 'Payment Pending';
+    const serviceStatus = serviceBooking.paymentStatus === 'Payment Submitted'
+      ? 'Payment Submitted'
+      : serviceBooking.paymentStatus === 'Payment Pending' && serviceBooking.paymentRejectionReason
+        ? 'Payment Pending'
+      : serviceBooking.paymentStatus === 'Confirmed' && serviceBooking.status === 'pending'
+        ? 'Confirmed'
+        : serviceBooking.status;
+    return <CustomerPage title="Booking details" description="Review your service booking and payment status.">
+      <div className="customer-flow-page">
+        <nav className="customer-breadcrumbs" aria-label="Breadcrumb"><Link to="/customer/profile">Account</Link><span>/</span><span>{serviceBooking.code || serviceBooking._id}</span></nav>
+        {error && <p className="customer-error" role="alert">{error}</p>}
+        {message && <p className="customer-success" role="status">{message}</p>}
+        <section className="customer-reservation-detail-card">
+          <div className="customer-reservation-card-top"><div><p className="customer-eyebrow">SERVICE BOOKING · {serviceBooking.code || serviceBooking._id}</p><h1>{serviceBooking.serviceType}</h1><p>{serviceBooking.scheduledDate ? formatDate(serviceBooking.scheduledDate) : 'Date to be confirmed'}{serviceBooking.startTime ? ` · ${serviceBooking.startTime} - ${serviceBooking.endTime}` : ''}{serviceBooking.vehicle ? ` · ${serviceBooking.vehicle}` : ''}</p></div><span className={`customer-status-pill ${statusClass(serviceStatus)}`}>{serviceStatus}</span></div>
+          <div className="customer-reservation-detail-meta"><div><span>Amount due</span><strong>{money(serviceBooking.estimatedPrice)}</strong></div><div><span>Payment</span><strong>{serviceBooking.paymentStatus || 'Payment Pending'}</strong></div><div><span>Reference</span><strong>{serviceBooking.code || serviceBooking._id}</strong></div></div>
+          {serviceBooking.paymentRejectionReason && <p className="customer-error" role="alert">Payment needs attention: {serviceBooking.paymentRejectionReason}</p>}
+          {paymentPending && !showPaymentForm && <button className="customer-primary-button" type="button" onClick={() => setShowPaymentForm(true)}>Pay with GCash</button>}
+          {showPaymentForm && paymentPending && <ReservationPaymentForm reservation={serviceBooking} amount={serviceBooking.estimatedPrice} settings={settings} onSubmit={submitPayment} onClose={() => setShowPaymentForm(false)} isSaving={isSaving} />}
+          <Link className="customer-secondary-button" to="/customer/profile">Back to Account</Link>
+        </section>
+      </div>
+    </CustomerPage>;
+  }
+
+  if (!reservation) return <CustomerPage title="Details not found" description={error || 'This record is not in your account.'}>{error && <p className="customer-error" role="alert">{error}</p>}<Link to="/customer/purchases">Back to My Purchases</Link></CustomerPage>;
 
   const canSubmitPayment = reservation.status === 'Pending Down Payment';
   const canCustomerCancel = ['Pending Down Payment', 'Payment Submitted'].includes(reservation.status);
@@ -147,8 +191,8 @@ export default function ReservationDetail() {
         {reservation.rejectionReason && <p className="customer-error">Payment needs attention: {reservation.rejectionReason}</p>}
         {reservation.refundDecision && <p className="customer-reservation-note">Refund decision: {reservation.refundDecision}.</p>}
         <h2>Reservation timeline</h2><ol className="customer-reservation-timeline">{timeline.map((event, index) => <li className={index < timelineStep ? 'is-complete' : index === timelineStep ? 'is-current' : ''} key={event.label}><span className="customer-timeline-marker">{index < timelineStep ? '✓' : index + 1}</span><div><strong>{event.label}</strong><small>{event.date ? formatDate(event.date) : currentStep !== undefined && index === currentStep ? 'In progress' : index > timelineStep || currentStep === undefined ? 'Not reached' : 'Pending'}</small></div></li>)}</ol>
-        {canSubmitPayment && !showPaymentForm && <button className="customer-primary-button" type="button" onClick={() => setShowPaymentForm(true)}>Pay now</button>}
-        {canSubmitPayment && showPaymentForm && <ReservationPaymentForm reservation={reservation} settings={settings} onSubmit={submitPayment} isSaving={isSaving} />}
+        {canSubmitPayment && !showPaymentForm && <button className="customer-primary-button" type="button" onClick={() => setShowPaymentForm(true)}>Pay with GCash</button>}
+        {canSubmitPayment && showPaymentForm && <ReservationPaymentForm reservation={reservation} settings={settings} onSubmit={submitPayment} onClose={() => setShowPaymentForm(false)} isSaving={isSaving} />}
         {canCustomerCancel && <button className="customer-secondary-button" type="button" onClick={() => setShowCancelDialog(true)} disabled={isSaving}>Cancel reservation</button>}
         <Link className="customer-secondary-button" to="/customer/purchases">Back to My Purchases</Link>
       </section>

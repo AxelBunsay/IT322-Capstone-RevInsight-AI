@@ -9,11 +9,11 @@ const validateItemForm = (form) => {
   const stock = Number(form.quantity);
 
   if (name.length < 2 || name.length > 80) errors.name = "Name must be 2 to 80 characters.";
-  if (form.price === "" || !Number.isFinite(price) || price < 0.01 || price > 999999.99) {
-    errors.price = "Price must be from 0.01 to 999,999.99.";
+  if (form.price === "" || !Number.isFinite(price) || price < 1 || price > 99999) {
+    errors.price = "Price must be from 1 to 99,999.";
   }
-  if (form.quantity === "" || !Number.isInteger(stock) || stock < 0 || stock > 99999) {
-    errors.quantity = "Stock must be a whole number from 0 to 99,999.";
+  if (form.quantity === "" || !Number.isInteger(stock) || stock < 0 || stock > 9999) {
+    errors.quantity = "Stock must be a whole number from 0 to 9,999.";
   }
   if (!form.category.trim()) errors.category = "Category is required.";
   return errors;
@@ -571,8 +571,8 @@ function Inventory() {
             <label>
               Price
               <input
-                min="0.01"
-                max="999999.99"
+                min="1"
+                max="99999"
                 step="0.01"
                 type="number"
                 aria-invalid={Boolean(itemFormErrors.price)}
@@ -588,7 +588,7 @@ function Inventory() {
               Stock
               <input
                 min="0"
-                max="99999"
+                max="9999"
                 step="1"
                 type="number"
                 aria-invalid={Boolean(itemFormErrors.quantity)}

@@ -27,6 +27,48 @@ const handleServiceError = (res, error) => {
   return res.status(status).json({ message: error.message });
 };
 
+const publicServicePayload = (service) => {
+  const value = service.toObject ? service.toObject() : service;
+  const id = String(value._id);
+  return {
+    _id: id,
+    name: value.name,
+    description: value.description || '',
+    price: value.price,
+    mechanicFee: value.mechanicFee ?? 0,
+    category: value.category || 'General',
+    durationMinutes: Number(value.durationMinutes) || 60,
+    code: `SVC-${id.slice(-4).toUpperCase()}`
+  };
+};
+
+const getPublicServices = async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store, max-age=0');
+    const services = await Service.find({ isActive: { $ne: false } })
+      .collation({ locale: 'en', strength: 2 })
+      .sort({ name: 1 })
+      .lean();
+    res.status(200).json({ services: services.map(publicServicePayload) });
+  } catch (error) {
+    handleServiceError(res, error);
+  }
+};
+
+const getPublicService = async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(404).json({ message: 'Service not found.' });
+  }
+  try {
+    res.set('Cache-Control', 'no-store, max-age=0');
+    const service = await Service.findOne({ _id: req.params.id, isActive: { $ne: false } }).lean();
+    if (!service) return res.status(404).json({ message: 'Service not found.' });
+    res.status(200).json({ service: publicServicePayload(service) });
+  } catch (error) {
+    handleServiceError(res, error);
+  }
+};
+
 const getServices = async (req, res) => {
   try {
     const services = await Service.find({ isActive: { $ne: false } }).sort({ name: 1 });
@@ -138,6 +180,8 @@ const deleteService = async (req, res) => {
 };
 
 module.exports = {
+  getPublicServices,
+  getPublicService,
   getServices,
   getService,
   createService,

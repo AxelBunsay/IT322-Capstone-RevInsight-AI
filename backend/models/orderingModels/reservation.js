@@ -12,6 +12,16 @@ const reservationItemSchema = new mongoose.Schema({
   lineTotal: { type: Number, required: true, min: 0 }
 }, { _id: false });
 
+const paymentSubmissionSchema = new mongoose.Schema({
+  reference: { type: String, required: true },
+  paymentProofPublicId: { type: String, required: true },
+  submittedAt: { type: Date, required: true },
+  status: { type: String, enum: ['Payment Submitted', 'Confirmed', 'Rejected'], default: 'Payment Submitted' },
+  rejectionReason: { type: String, default: '' },
+  reviewedAt: { type: Date, default: null },
+  reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null }
+}, { _id: true });
+
 const reservationSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true, sparse: true },
   customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -32,12 +42,16 @@ const reservationSchema = new mongoose.Schema({
   paymentMethod: { type: String, default: '' },
   paymentReference: { type: String, default: '' },
   paymentProofUrl: { type: String, default: '' },
+  paymentProofPublicId: { type: String, default: '' },
+  paymentSubmissions: { type: [paymentSubmissionSchema], default: [] },
   rejectionReason: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },
   paymentDueAt: { type: Date, default: null },
   submittedAt: { type: Date, default: null },
   verifiedAt: { type: Date, default: null },
   verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null },
+  paymentRejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null },
+  paymentRejectedAt: { type: Date, default: null },
   reservedUntil: { type: Date, default: null },
   completedAt: { type: Date, default: null },
   cancelledAt: { type: Date, default: null },

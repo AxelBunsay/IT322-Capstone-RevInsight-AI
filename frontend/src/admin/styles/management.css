@@ -767,6 +767,39 @@
   grid-column: span 2;
 }
 
+.reservation-booking-open-days {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #dccab8;
+  border-radius: 8px;
+}
+
+.reservation-booking-open-days legend {
+  padding: 0 5px;
+  color: #4f4033;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reservation-booking-open-days > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.reservation-settings-form .reservation-booking-open-days label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reservation-settings-form .reservation-booking-open-days input {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+}
+
 .reservation-settings-form button {
   align-self: end;
   min-height: 38px;

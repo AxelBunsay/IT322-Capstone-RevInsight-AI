@@ -54,7 +54,7 @@ function ServiceReservationCard({ reservation }) {
     </div>
     <div className="customer-reservation-card-bottom">
       <strong>{money(reservation.price)}</strong>
-      <Link to={`/customer/reservations/${reservation.id}`}>View service <span aria-hidden="true">→</span></Link>
+      <Link to={`/customer/reservations/${reservation.id}`}>View booking <span aria-hidden="true">→</span></Link>
     </div>
   </article>;
 }
@@ -83,12 +83,12 @@ export default function Reservations() {
     <div className="customer-flow-page customer-reservations-page">
       {error && <p className="customer-error" role="alert">{error}</p>}
       <div className="customer-flow-section-heading">
-        <div><p className="customer-eyebrow">YOUR ACTIVITY</p><h2>Reservations and services</h2></div>
-        <span>{records.length} {activeTab === 'services' ? 'services' : 'reservations'}</span>
+        <div><p className="customer-eyebrow">YOUR ACTIVITY</p><h2>Purchases and bookings</h2></div>
+        <span>{records.length} {activeTab === 'services' ? 'bookings' : 'reservations'}</span>
       </div>
-      <div className="customer-reservation-tabs" role="tablist" aria-label="Reservations and services">
+      <div className="customer-reservation-tabs" role="tablist" aria-label="Purchases and bookings">
         <button type="button" role="tab" aria-selected={activeTab === 'items'} className={activeTab === 'items' ? 'is-active' : ''} onClick={() => setActiveTab('items')}>Reservations <span>{itemReservations.length}</span></button>
-        <button type="button" role="tab" aria-selected={activeTab === 'services'} className={activeTab === 'services' ? 'is-active' : ''} onClick={() => setActiveTab('services')}>Services <span>{reservations.length}</span></button>
+        <button type="button" role="tab" aria-selected={activeTab === 'services'} className={activeTab === 'services' ? 'is-active' : ''} onClick={() => setActiveTab('services')}>My bookings <span>{reservations.length}</span></button>
       </div>
       {isLoading && activeTab === 'items'
         ? <p className="customer-empty">Loading reservations...</p>

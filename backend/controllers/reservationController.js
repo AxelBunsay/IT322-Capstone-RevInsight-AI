@@ -6,7 +6,18 @@ const Counter = require('../models/orderingModels/counter');
 const ReservationSettings = require('../models/reservationSettings');
 const BusinessRecord = require('../models/businessRecord');
 const Cart = require('../models/orderingModels/cart');
-const cloudinary = require('../config/cloudinary');
+const Notification = require('../models/notification');
+const {
+  validateReceipt,
+  validateReference,
+  uploadReceipt,
+  claimPaymentReference,
+  getAuthorizedReceiptUrl,
+  removeReceipt,
+  uploadPublicImage,
+  removePublicImage
+} = require('../utils/paymentReceipt');
+const { createPaymentDecisionNotification } = require('../utils/paymentNotifications');
 
 const validStatuses = ['Pending Down Payment', 'Payment Submitted', 'Reserved', 'Completed', 'Cancelled', 'Expired'];
 const money = (amount) => Math.round((amount + Number.EPSILON) * 100) / 100;
@@ -22,16 +33,13 @@ const getSettings = async () => ReservationSettings.getDefaults();
 const validateStatus = (status) => !status || validStatuses.includes(status);
 const isValidReservationId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-const uploadPaymentProof = (file) => new Promise((resolve, reject) => {
-  const stream = cloudinary.uploader.upload_stream(
-    { folder: 'revinsight/reservation-proofs', resource_type: 'image' },
-    (error, result) => {
-      if (error) reject(error);
-      else resolve(result.secure_url);
-    }
-  );
-  stream.end(file.buffer);
-});
+const customerReservationPayload = (reservation) => {
+  const payload = reservation.toObject ? reservation.toObject() : { ...reservation };
+  delete payload.paymentProofUrl;
+  delete payload.paymentProofPublicId;
+  delete payload.paymentSubmissions;
+  return payload;
+};
 
 async function releaseReservedStock(reservation, session) {
   for (const item of reservation.items) {
@@ -208,12 +216,12 @@ const createReservationFromCart = async (req, res) => {
 };
 
 const submitPayment = async (req, res) => {
+  let uploadedReceipt;
+  let session;
   try {
     if (!isValidReservationId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid reservation ID.' });
-    const { reference } = req.body || {};
-    if (typeof reference !== 'string' || reference.trim().length < 3 || reference.trim().length > 120) {
-      return res.status(400).json({ success: false, message: 'Enter a reference number between 3 and 120 characters.' });
-    }
+    const reference = validateReference(req.body?.reference);
+    validateReceipt(req.file);
     await expireReservations();
     const reservation = await Reservation.findOne({ _id: req.params.id, customerId: req.user.userId, code: { $exists: true } });
     if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found.' });
@@ -224,20 +232,56 @@ const submitPayment = async (req, res) => {
     if (!settings.paymentInstructions.methodName || !settings.paymentInstructions.accountName || !settings.paymentInstructions.accountNumber) {
       return res.status(409).json({ success: false, message: 'The shop payment instructions are not configured yet. Please contact the shop before submitting payment.' });
     }
-    if (req.file && !['image/jpeg', 'image/png'].includes(req.file.mimetype)) {
-      return res.status(400).json({ success: false, message: 'Upload a JPG or PNG image as payment proof.' });
-    }
-    const paymentProofUrl = req.file ? await uploadPaymentProof(req.file) : '';
-    reservation.paymentReference = reference.trim();
-    reservation.paymentMethod = settings.paymentInstructions.methodName;
-    reservation.paymentProofUrl = paymentProofUrl;
-    reservation.submittedAt = new Date();
-    reservation.status = 'Payment Submitted';
-    reservation.rejectionReason = '';
-    await reservation.save();
-    res.json({ success: true, reservation });
+    uploadedReceipt = await uploadReceipt(req.file);
+    session = await mongoose.startSession();
+    let updatedReservation;
+    await session.withTransaction(async () => {
+      const current = await Reservation.findOne({
+        _id: req.params.id,
+        customerId: req.user.userId,
+        status: 'Pending Down Payment',
+        code: { $exists: true }
+      }).session(session);
+      if (!current) throw Object.assign(new Error('Payment can only be submitted for a pending down payment.'), { status: 409 });
+      const submittedAt = new Date();
+      await claimPaymentReference({ reference, recordType: 'item', recordId: current._id, session });
+      current.paymentReference = reference;
+      current.paymentMethod = settings.paymentInstructions.methodName;
+      current.paymentProofUrl = '';
+      current.paymentProofPublicId = uploadedReceipt.publicId;
+      current.submittedAt = submittedAt;
+      current.status = 'Payment Submitted';
+      current.rejectionReason = '';
+      current.paymentSubmissions.push({
+        reference,
+        paymentProofPublicId: uploadedReceipt.publicId,
+        submittedAt,
+        status: 'Payment Submitted'
+      });
+      updatedReservation = await current.save({ session });
+      await Notification.create([{
+        audience: 'admin',
+        type: 'payment_submitted',
+        message: `New payment submitted: ${current.code} · ${current.customerName} · ₱${money(current.downPaymentAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+        recordId: current._id,
+        recordType: 'item'
+      }], { session });
+    });
+    res.json({ success: true, reservation: customerReservationPayload(updatedReservation) });
   } catch (error) {
+    if (uploadedReceipt?.publicId) {
+      try {
+        await removeReceipt(uploadedReceipt.publicId);
+      } catch (cleanupError) {
+        console.error('[submitPayment] receipt cleanup failed', cleanupError);
+      }
+    }
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'This reference number was already used.' });
+    }
     sendError(res, error);
+  } finally {
+    if (session) await session.endSession();
   }
 };
 
@@ -245,7 +289,7 @@ const getCustomerReservations = async (req, res) => {
   try {
     await expireReservations();
     const reservations = await Reservation.find({ customerId: req.user.userId, code: { $exists: true } }).sort({ createdAt: -1 });
-    res.json({ success: true, reservations });
+    res.json({ success: true, reservations: reservations.map(customerReservationPayload) });
   } catch (error) {
     sendError(res, error);
   }
@@ -257,7 +301,7 @@ const getCustomerReservation = async (req, res) => {
     await expireReservations();
     const reservation = await Reservation.findOne({ _id: req.params.id, customerId: req.user.userId, code: { $exists: true } });
     if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found.' });
-    res.json({ success: true, reservation });
+    res.json({ success: true, reservation: customerReservationPayload(reservation) });
   } catch (error) {
     sendError(res, error);
   }
@@ -278,7 +322,7 @@ const cancelCustomerReservation = async (req, res) => {
     reservation.cancelledAt = new Date();
     reservation.cancelReason = reason.trim() || 'Cancelled by customer';
     await reservation.save();
-    res.json({ success: true, reservation });
+    res.json({ success: true, reservation: customerReservationPayload(reservation) });
   } catch (error) {
     sendError(res, error);
   }
@@ -304,13 +348,37 @@ const getAdminReservations = async (req, res) => {
         { customerId: { $in: matchingUsers.map((user) => user._id) } }
       ];
     }
-    const reservations = await Reservation.find(query)
+    const populateAdminReservation = (builder) => builder
       .populate('customerId', 'firstName lastName email phoneNumber')
       .populate('verifiedBy', 'username')
-      .populate('refundDecisionBy', 'username')
-      .sort({ createdAt: -1 })
-      .limit(200);
-    res.json({ success: true, reservations });
+      .populate('refundDecisionBy', 'username');
+    let reservations;
+    if (!status) {
+      const [submitted, otherReservations] = await Promise.all([
+        populateAdminReservation(Reservation.find({ ...query, status: 'Payment Submitted' }).sort({ createdAt: -1 }).limit(200)),
+        populateAdminReservation(Reservation.find({ ...query, status: { $ne: 'Payment Submitted' } }).sort({ createdAt: -1 }).limit(200))
+      ]);
+      reservations = [...submitted, ...otherReservations].slice(0, 200);
+    } else {
+      reservations = await populateAdminReservation(Reservation.find(query).sort({ createdAt: -1 }).limit(200));
+    }
+    const sortedReservations = reservations.sort((left, right) => {
+      const leftPending = left.status === 'Payment Submitted' ? 0 : 1;
+      const rightPending = right.status === 'Payment Submitted' ? 0 : 1;
+      return leftPending - rightPending || right.createdAt - left.createdAt;
+    });
+    res.json({ success: true, reservations: sortedReservations.map((reservation) => {
+      const value = reservation.toObject();
+      value.paymentProofUrl = value.paymentProofPublicId
+        ? getAuthorizedReceiptUrl(value.paymentProofPublicId)
+        : value.paymentProofUrl;
+      value.paymentSubmissions = (value.paymentSubmissions || []).map((submission) => ({
+        ...submission.toObject(),
+        receiptUrl: getAuthorizedReceiptUrl(submission.paymentProofPublicId)
+      }));
+      delete value.paymentProofPublicId;
+      return value;
+    }) });
   } catch (error) {
     sendError(res, error);
   }
@@ -343,7 +411,21 @@ const confirmReservation = async (req, res) => {
       reservation.verifiedAt = new Date();
       reservation.verifiedBy = req.admin.id;
       reservation.reservedUntil = new Date(Date.now() + settings.holdDays * 24 * 60 * 60 * 1000);
+      const latestSubmission = reservation.paymentSubmissions[reservation.paymentSubmissions.length - 1];
+      if (latestSubmission) {
+        latestSubmission.status = 'Confirmed';
+        latestSubmission.reviewedAt = reservation.verifiedAt;
+        latestSubmission.reviewedBy = req.admin.id;
+      }
       result = await reservation.save({ session });
+      await createPaymentDecisionNotification({
+        customerId: reservation.customerId,
+        recordId: reservation._id,
+        recordType: 'item',
+        code: reservation.code,
+        confirmed: true,
+        session
+      });
     });
     res.json({ success: true, reservation: result });
   } catch (error) {
@@ -354,29 +436,50 @@ const confirmReservation = async (req, res) => {
 };
 
 const rejectReservation = async (req, res) => {
+  let session;
   try {
     if (!isValidReservationId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid reservation ID.' });
     const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
     if (reason.length < 3 || reason.length > 300) {
       return res.status(400).json({ success: false, message: 'Provide a rejection reason between 3 and 300 characters.' });
     }
-    const reservation = await Reservation.findOne({ _id: req.params.id, code: { $exists: true } });
-    if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found.' });
-    if (reservation.status !== 'Payment Submitted') {
-      return res.status(409).json({ success: false, message: 'Only submitted payments can be rejected.' });
-    }
-    reservation.status = 'Pending Down Payment';
-    reservation.rejectionReason = reason;
     const settings = await getSettings();
-    reservation.paymentDueAt = new Date(Date.now() + settings.pendingPaymentHours * 60 * 60 * 1000);
-    reservation.paymentReference = '';
-    reservation.paymentMethod = '';
-    reservation.paymentProofUrl = '';
-    reservation.submittedAt = null;
-    await reservation.save();
-    res.json({ success: true, reservation });
+    session = await mongoose.startSession();
+    let reservation;
+    await session.withTransaction(async () => {
+      reservation = await Reservation.findOne({ _id: req.params.id, code: { $exists: true } }).session(session);
+      if (!reservation) throw Object.assign(new Error('Reservation not found.'), { status: 404 });
+      if (reservation.status !== 'Payment Submitted') {
+        throw Object.assign(new Error('Only submitted payments can be rejected.'), { status: 409 });
+      }
+      reservation.status = 'Pending Down Payment';
+      reservation.rejectionReason = reason;
+      reservation.paymentRejectedBy = req.admin.id;
+      reservation.paymentRejectedAt = new Date();
+      reservation.paymentDueAt = new Date(Date.now() + settings.pendingPaymentHours * 60 * 60 * 1000);
+      const latestSubmission = reservation.paymentSubmissions[reservation.paymentSubmissions.length - 1];
+      if (latestSubmission) {
+        latestSubmission.status = 'Rejected';
+        latestSubmission.rejectionReason = reason;
+        latestSubmission.reviewedAt = reservation.paymentRejectedAt;
+        latestSubmission.reviewedBy = req.admin.id;
+      }
+      reservation = await reservation.save({ session });
+      await createPaymentDecisionNotification({
+        customerId: reservation.customerId,
+        recordId: reservation._id,
+        recordType: 'item',
+        code: reservation.code,
+        confirmed: false,
+        reason,
+        session
+      });
+    });
+    res.json({ success: true, reservation: customerReservationPayload(reservation) });
   } catch (error) {
     sendError(res, error);
+  } finally {
+    if (session) await session.endSession();
   }
 };
 
@@ -497,7 +600,12 @@ const getPublicSettings = async (req, res) => {
         downPaymentPercent: settings.downPaymentPercent,
         pendingPaymentHours: settings.pendingPaymentHours,
         holdDays: settings.holdDays,
-        paymentInstructions: settings.paymentInstructions,
+        paymentInstructions: {
+          methodName: settings.paymentInstructions.methodName,
+          accountName: settings.paymentInstructions.accountName,
+          accountNumber: settings.paymentInstructions.accountNumber,
+          qrImageUrl: settings.paymentInstructions.qrImageUrl
+        },
         pickupAddress: settings.pickupAddress,
         pickupHours: settings.pickupHours
       }
@@ -507,9 +615,118 @@ const getPublicSettings = async (req, res) => {
   }
 };
 
+const uploadGcashQr = async (req, res) => {
+  let uploaded;
+  try {
+    validateReceipt(req.file);
+    uploaded = await uploadPublicImage(req.file, 'revinsight/gcash-qr');
+    const settings = await getSettings();
+    const previousPublicId = settings.paymentInstructions.qrImagePublicId;
+    settings.paymentInstructions.qrImagePublicId = uploaded.publicId;
+    settings.paymentInstructions.qrImageUrl = uploaded.url;
+    await settings.save();
+    if (previousPublicId) {
+      try {
+        await removePublicImage(previousPublicId);
+      } catch (error) {
+        console.error('[uploadGcashQr] previous QR cleanup failed', error);
+      }
+    }
+    res.json({ success: true, qrImageUrl: uploaded.url });
+  } catch (error) {
+    if (uploaded?.publicId) {
+      try {
+        await removePublicImage(uploaded.publicId);
+      } catch (cleanupError) {
+        console.error('[uploadGcashQr] uploaded QR cleanup failed', cleanupError);
+      }
+    }
+    sendError(res, error);
+  }
+};
+
+const getShopSettings = async (req, res) => {
+  try {
+    const settings = await getSettings();
+    res.json({
+      success: true,
+      settings: {
+        downPaymentPercent: settings.downPaymentPercent,
+        pickupAddress: settings.pickupAddress,
+        pickupHours: settings.pickupHours,
+        contactNumber: settings.contactNumber
+      }
+    });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+const getBookingSchedule = async (req, res) => {
+  try {
+    const settings = await getSettings();
+    res.json({
+      success: true,
+      schedule: {
+        openDays: settings.openDays,
+        openTime: settings.openTime,
+        closeTime: settings.closeTime,
+        slotCapacity: settings.slotCapacity,
+        maxDaysAhead: settings.maxDaysAhead
+      }
+    });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+const updateBookingSchedule = async (req, res) => {
+  try {
+    const { openDays, openTime, closeTime, slotCapacity, maxDaysAhead } = req.body || {};
+    const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const isValidTime = (value) => typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+    const minutes = (value) => Number(value.slice(0, 2)) * 60 + Number(value.slice(3));
+    const errors = [];
+
+    if (!Array.isArray(openDays) || openDays.length === 0 || openDays.some((day) => !validDays.includes(day)) || new Set(openDays).size !== openDays.length) {
+      errors.push('Select at least one valid, unique open day.');
+    }
+    if (!isValidTime(openTime)) errors.push('Opening time must use 24-hour HH:mm format.');
+    if (!isValidTime(closeTime)) errors.push('Closing time must use 24-hour HH:mm format.');
+    if (isValidTime(openTime) && isValidTime(closeTime) && minutes(closeTime) <= minutes(openTime)) {
+      errors.push('Closing time must be after opening time.');
+    }
+    if (!Number.isInteger(slotCapacity) || slotCapacity < 1 || slotCapacity > 100) {
+      errors.push('Slot capacity must be a whole number from 1 to 100.');
+    }
+    if (!Number.isInteger(maxDaysAhead) || maxDaysAhead < 1 || maxDaysAhead > 365) {
+      errors.push('Maximum days ahead must be a whole number from 1 to 365.');
+    }
+    if (errors.length) return res.status(400).json({ success: false, message: errors.join(' ') });
+
+    const settings = await ReservationSettings.findOneAndUpdate(
+      { key: 'reservation' },
+      { $set: { openDays, openTime, closeTime, slotCapacity, maxDaysAhead } },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    );
+    res.json({
+      success: true,
+      schedule: {
+        openDays: settings.openDays,
+        openTime: settings.openTime,
+        closeTime: settings.closeTime,
+        slotCapacity: settings.slotCapacity,
+        maxDaysAhead: settings.maxDaysAhead
+      }
+    });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
 const updateSettings = async (req, res) => {
   try {
-    const { downPaymentPercent, pendingPaymentHours, holdDays, paymentInstructions, pickupAddress, pickupHours } = req.body || {};
+    const { downPaymentPercent, pendingPaymentHours, holdDays, paymentInstructions, pickupAddress, pickupHours, contactNumber } = req.body || {};
     const errors = [];
     if (!Number.isInteger(downPaymentPercent) || downPaymentPercent < 10 || downPaymentPercent > 100) errors.push('Down payment percent must be a whole number from 10 to 100.');
     if (!Number.isInteger(pendingPaymentHours) || pendingPaymentHours < 1 || pendingPaymentHours > 720) errors.push('Pending payment hours must be a whole number from 1 to 720.');
@@ -522,11 +739,18 @@ const updateSettings = async (req, res) => {
     }
     if (typeof pickupAddress !== 'string' || pickupAddress.length > 500) errors.push('Pickup address must be 500 characters or fewer.');
     if (typeof pickupHours !== 'string' || pickupHours.length > 200) errors.push('Pickup hours must be 200 characters or fewer.');
+    if (typeof contactNumber !== 'string' || contactNumber.length > 40) errors.push('Contact number must be 40 characters or fewer.');
     if (errors.length) return res.status(400).json({ success: false, message: errors.join(' ') });
 
+    const currentSettings = await getSettings();
+    const savedPaymentInstructions = {
+      ...paymentInstructions,
+      qrImageUrl: currentSettings.paymentInstructions.qrImageUrl || '',
+      qrImagePublicId: currentSettings.paymentInstructions.qrImagePublicId || ''
+    };
     const settings = await ReservationSettings.findOneAndUpdate(
       { key: 'reservation' },
-      { $set: { downPaymentPercent, pendingPaymentHours, holdDays, paymentInstructions, pickupAddress, pickupHours } },
+      { $set: { downPaymentPercent, pendingPaymentHours, holdDays, paymentInstructions: savedPaymentInstructions, pickupAddress, pickupHours, contactNumber } },
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
     );
     res.json({ success: true, settings });
@@ -549,6 +773,10 @@ module.exports = {
   cancelAdminReservation,
   decideExpiredRefund,
   getPublicSettings,
+  getShopSettings,
+  getBookingSchedule,
+  updateBookingSchedule,
   updateSettings,
+  uploadGcashQr,
   expireReservations
 };

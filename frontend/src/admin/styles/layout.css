@@ -196,6 +196,117 @@
   transition: margin-left 200ms ease, width 200ms ease;
 }
 
+.admin-root .admin-topbar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: -8px 0 18px;
+  color: #71645a;
+  font-size: 12px;
+}
+
+.admin-root .admin-notification-area { position: relative; }
+
+.admin-root .admin-notification-bell {
+  position: relative;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid #e8ddd3;
+  border-radius: 50%;
+  background: #fffaf5;
+  color: #4a3428;
+  cursor: pointer;
+}
+
+.admin-root .admin-notification-bell svg {
+  width: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.admin-root .admin-notification-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d4540a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-root .admin-notification-popover {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(360px, calc(100vw - 28px));
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #eadfd5;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(48, 31, 20, .18);
+  color: #3a2c23;
+}
+
+.admin-root .admin-notification-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.admin-root .admin-notification-popover-header button {
+  border: 0;
+  background: transparent;
+  color: #c54f0a;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-root .admin-notification-popover-header button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.admin-root .admin-notification-popover ul { margin: 0; padding: 0; list-style: none; }
+.admin-root .admin-notification-popover li { border-top: 1px solid #f0e8e1; }
+.admin-root .admin-notification-popover li.is-unread { background: #fff6eb; }
+.admin-root .admin-notification-popover li button {
+  display: grid;
+  width: 100%;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.admin-root .admin-notification-popover small { color: #817268; font-size: 11px; }
+.admin-root .admin-notification-empty,
+.admin-root .admin-notification-popover > p { margin: 0; padding: 12px 14px; color: #817268; font-size: 13px; }
+.admin-root .reservation-gcash-qr-preview { display: block; width: 120px; height: 120px; margin-top: 8px; object-fit: contain; }
+.admin-root .transaction-needs-review { display: block; margin-top: 4px; color: #bc4a08; font-weight: 700; }
+
 .admin-root .admin-page { width: min(100%, 1200px); min-width: 0; margin: 0 auto; }
 
 @media (min-width: 761px) {

@@ -1,0 +1,76 @@
+{
+  "planHash": "03596f7fc610c5e63e9caf68553b595f1b86f1cf0b40f1bf7b61c17f4fb7de83",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-10-22T15:19:23.5929169Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 0,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E backend@1.0.0 test\r\n\u003E vitest run\r\n\r\n\r\n RUN  v4.1.12 C:/Users/Axel Stephan Bunsay/Documents/projects/IT322-Capstone-RevInsight-AI/backend\r\n\r\n\r\n Test Files  1 passed (1)\r\n      Tests  8 passed (8)\r\n   Start at  23:19:17\r\n   Duration  1.99s (transform 70ms, setup 0ms, import 1.26s, tests 28ms, environment 0ms)\r\n\r\n",
+        "durationMs": 5403,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 8,
+          "testsPassed": 8,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "admin-notifications-require-auth",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 401\n{\u0022success\u0022:false,\u0022message\u0022:\u0022Not authorized to access this route\u0022}\n--- server output ---\n\r\n\u003E backend@1.0.0 start\r\n\u003E node server.js\r\n\r\n\u25C7 injected env (13) from .env // tip: \u2301 auth for agents [www.vestauth.com]\r\nServer is running on port 5199\r\nRegistered routes (mounted):\r\nNo router stack available to print.\r\n",
+        "durationMs": 3977
+      }
+    ],
+    "executions": [
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\Axel Stephan Bunsay\\Documents\\projects\\IT322-Capstone-RevInsight-AI\\backend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "admin-notifications-require-auth",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "start"
+        ],
+        "cwd": "C:\\Users\\Axel Stephan Bunsay\\Documents\\projects\\IT322-Capstone-RevInsight-AI\\backend",
+        "env": {
+          "MONGODB_URI": "mongodb://127.0.0.1:1/validation",
+          "PORT": "5199"
+        },
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

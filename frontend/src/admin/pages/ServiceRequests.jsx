@@ -32,6 +32,7 @@ function ServiceRequests() {
   }, []);
 
   const confirmAssignment = async (requestId, mechanicId) => {
+    if (!mechanicId) return;
     setSavingId(requestId);
     setError("");
     try {
@@ -164,13 +165,13 @@ function ServiceRequests() {
                 <div className="mechanic-actions">
                   <select
                     aria-label={`Assign mechanic for ${request.serviceType}`}
-                    value={request.mechanic?._id || request.mechanic || ""}
+                    value={request.mechanic?._id || request.mechanic || request.mechanicId?._id || request.mechanicId || ""}
                     disabled={savingId === request._id}
                     onChange={(event) =>
                       confirmAssignment(request._id, event.target.value)
                     }
                   >
-                    <option value="">Select mechanic</option>
+                    <option value="">Assign mechanic</option>
                     {mechanics.map((mechanic) => (
                       <option
                         key={mechanic.id || mechanic._id}
@@ -189,11 +190,13 @@ function ServiceRequests() {
                     }
                   >
                     <option value="pending">Pending</option>
+                    <option value="assigned">Assigned</option>
                     <option value="confirmed">Confirmed</option>
                     <option value="accepted">Accepted</option>
                     <option value="in-progress">In progress</option>
                     <option value="completed">Completed</option>
                     <option value="declined">Declined</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
               </article>

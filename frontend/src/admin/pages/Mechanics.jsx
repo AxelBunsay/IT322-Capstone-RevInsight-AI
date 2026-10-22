@@ -6,6 +6,8 @@ function Mechanics() {
   const [mechanics, setMechanics] = useState([]);
   const [totalMechanics, setTotalMechanics] = useState(0);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [totalLaborToday, setTotalLaborToday] = useState(0);
+  const [mechanicRepairCounts, setMechanicRepairCounts] = useState({});
   const [completedJobs, setCompletedJobs] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -26,18 +28,19 @@ function Mechanics() {
   useEffect(() => {
     let isMounted = true;
 
-    api
-      .getMechanics()
-      .then((response) => {
+    Promise.all([api.getMechanics(), api.getMechanicsSummary()])
+      .then(([response, summary]) => {
         if (isMounted) {
           const data = response.mechanics || response.data || [];
           setMechanics(data);
           setTotalMechanics(data.length);
-          setTotalJobs(
-            data.reduce(
-              (sum, mechanic) => sum + (mechanic.totalRepairs || 0),
-              0,
-            ),
+          setTotalJobs(summary.totalRepairs || 0);
+          setTotalLaborToday(summary.totalLaborToday || 0);
+          setMechanicRepairCounts(
+            Object.fromEntries((summary.mechanics || []).map((item) => [
+              item.mechanicId,
+              item.totalRepairs || 0,
+            ])),
           );
           setCompletedJobs(data.filter((mechanic) => mechanic.isActive).length);
         }
@@ -179,7 +182,11 @@ function Mechanics() {
               <div className="stat-label">Active Mechanics</div>
             </div>
             <div className="stat-box">
-              <div className="stat-number">₱0</div>
+              <div className="stat-number">
+                {isLoading
+                  ? "..."
+                  : `₱${Number(totalLaborToday).toLocaleString("en-PH", { maximumFractionDigits: 2 })}`}
+              </div>
               <div className="stat-label">Total Labor Today</div>
             </div>
           </div>
@@ -225,7 +232,7 @@ function Mechanics() {
               <div className="mechanic-stats">
                 <div className="mechanic-stat">
                   <div className="mechanic-stat-number">
-                    {mechanic.totalRepairs || 0}
+                    {mechanicRepairCounts[String(mechanic.id)] || 0}
                   </div>
                   <div className="mechanic-stat-label">Total Repairs</div>
                 </div>

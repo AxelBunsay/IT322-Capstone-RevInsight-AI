@@ -8,7 +8,13 @@ const defaultSettings = {
   holdDays: 3,
   paymentInstructions: { methodName: '', accountName: '', accountNumber: '' },
   pickupAddress: '',
-  pickupHours: ''
+  pickupHours: '',
+  contactNumber: '0900 000 0000',
+  openDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  openTime: '09:00',
+  closeTime: '18:00',
+  slotCapacity: 1,
+  maxDaysAhead: 30
 };
 
 const money = (value) => `₱${Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -16,6 +22,13 @@ const money = (value) => `₱${Number(value || 0).toLocaleString('en-PH', { mini
 function Reservations() {
   const [reservations, setReservations] = useState([]);
   const [settings, setSettings] = useState(defaultSettings);
+  const [bookingSchedule, setBookingSchedule] = useState({
+    openDays: defaultSettings.openDays,
+    openTime: defaultSettings.openTime,
+    closeTime: defaultSettings.closeTime,
+    slotCapacity: defaultSettings.slotCapacity,
+    maxDaysAhead: defaultSettings.maxDaysAhead
+  });
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -29,11 +42,12 @@ function Reservations() {
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([api.getReservations({ status, search }), api.getReservationSettings()])
-      .then(([reservationResponse, settingsResponse]) => {
+    Promise.all([api.getReservations({ status, search }), api.getReservationSettings(), api.getBookingSchedule()])
+      .then(([reservationResponse, settingsResponse, scheduleResponse]) => {
         if (!isMounted) return;
         setReservations(reservationResponse.reservations || []);
         setSettings({ ...defaultSettings, ...settingsResponse.settings, paymentInstructions: { ...defaultSettings.paymentInstructions, ...settingsResponse.settings?.paymentInstructions } });
+        setBookingSchedule((current) => ({ ...current, ...scheduleResponse.schedule }));
         setError('');
       })
       .catch((requestError) => {
@@ -69,6 +83,29 @@ function Reservations() {
       setIsSavingSettings(false);
     }
   };
+
+  const saveBookingSchedule = async (event) => {
+    event.preventDefault();
+    setError('');
+    setToast('');
+    setIsSavingSettings(true);
+    try {
+      const response = await api.updateBookingSchedule(bookingSchedule);
+      setBookingSchedule(response.schedule);
+      setToast('Booking schedule saved.');
+    } catch (requestError) {
+      setError(requestError.message || 'Booking schedule could not be saved.');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const toggleOpenDay = (day) => setBookingSchedule((current) => ({
+    ...current,
+    openDays: current.openDays.includes(day)
+      ? current.openDays.filter((openDay) => openDay !== day)
+      : [...current.openDays, day]
+  }));
 
   const performImmediateAction = async (action, reservation) => {
     setError('');
@@ -124,7 +161,23 @@ function Reservations() {
           <label>Account number<input maxLength="120" value={settings.paymentInstructions.accountNumber} onChange={(event) => setInstruction('accountNumber', event.target.value)} /></label>
           <label className="reservation-settings-wide">Pickup address<textarea maxLength="500" rows="2" value={settings.pickupAddress} onChange={(event) => setSettings({ ...settings, pickupAddress: event.target.value })} /></label>
           <label>Pickup hours<input maxLength="200" value={settings.pickupHours} onChange={(event) => setSettings({ ...settings, pickupHours: event.target.value })} placeholder="e.g. Mon-Sat, 9 AM-6 PM" /></label>
+          <label>Contact number<input type="tel" maxLength="40" value={settings.contactNumber} onChange={(event) => setSettings({ ...settings, contactNumber: event.target.value })} placeholder="0900 000 0000" /></label>
           <button type="submit" className="btn-primary" disabled={isSavingSettings}>{isSavingSettings ? 'Saving...' : 'Save reservation settings'}</button>
+        </form>
+      </section>
+
+      <section className="reservation-settings-card">
+        <div className="reservation-admin-section-heading"><div><h2>Booking schedule</h2><p>These hours and capacity apply to service bookings.</p></div></div>
+        <form className="reservation-settings-form" onSubmit={saveBookingSchedule}>
+          <fieldset className="reservation-booking-open-days reservation-settings-wide">
+            <legend>Open days</legend>
+            <div>{[['Mon', 'Monday'], ['Tue', 'Tuesday'], ['Wed', 'Wednesday'], ['Thu', 'Thursday'], ['Fri', 'Friday'], ['Sat', 'Saturday'], ['Sun', 'Sunday']].map(([day, label]) => <label key={day}><input type="checkbox" checked={bookingSchedule.openDays.includes(day)} onChange={() => toggleOpenDay(day)} />{label}</label>)}</div>
+          </fieldset>
+          <label>Opening time<input type="time" required value={bookingSchedule.openTime} onChange={(event) => setBookingSchedule({ ...bookingSchedule, openTime: event.target.value })} /></label>
+          <label>Closing time<input type="time" required value={bookingSchedule.closeTime} onChange={(event) => setBookingSchedule({ ...bookingSchedule, closeTime: event.target.value })} /></label>
+          <label>Jobs per start time<input type="number" min="1" max="100" step="1" required value={bookingSchedule.slotCapacity} onChange={(event) => setBookingSchedule({ ...bookingSchedule, slotCapacity: Number(event.target.value) })} /></label>
+          <label>Maximum days ahead<input type="number" min="1" max="365" step="1" required value={bookingSchedule.maxDaysAhead} onChange={(event) => setBookingSchedule({ ...bookingSchedule, maxDaysAhead: Number(event.target.value) })} /></label>
+          <button type="submit" className="btn-primary" disabled={isSavingSettings}>{isSavingSettings ? 'Saving...' : 'Save booking schedule'}</button>
         </form>
       </section>
 

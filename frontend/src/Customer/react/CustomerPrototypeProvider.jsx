@@ -12,11 +12,10 @@ function readInitialState() {
       reservations: Array.isArray(saved.reservations) ? saved.reservations : [],
       vehicles: Array.isArray(saved.vehicles) ? saved.vehicles : [],
       addresses: Array.isArray(saved.addresses) ? saved.addresses : [],
-      promoCode: saved.promoCode || '',
       profile: saved.profile || JSON.parse(localStorage.getItem('customerUser') || '{}')
     };
   } catch {
-    return { cart: [], wishlist: [], orders: [], reservations: [], vehicles: [], addresses: [], promoCode: '', profile: {} };
+    return { cart: [], wishlist: [], orders: [], reservations: [], vehicles: [], addresses: [], profile: {} };
   }
 }
 
@@ -55,11 +54,16 @@ export function CustomerPrototypeProvider({ children }) {
   })), []);
 
   const removeCartItem = (key) => setState((current) => ({ ...current, cart: current.cart.filter((item) => item.key !== key) }));
-  const applyPromoCode = (code) => {
-    const normalizedCode = code.trim().toUpperCase();
-    if (!['RIDE10', 'WRENCH15'].includes(normalizedCode)) return false;
-    setState((current) => ({ ...current, promoCode: normalizedCode }));
-    return true;
+  const replaceCartItem = (key, item) => {
+    const nextKey = item.kind === 'service'
+      ? `${item.id}:${item.bookingDate}:${item.startTime}`
+      : item.id;
+    setState((current) => ({
+      ...current,
+      cart: current.cart
+        .filter((entry) => entry.key !== key && entry.key !== nextKey)
+        .concat({ ...item, key: nextKey, quantity: item.kind === 'service' ? 1 : item.quantity || 1 })
+    }));
   };
   const toggleWishlist = (productId) => setState((current) => ({
     ...current,
@@ -68,12 +72,12 @@ export function CustomerPrototypeProvider({ children }) {
       : [...current.wishlist, productId]
   }));
 
-  const placeOrder = (checkout) => {
+  const placeOrder = (checkout, { createServiceReservations = true } = {}) => {
     const orderId = `ORD-${Date.now().toString().slice(-7)}`;
     const createdAt = new Date().toISOString();
     const items = state.cart.map((item) => ({ ...item }));
     const order = { id: orderId, createdAt, items, total: checkout.total, status: 'Confirmed', ...checkout };
-    const reservations = items.filter((item) => item.kind === 'service').map((item, index) => ({
+    const reservations = (createServiceReservations ? items.filter((item) => item.kind === 'service') : []).map((item, index) => ({
       ...item,
       id: `RSV-${orderId.slice(-5)}${index + 1}`,
       orderId,
@@ -100,7 +104,7 @@ export function CustomerPrototypeProvider({ children }) {
   const addAddress = (address) => setState((current) => ({ ...current, addresses: [...current.addresses, { ...address, id: `ADDR-${Date.now()}` }] }));
 
   return (
-    <CustomerPrototypeContext.Provider value={{ ...state, addCartItem, updateCartItem, setCartItemStock, removeCartItem, applyPromoCode, toggleWishlist, placeOrder, updateProfile, addVehicle, addAddress }}>
+    <CustomerPrototypeContext.Provider value={{ ...state, addCartItem, updateCartItem, setCartItemStock, removeCartItem, replaceCartItem, toggleWishlist, placeOrder, updateProfile, addVehicle, addAddress }}>
       {children}
     </CustomerPrototypeContext.Provider>
   );

@@ -63,7 +63,7 @@ export function getMechanicProfile() {
 }
 
 export function getMechanicJobs() {
-  return isDemoMechanic() ? Promise.resolve({ jobs: readStored(JOBS_KEY, demoJobs) }) : api.getMechanicJobs();
+  return api.getMechanicJobs();
 }
 
 export function saveMechanicProfile(profile) {
@@ -93,12 +93,19 @@ export function getJobActions(job) {
       'waiting-parts': ['start'], 'quality-check': ['complete']
     })[job.status] || [];
   }
-  return ({ confirmed: ['accept', 'decline'], accepted: ['start'], 'in-progress': ['complete'] })[job.status] || [];
+  if (job.status === 'pending' && !job.mechanic) return ['accept'];
+  return ({
+    assigned: ['start', 'decline'],
+    confirmed: ['accept', 'decline'],
+    accepted: ['start'],
+    'in-progress': ['complete']
+  })[job.status] || [];
 }
 
 export async function performJobAction(job, action) {
+  if (action === 'complete') return api.updateMechanicJobStatus(job._id, 'completed');
   if (!isDemoMechanic()) {
-    if (action === 'accept') return api.acceptMechanicJob(job._id, '08:00');
+    if (action === 'accept') return api.acceptMechanicJob(job._id, job.startTime || '');
     const status = { decline: 'declined', start: 'in-progress', complete: 'completed' }[action];
     if (status) return api.updateMechanicJobStatus(job._id, status);
     throw new Error('That action is only available for the sample mechanic account.');

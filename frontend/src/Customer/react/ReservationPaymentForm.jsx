@@ -1,52 +1,102 @@
 import { useEffect, useState } from 'react';
+import '../styles/customer-flow.css';
 
 const money = (value) => `₱${Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const MAX_RECEIPT_SIZE = 2 * 1024 * 1024;
 
-export default function ReservationPaymentForm({ reservation, settings, onSubmit, isSaving }) {
+export default function ReservationPaymentForm({ reservation, amount, settings, onSubmit, isSaving, onClose }) {
   const [reference, setReference] = useState('');
   const [proof, setProof] = useState(null);
   const [fileError, setFileError] = useState('');
-  const [countdown, setCountdown] = useState('');
+  const [copyMessage, setCopyMessage] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
   const instructions = settings?.paymentInstructions || {};
-  const canSubmit = Boolean(instructions.methodName && instructions.accountName && instructions.accountNumber);
+  const paymentAmount = amount ?? reservation?.downPaymentAmount;
+  const canSubmit = Boolean(
+    instructions.methodName
+    && instructions.accountName
+    && instructions.accountNumber
+    && /^\d{10,20}$/.test(reference)
+    && proof
+  );
 
   useEffect(() => {
-    if (!reservation.paymentDueAt) return undefined;
-    const updateCountdown = () => {
-      const remaining = Math.max(0, new Date(reservation.paymentDueAt).getTime() - Date.now());
-      const hours = Math.floor(remaining / 3600000);
-      const minutes = Math.floor((remaining % 3600000) / 60000);
-      setCountdown(`${hours}h ${String(minutes).padStart(2, '0')}m`);
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-    updateCountdown();
-    const timer = window.setInterval(updateCountdown, 1000);
-    return () => window.clearInterval(timer);
-  }, [reservation.paymentDueAt]);
+  }, [previewUrl]);
 
-  const submit = (event) => {
-    event.preventDefault();
-    setFileError('');
-    if (proof && (!['image/jpeg', 'image/png'].includes(proof.type) || proof.size > 5 * 1024 * 1024)) {
-      setFileError('Choose a JPG or PNG image no larger than 5 MB.');
-      return;
+  const copy = async (label, value) => {
+    try {
+      await navigator.clipboard.writeText(String(value));
+      setCopyMessage(`${label} copied.`);
+    } catch {
+      setCopyMessage(`Could not copy ${label.toLowerCase()}.`);
     }
-    onSubmit({ reference, proof });
   };
 
-  return <form className="customer-reservation-payment" onSubmit={submit}>
-    <h2>Step 2: Submit your down payment</h2>
-    <p>Pay exactly <strong>{money(reservation.downPaymentAmount)}</strong> to submit this reservation.</p>
-    {countdown && <p className="customer-payment-countdown">Pay within {countdown}</p>}
-    {canSubmit ? <div className="customer-reservation-payment-instructions">
-      <strong>{instructions.methodName}</strong>
-      <span>Account name: {instructions.accountName}</span>
-      <span>Account number: {instructions.accountNumber}</span>
-    </div> : <p className="customer-error" role="alert">Shop payment instructions are not configured yet. Please contact the shop before paying.</p>}
-    {settings?.pickupAddress && <p className="customer-pickup-location">Pickup at {settings.pickupAddress}{settings.pickupHours ? ` · ${settings.pickupHours}` : ''}</p>}
-    <label>Reference number<input required minLength="3" maxLength="120" value={reference} onChange={(event) => setReference(event.target.value)} /></label>
-    <label>Upload proof (optional image)<input type="file" accept="image/jpeg,image/png" onChange={(event) => { setProof(event.target.files?.[0] || null); setFileError(''); }} /></label>
-    {proof && <small>{proof.name}</small>}
-    {fileError && <p className="customer-error" role="alert">{fileError}</p>}
-    <button className="customer-primary-button" type="submit" disabled={isSaving || !canSubmit}>{isSaving ? 'Submitting...' : 'Submit Payment'}</button>
-  </form>;
+  const selectReceipt = (event) => {
+    const file = event.target.files?.[0] || null;
+    event.target.value = '';
+    setFileError('');
+    if (!file) return;
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      setFileError('Choose a PNG or JPG receipt image.');
+      return;
+    }
+    if (file.size > MAX_RECEIPT_SIZE) {
+      setFileError('Receipt image must be 2 MB or smaller.');
+      return;
+    }
+    setPreviewUrl(URL.createObjectURL(file));
+    setProof(file);
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setFileError('');
+    if (!/^\d{10,20}$/.test(reference)) {
+      setFileError('Enter a GCash reference number with 10 to 20 digits.');
+      return;
+    }
+    if (!proof) {
+      setFileError('Attach a PNG or JPG receipt image.');
+      return;
+    }
+    await onSubmit({ reference, proof });
+  };
+
+  return <div className="customer-confirmation-backdrop gcash-payment-backdrop" role="presentation" onMouseDown={onClose}>
+    <form className="customer-confirmation-dialog gcash-payment-modal" onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="gcash-payment-title" onMouseDown={(event) => event.stopPropagation()}>
+      <button type="button" className="gcash-payment-close" aria-label="Close payment dialog" onClick={onClose} disabled={isSaving}>×</button>
+      <h2 id="gcash-payment-title">Pay with GCash</h2>
+      {instructions.qrImageUrl
+        ? <img className="gcash-payment-qr" src={instructions.qrImageUrl} alt="Shop GCash QR code" />
+        : <p className="customer-reservation-note">The shop has not added a GCash QR code yet. You can use the account details below.</p>}
+      <div className="gcash-payment-details">
+        <div><span>Amount to pay</span><strong>{money(paymentAmount)}</strong><button type="button" onClick={() => copy('Amount', money(paymentAmount))}>Copy</button></div>
+        <div><span>Account name</span><strong>{instructions.accountName || 'Not configured'}</strong><button type="button" onClick={() => copy('Account name', instructions.accountName)}>Copy</button></div>
+        <div><span>Account number</span><strong>{instructions.accountNumber || 'Not configured'}</strong><button type="button" onClick={() => copy('Account number', instructions.accountNumber)}>Copy</button></div>
+      </div>
+      {copyMessage && <small className="gcash-payment-copy-message" role="status">{copyMessage}</small>}
+      <label className="gcash-payment-reference">GCash reference number
+        <input
+          required
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]{10,20}"
+          minLength={10}
+          maxLength={20}
+          value={reference}
+          onChange={(event) => setReference(event.target.value.replace(/\D/g, '').slice(0, 20))}
+          autoComplete="off"
+        />
+      </label>
+      <input className="gcash-payment-file-input" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" onChange={selectReceipt} aria-label="Attach receipt file" />
+      <button className="customer-secondary-button gcash-payment-attach" type="button" onClick={(event) => event.currentTarget.previousElementSibling.click()}>Attach receipt</button>
+      {proof && <div className="gcash-payment-preview"><img src={previewUrl} alt="Receipt preview" /><span>{proof.name}</span><button type="button" onClick={() => { setProof(null); setPreviewUrl(''); }}>Remove</button></div>}
+      {fileError && <p className="customer-error" role="alert">{fileError}</p>}
+      <button className="customer-primary-button" type="submit" disabled={!canSubmit || isSaving}>{isSaving ? 'Submitting...' : 'Submit payment'}</button>
+    </form>
+  </div>;
 }

@@ -2,11 +2,20 @@ const express = require('express');
 const router = express.Router();
 const serviceRequestController = require('../controllers/serviceRequestController');
 const { authorizeRoles } = require('../middleware/authorize');
+const paymentUpload = require('../middleware/paymentUpload');
 
 // User creates a service request
 router.post('/', authorizeRoles('customer'), serviceRequestController.createServiceRequest);
 // User gets their own service requests
 router.get('/my', authorizeRoles('customer'), serviceRequestController.getUserServiceRequests);
+router.post('/:id/payment', authorizeRoles('customer'), (req, res, next) => {
+  paymentUpload.single('proof')(req, res, (error) => {
+    if (error) return res.status(400).json({
+      message: error.code === 'LIMIT_FILE_SIZE' ? 'Receipt image must be 2 MB or smaller.' : error.message || 'Payment proof could not be uploaded.'
+    });
+    next();
+  });
+}, serviceRequestController.submitServicePayment);
 // Mechanic gets their assigned jobs
 router.get('/mechanic', authorizeRoles('mechanic'), serviceRequestController.getMechanicJobs);
 // Mechanic accepts a job and sets start time
