@@ -28,7 +28,7 @@ const serializeServiceRequest = (request) => {
 // Public endpoint for mechanics to fetch parts
 const getPartsForMechanic = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find({ isActive: { $ne: false } });
 
     const host = req.get('host');
     const protocol = req.protocol;

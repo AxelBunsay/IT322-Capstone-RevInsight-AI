@@ -21,7 +21,7 @@ function SalesChart({ series, loading, period, compact = false }) {
         labels: series.map((item) => item.label),
         datasets: [{
           data: values,
-          backgroundColor: values.map((_, index) => index === values.length - 1 ? '#FFC08F' : '#F26A1B'),
+          backgroundColor: '#e8630f',
           borderRadius: 7,
           borderSkipped: false,
           maxBarThickness: 72,
@@ -39,14 +39,14 @@ function SalesChart({ series, loading, period, compact = false }) {
           x: {
             grid: { display: false },
             border: { display: false },
-            ticks: { color: '#CDB09D', font: { family: 'Plus Jakarta Sans, system-ui, sans-serif', size: 12, weight: '600' }, maxRotation: 0, autoSkip: compact, maxTicksLimit: compact ? 6 : 12 }
+            ticks: { color: '#6b5440', font: { family: 'Plus Jakarta Sans, system-ui, sans-serif', size: 12, weight: '600' }, maxRotation: 0, autoSkip: compact, maxTicksLimit: compact ? 6 : 12 }
           },
           y: {
             beginAtZero: true,
             border: { display: false },
-            grid: { color: 'rgba(255,255,255,.1)', drawTicks: false },
+            grid: { color: '#f3dcc3', drawTicks: false },
             ticks: {
-              color: '#CDB09D',
+              color: '#6b5440',
               padding: 10,
               maxTicksLimit: 5,
               font: { family: 'Plus Jakarta Sans, system-ui, sans-serif', size: 11 },
@@ -66,14 +66,14 @@ function SalesChart({ series, loading, period, compact = false }) {
           const y = scales.y.getPixelForValue(average);
           ctx.save();
           ctx.setLineDash([5, 5]);
-          ctx.strokeStyle = 'rgba(255,255,255,.52)';
+          ctx.strokeStyle = 'rgba(111,95,78,.38)';
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(chartArea.left, y);
           ctx.lineTo(chartArea.right, y);
           ctx.stroke();
           ctx.setLineDash([]);
-          ctx.fillStyle = '#F6E8DD';
+          ctx.fillStyle = '#6b5440';
           ctx.font = '600 11px Plus Jakarta Sans, system-ui, sans-serif';
           ctx.textAlign = 'right';
           ctx.fillText(`avg ${peso.format(average)}`, chartArea.right - 2, y - 7);

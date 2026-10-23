@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import useDashboardData from '../hooks/useDashboardData';
 import AdminSidebar from '../components/layout/AdminSidebar';
+import AdminNotifications from '../components/layout/AdminNotifications';
 import '../styles/admin.css';
 import '../styles/layout.css';
 import '../styles/dashboard.css';
@@ -51,6 +52,7 @@ function AdminLayout() {
           onClose={() => setIsSidebarCollapsed(true)}
         />
         <main className="admin-main" id="admin-main">
+          <header className="admin-topbar"><span>Administration</span><AdminNotifications /></header>
           <Outlet context={dashboard} />
         </main>
       </div>

@@ -4,20 +4,38 @@ const productSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Product name is required'],
-    minlength: 3,
-    maxlength: 100
+    minlength: 2,
+    maxlength: 80,
+    trim: true
   },
   
   price: {
     type: Number,
     required: [true, 'Product price is required'],
-    min: 0
+    min: 0.01,
+    max: 999999.99
   },
   
   quantity: {
     type: Number,
     required: [true, 'Product quantity is required'],
-    min: 0
+    min: 0,
+    max: 99999,
+    validate: {
+      validator: Number.isInteger,
+      message: 'Stock must be a whole number'
+    }
+  },
+
+  reservedQty: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 99999,
+    validate: {
+      validator: Number.isInteger,
+      message: 'Reserved stock must be a whole number'
+    }
   },
   
   category: {
@@ -28,6 +46,11 @@ const productSchema = new mongoose.Schema({
   image: {
     type: String,
     required: false
+  },
+
+  isActive: {
+    type: Boolean,
+    default: true
   }
 });
 

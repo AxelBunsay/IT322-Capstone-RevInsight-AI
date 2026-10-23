@@ -17,6 +17,7 @@ function AdminApp() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="transactions" element={<Transactions />} />
+          <Route path="reservations" element={<Navigate to="/admin/transactions?type=items" replace />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="mechanics" element={<Mechanics />} />
           <Route path="service-requests" element={<ServiceRequests />} />

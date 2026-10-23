@@ -6,7 +6,7 @@ import './css/Header.css';
 const navItems = [
   { label: 'Shop', to: '/customer/shop', icon: 'shop' },
   { label: 'Services', to: '/customer/services', icon: 'services' },
-  { label: 'My Orders', to: '/customer/orders', icon: 'orders' }
+  { label: 'My Reservations', to: '/customer/orders', icon: 'orders' }
 ];
 
 function Icon({ name }) {
@@ -168,7 +168,7 @@ function Header({ title = 'MMPS', subtitle = 'Customer Shop', onMenuClick }) {
                 <Icon name="bell" />
               </button>
 
-              <Link to="/customer/cart" className="customer-shell-icon-button" aria-label="Open cart" onClick={requireLogin}>
+              <Link to="/customer/cart" className="customer-shell-icon-button" aria-label="Open Reservation Cart" onClick={requireLogin}>
                 <Icon name="cart" />
               </Link>
             </div>
@@ -195,7 +195,7 @@ function Header({ title = 'MMPS', subtitle = 'Customer Shop', onMenuClick }) {
       {!isSignedIn && (
         <div className="customer-shell-guest-strip">
           <span className="customer-shell-guest-strip__text">
-            Sign in to track orders and book services faster.
+            Sign in to track reservations and book services faster.
           </span>
           <div className="customer-shell-guest-strip__actions">
             <Link to="/customer/login" className="customer-shell-guest-strip__link">

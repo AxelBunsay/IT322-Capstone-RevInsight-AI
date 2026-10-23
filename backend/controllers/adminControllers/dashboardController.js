@@ -4,16 +4,67 @@ const User = require('../../models/user');
 const Mechanic = require('../../models/mechanic');
 const ServiceRequest = require('../../models/serviceRequest');
 const BusinessRecord = require('../../models/businessRecord');
+const Reservation = require('../../models/orderingModels/reservation');
+const { validateProductInput } = require('../../utils/inventoryValidation');
+const { archiveOrDeleteProduct, hasActiveProductReservation } = require('../../utils/safeDeleteInventoryRecord');
+const { expireReservations } = require('../reservationController');
 
 const revenueStatuses = ['completed', 'Paid'];
 const revenueAmount = { $ifNull: ['$totalPrice', '$totalAmount'] };
+
+const mergeGroupedRevenue = (orderGroups, reservationGroups) => {
+  const groups = new Map();
+  [...orderGroups, ...reservationGroups].forEach((item) => {
+    const key = JSON.stringify(item._id);
+    const current = groups.get(key) || { ...item, revenue: 0, count: 0 };
+    current.revenue += Number(item.revenue || 0);
+    current.count += Number(item.count || 0);
+    groups.set(key, current);
+  });
+  return [...groups.values()].sort((left, right) => {
+    const a = left._id;
+    const b = right._id;
+    if (a.year !== undefined && b.year !== undefined) {
+      return a.year - b.year || (a.quarter || a.month || 0) - (b.quarter || b.month || 0);
+    }
+    return String(a).localeCompare(String(b));
+  });
+};
+
+const getRevenueByPeriod = async (unit, dateField = 'createdAt', fromDate) => {
+  const match = { status: { $in: revenueStatuses }, code: { $exists: false } };
+  if (fromDate) match[dateField] = { $gte: fromDate };
+  const reservationMatch = { status: 'Completed' };
+  if (fromDate) reservationMatch.completedAt = { $gte: fromDate };
+  const periodValue = unit === 'date'
+    ? { $dateToString: { format: '%Y-%m-%d', date: `$${dateField}` } }
+    : unit === 'quarter'
+      ? { year: { $year: `$${dateField}` }, quarter: { $ceil: { $divide: [{ $month: `$${dateField}` }, 3] } } }
+      : { year: { $year: `$${dateField}` }, month: { $month: `$${dateField}` } };
+  const reservationPeriodValue = unit === 'date'
+    ? { $dateToString: { format: '%Y-%m-%d', date: '$completedAt' } }
+    : unit === 'quarter'
+      ? { year: { $year: '$completedAt' }, quarter: { $ceil: { $divide: [{ $month: '$completedAt' }, 3] } } }
+      : { year: { $year: '$completedAt' }, month: { $month: '$completedAt' } };
+  const [orders, reservations] = await Promise.all([
+    Order.aggregate([
+      { $match: match },
+      { $group: { _id: periodValue, revenue: { $sum: revenueAmount }, count: { $sum: 1 } } }
+    ]),
+    Reservation.aggregate([
+      { $match: reservationMatch },
+      { $group: { _id: reservationPeriodValue, revenue: { $sum: '$total' }, count: { $sum: 1 } } }
+    ])
+  ]);
+  return mergeGroupedRevenue(orders, reservations);
+};
 
 // Product line items and completed labor are normalized into one concentration report.
 const getRevenueConcentration = async (req, res) => {
   try {
     const [productContributors, serviceContributors] = await Promise.all([
       Order.aggregate([
-        { $match: { status: { $in: revenueStatuses } } },
+        { $match: { status: { $in: revenueStatuses }, code: { $exists: false } } },
         { $unwind: '$items' },
         { $group: { _id: '$items.productName', revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } }, contributorType: { $first: '$items.category' } } },
         { $project: { _id: 0, name: '$_id', revenue: 1, contributorType: { $ifNull: ['$contributorType', 'Product'] } } }
@@ -24,8 +75,21 @@ const getRevenueConcentration = async (req, res) => {
         { $project: { _id: 0, name: '$_id', revenue: 1, contributorType: { $literal: 'Labor service' } } }
       ])
     ]);
+    const reservationContributors = await Reservation.aggregate([
+      { $match: { status: 'Completed', code: { $exists: true } } },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.name', revenue: { $sum: '$items.lineTotal' }, contributorType: { $literal: 'Product reservation' } } },
+      { $project: { _id: 0, name: '$_id', revenue: 1, contributorType: 1 } }
+    ]);
 
-    const contributors = [...productContributors, ...serviceContributors]
+    const consolidatedContributors = new Map();
+    [...productContributors, ...reservationContributors, ...serviceContributors].forEach((item) => {
+      const key = `${item.contributorType}:${item.name}`;
+      const current = consolidatedContributors.get(key) || { ...item, revenue: 0 };
+      current.revenue += Number(item.revenue || 0);
+      consolidatedContributors.set(key, current);
+    });
+    const contributors = [...consolidatedContributors.values()]
       .filter((item) => Number(item.revenue) > 0)
       .sort((left, right) => right.revenue - left.revenue);
     const totalRevenue = contributors.reduce((sum, item) => sum + item.revenue, 0);
@@ -58,24 +122,49 @@ const getRevenueConcentration = async (req, res) => {
 // Get Dashboard Stats
 const getDashboardStats = async (req, res) => {
   try {
-    const totalRevenue = await Order.aggregate([
-      { $match: { status: { $in: revenueStatuses } } },
-      { $group: { _id: null, total: { $sum: revenueAmount } } }
+    await expireReservations();
+    const [orderRevenue, reservationRevenue, orderCount, reservationCount] = await Promise.all([
+      Order.aggregate([
+        { $match: { status: { $in: revenueStatuses }, code: { $exists: false } } },
+        { $group: { _id: null, total: { $sum: revenueAmount } } }
+      ]),
+      Reservation.aggregate([
+        { $match: { status: 'Completed', code: { $exists: true } } },
+        { $group: { _id: null, total: { $sum: '$total' } } }
+      ]),
+      Order.countDocuments({ status: { $in: revenueStatuses }, code: { $exists: false } }),
+      Reservation.countDocuments({ status: 'Completed', code: { $exists: true } })
     ]);
-
-    const totalTransactions = await Order.countDocuments({ status: { $in: revenueStatuses } });
-    const totalInventoryItems = await Product.countDocuments();
+    const [collectionSummary, outstandingSummary] = await Promise.all([
+      Reservation.aggregate([
+        {
+          $match: {
+            code: { $exists: true },
+            verifiedAt: { $ne: null },
+            refundDecision: { $ne: 'refunded' }
+          }
+        },
+        { $group: { _id: null, total: { $sum: '$amountPaid' } } }
+      ]),
+      Reservation.aggregate([
+        { $match: { code: { $exists: true }, status: 'Reserved' } },
+        { $group: { _id: null, total: { $sum: '$balanceDue' } } }
+      ])
+    ]);
+    const totalInventoryItems = await Product.countDocuments({ isActive: { $ne: false } });
     const totalMechanics = await Mechanic.countDocuments();
     const totalUsers = await User.countDocuments();
 
     res.json({
       success: true,
       data: {
-        totalRevenue: totalRevenue[0]?.total || 0,
-        totalTransactions,
+        totalRevenue: (orderRevenue[0]?.total || 0) + (reservationRevenue[0]?.total || 0),
+        totalTransactions: orderCount + reservationCount,
         totalInventoryItems,
         totalMechanics,
         totalUsers,
+        collected: collectionSummary[0]?.total || 0,
+        outstanding: outstandingSummary[0]?.total || 0,
         timestamp: new Date()
       }
     });
@@ -88,20 +177,7 @@ const getDashboardStats = async (req, res) => {
 // Get Revenue Data
 const getRevenueData = async (req, res) => {
   try {
-    const revenueByMonth = await Order.aggregate([
-      { $match: { status: { $in: revenueStatuses } } },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
-          },
-          revenue: { $sum: revenueAmount },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { '_id.year': 1, '_id.month': 1 } }
-    ]);
+    const revenueByMonth = await getRevenueByPeriod('month');
 
     res.json({
       success: true,
@@ -116,23 +192,7 @@ const getRevenueData = async (req, res) => {
 // Get Quarterly Data
 const getQuarterlyData = async (req, res) => {
   try {
-    const currentYear = new Date().getFullYear();
-    const previousYear = currentYear - 1;
-
-    const quarterlyData = await Order.aggregate([
-      { $match: { status: { $in: revenueStatuses } } },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            quarter: { $ceil: { $divide: [{ $month: '$createdAt' }, 3] } }
-          },
-          revenue: { $sum: revenueAmount },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { '_id.year': 1, '_id.quarter': 1 } }
-    ]);
+    const quarterlyData = await getRevenueByPeriod('quarter');
 
     res.json({
       success: true,
@@ -150,22 +210,7 @@ const getDailyData = async (req, res) => {
     const lastSevenDays = new Date();
     lastSevenDays.setDate(lastSevenDays.getDate() - 7);
 
-    const dailyData = await Order.aggregate([
-      {
-        $match: {
-          status: { $in: revenueStatuses },
-          createdAt: { $gte: lastSevenDays }
-        }
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          revenue: { $sum: revenueAmount },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+    const dailyData = await getRevenueByPeriod('date', 'createdAt', lastSevenDays);
 
     res.json({
       success: true,
@@ -180,17 +225,26 @@ const getDailyData = async (req, res) => {
 // Get Revenue Risk
 const getRevenueRisk = async (req, res) => {
   try {
-    const revenueByCategory = await Order.aggregate([
-      { $match: { status: { $in: revenueStatuses } } },
-      {
-        $group: {
-          _id: '$category',
-          revenue: { $sum: revenueAmount },
-          percentage: { $sum: 1 }
-        }
-      },
-      { $sort: { revenue: -1 } }
+    const [orderCategories, reservationCategories] = await Promise.all([
+      Order.aggregate([
+        { $match: { status: { $in: revenueStatuses }, code: { $exists: false } } },
+        { $group: { _id: '$category', revenue: { $sum: revenueAmount }, percentage: { $sum: 1 } } }
+      ]),
+      Reservation.aggregate([
+        { $match: { status: 'Completed', code: { $exists: true } } },
+        { $unwind: '$items' },
+        { $group: { _id: '$items.name', revenue: { $sum: '$items.lineTotal' }, percentage: { $sum: '$items.qty' } } }
+      ])
     ]);
+    const categoriesByName = new Map();
+    [...orderCategories, ...reservationCategories].forEach((item) => {
+      const key = item._id || 'Uncategorized';
+      const current = categoriesByName.get(key) || { _id: key, revenue: 0, percentage: 0 };
+      current.revenue += Number(item.revenue || 0);
+      current.percentage += Number(item.percentage || 0);
+      categoriesByName.set(key, current);
+    });
+    const revenueByCategory = [...categoriesByName.values()].sort((left, right) => right.revenue - left.revenue);
 
     const totalRevenue = revenueByCategory.reduce((sum, item) => sum + item.revenue, 0);
 
@@ -202,7 +256,7 @@ const getRevenueRisk = async (req, res) => {
       data: {
         totalRevenue,
         riskLevel,
-        topCategory: topCategory?.category,
+        topCategory: topCategory?._id,
         concentration: topCategory ? (topCategory.revenue / totalRevenue * 100).toFixed(2) : 0,
         byCategory: revenueByCategory
       }
@@ -216,20 +270,7 @@ const getRevenueRisk = async (req, res) => {
 // Get Projected Revenue
 const getProjectedRevenue = async (req, res) => {
   try {
-    const projectedData = await Order.aggregate([
-      { $match: { status: { $in: revenueStatuses } } },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            quarter: { $ceil: { $divide: [{ $month: '$createdAt' }, 3] } }
-          },
-          revenue: { $sum: revenueAmount }
-        }
-      },
-      { $sort: { '_id.year': 1, '_id.quarter': 1 } },
-      { $limit: 3 }
-    ]);
+    const projectedData = (await getRevenueByPeriod('quarter')).slice(-3).map(({ _id, revenue }) => ({ _id, revenue }));
 
     res.json({
       success: true,
@@ -244,13 +285,35 @@ const getProjectedRevenue = async (req, res) => {
 // Get All Transactions
 const getBusinessRecords = async (req, res) => {
   try {
-    const { recordType, status, startDate, endDate, mechanicId } = req.query;
+    const { recordType, status, startDate, endDate, mechanicId, type, search } = req.query;
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
+    await expireReservations();
     const query = {};
 
     if (recordType) query.recordType = recordType;
-    if (status) query.status = status;
+    const reservationStatuses = [
+      'Pending Down Payment',
+      'Payment Submitted',
+      'Reserved',
+      'Completed',
+      'Cancelled',
+      'Expired'
+    ];
+    const statusLower = String(status || '').toLowerCase();
+    const reservationStatus = reservationStatuses.find(
+      (value) => value.toLowerCase() === statusLower
+    );
+    if (status) {
+      query.status = reservationStatus
+        ? statusLower === 'completed'
+          ? { $in: ['Paid', 'completed'] }
+          : '__no_matching_business_record_status__'
+        : statusLower === 'paid'
+          ? { $in: ['Paid', 'completed'] }
+          : statusLower;
+    }
     if (mechanicId) query.mechanicId = mechanicId;
-
     if (startDate || endDate) {
       query.completedAt = {};
       if (startDate) query.completedAt.$gte = new Date(startDate);
@@ -261,11 +324,168 @@ const getBusinessRecords = async (req, res) => {
       }
     }
 
-    const records = await BusinessRecord.find(query).sort({ completedAt: -1 });
+    const typeMap = { item: 'product', service: 'service' };
+    if (type && !typeMap[type]) {
+      return res.status(400).json({ success: false, message: 'Type must be item or service' });
+    }
+    const searchPattern = search
+      ? new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      : null;
+    const withSearch = (fields) => searchPattern
+      ? { ...query, $or: fields.map((field) => ({ [field]: searchPattern })) }
+      : { ...query };
+    const allQuery = withSearch(['customer', 'itemName', 'mechanicName']);
+    const itemQuery = { ...withSearch(['customer', 'itemName']), recordType: 'product' };
+    const serviceQuery = { ...withSearch(['customer', 'itemName', 'mechanicName']), recordType: 'service' };
+    const reservationQuery = { code: { $exists: true } };
+    if (reservationStatus) reservationQuery.status = reservationStatus;
+    else if (status) reservationQuery.status = '__no_matching_reservation_status__';
+    if (searchPattern) {
+      reservationQuery.$or = [
+        { code: searchPattern },
+        { customerName: searchPattern },
+        { paymentReference: searchPattern },
+        { 'items.name': searchPattern }
+      ];
+    }
+    if (startDate || endDate) {
+      reservationQuery.createdAt = {};
+      if (startDate) reservationQuery.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        reservationQuery.createdAt.$lte = end;
+      }
+    }
+    const includeReservations = !type || type === 'item';
+    const reservationIds = await Reservation.distinct('_id', {
+      code: { $exists: true },
+      status: 'Completed'
+    });
+    const allBusinessRecordsQuery = {
+      $and: [
+        allQuery,
+        { $or: [{ recordType: { $ne: 'product' } }, { sourceId: { $nin: reservationIds } }] }
+      ]
+    };
+    const itemBusinessRecordsQuery = { ...itemQuery, sourceId: { $nin: reservationIds } };
+    const filteredQuery = type === 'item'
+      ? itemBusinessRecordsQuery
+      : type === 'service'
+        ? serviceQuery
+        : allBusinessRecordsQuery;
+    const [businessCount, businessAmount, reservationCount, reservationAmount, allCountBase, itemCountBase, serviceCount, records, reservationRows] = await Promise.all([
+      BusinessRecord.countDocuments(filteredQuery),
+      BusinessRecord.aggregate([
+        { $match: filteredQuery },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      includeReservations ? Reservation.countDocuments(reservationQuery) : 0,
+      includeReservations ? Reservation.aggregate([
+        { $match: reservationQuery },
+        { $group: { _id: null, total: { $sum: '$total' } } }
+      ]) : [],
+      BusinessRecord.countDocuments(allBusinessRecordsQuery),
+      BusinessRecord.countDocuments(itemBusinessRecordsQuery),
+      BusinessRecord.countDocuments(serviceQuery),
+      BusinessRecord.find(filteredQuery)
+        .sort({ completedAt: -1, createdAt: -1 })
+        .limit(page * limit),
+      includeReservations
+        ? Reservation.aggregate([
+          { $match: reservationQuery },
+          { $addFields: { sortDate: { $ifNull: ['$completedAt', '$createdAt'] } } },
+          { $sort: { sortDate: -1 } },
+          { $limit: page * limit }
+        ])
+        : []
+    ]);
+    const allReservationCount = await Reservation.countDocuments({
+      code: { $exists: true },
+      ...(searchPattern ? { $or: [
+        { code: searchPattern },
+        { customerName: searchPattern },
+        { paymentReference: searchPattern },
+        { 'items.name': searchPattern }
+      ] } : {}),
+      ...(status ? (reservationStatus ? { status: reservationStatus } : { status: '__no_matching_reservation_status__' }) : {}),
+      ...(startDate || endDate ? { createdAt: {
+        ...(startDate ? { $gte: new Date(startDate) } : {}),
+        ...(endDate ? { $lte: (() => { const end = new Date(endDate); end.setHours(23, 59, 59, 999); return end; })() } : {})
+      } } : {})
+    });
+    const paymentSubmittedCount = await Reservation.countDocuments({
+      ...reservationQuery,
+      status: 'Payment Submitted'
+    });
+    const counts = {
+      all: allCountBase + allReservationCount,
+      items: itemCountBase + allReservationCount,
+      services: serviceCount,
+      paymentSubmitted: paymentSubmittedCount
+    };
+
+    const productRecordIds = records
+      .filter((record) => record.recordType === 'product')
+      .map((record) => record.sourceId);
+    const [orders, reservations] = productRecordIds.length
+      ? await Promise.all([
+        Order.find({ _id: { $in: productRecordIds }, code: { $exists: false } }).select('items').lean(),
+        Reservation.find({ _id: { $in: productRecordIds }, code: { $exists: true } }).select('items').lean()
+      ])
+      : [[], []];
+    const quantitiesByOrderId = new Map([
+      ...orders.map((order) => [
+        order._id.toString(),
+        (order.items || []).reduce((total, item) => total + Number(item.quantity || 0), 0)
+      ]),
+      ...reservations.map((reservation) => [
+        reservation._id.toString(),
+        (reservation.items || []).reduce((total, item) => total + Number(item.qty || 0), 0)
+      ])
+    ]);
+    const recordsWithQuantity = records.map((record) => ({
+      ...record.toObject(),
+      quantity: quantitiesByOrderId.get(record.sourceId.toString()),
+      paid: record.recordType === 'product' ? Number(record.amount || 0) : null,
+      balance: record.recordType === 'product' ? 0 : null
+    }));
+    const reservationRecords = reservationRows.map((reservation) => {
+      const reservationData = { ...reservation };
+      delete reservationData.sortDate;
+      return {
+        ...reservationData,
+        recordType: 'product',
+        isReservation: true,
+        sourceId: reservation._id,
+        customer: reservation.customerName || 'Unknown',
+        itemName: (reservation.items || []).map((item) => item.name).join(', '),
+        amount: Number(reservation.total || 0),
+        paid: Number(reservation.amountPaid || 0),
+        balance: Number(reservation.balanceDue || 0),
+        quantity: (reservation.items || []).reduce((total, item) => total + Number(item.qty || 0), 0),
+        completedAt: reservation.completedAt || reservation.createdAt,
+        mechanicName: 'N/A'
+      };
+    });
+    const combinedRows = [...recordsWithQuantity, ...reservationRecords].sort(
+      (left, right) => new Date(right.completedAt || right.createdAt) - new Date(left.completedAt || left.createdAt)
+    );
+    const pageRows = combinedRows.slice((page - 1) * limit, page * limit);
+    const matchingCount = businessCount + reservationCount;
+    const totalAmount = (businessAmount[0]?.total || 0) + (reservationAmount[0]?.total || 0);
 
     res.json({
       success: true,
-      data: records
+      data: pageRows,
+      counts,
+      totalAmount,
+      pagination: {
+        totalRecords: matchingCount,
+        totalPages: Math.max(1, Math.ceil(matchingCount / limit)),
+        currentPage: page,
+        limit
+      }
     });
   } catch (error) {
     console.error('[getBusinessRecords] error', error);
@@ -274,18 +494,45 @@ const getBusinessRecords = async (req, res) => {
 };
 
 const getAllTransactions = async (req, res) => {
+  if (req.query.view !== 'orders') {
+    return getBusinessRecords(req, res);
+  }
+
   try {
-    const { page = 1, limit = 10, status = null } = req.query;
-    const query = status ? { status } : {};
-
-    const transactions = await Order.find(query)
-      .populate('userId', 'name email')
-      .populate('mechanicId', 'name specialty')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ createdAt: -1 });
-
-    const total = await Order.countDocuments(query);
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
+    const { status = null } = req.query;
+    const query = { code: { $exists: false }, ...(status ? { status } : {}) };
+    const includeCompletedReservations = !status || String(status).toLowerCase() === 'completed';
+    const [orders, orderCount, reservationRows, reservationCount] = await Promise.all([
+      Order.find(query)
+        .populate('userId', 'name email')
+        .populate('mechanicId', 'name specialty')
+        .sort({ createdAt: -1 })
+        .limit(page * limit),
+      Order.countDocuments(query),
+      includeCompletedReservations
+        ? Reservation.find({ status: 'Completed', code: { $exists: true } }).sort({ completedAt: -1 }).limit(page * limit)
+        : [],
+      includeCompletedReservations ? Reservation.countDocuments({ status: 'Completed', code: { $exists: true } }) : 0
+    ]);
+    const reservations = reservationRows.map((reservation) => ({
+      _id: reservation._id,
+      totalPrice: reservation.total,
+      createdAt: reservation.completedAt,
+      status: 'completed',
+      items: reservation.items.map((item) => ({
+        productId: item.productId,
+        productName: item.name,
+        category: 'Product reservations',
+        price: item.unitPrice,
+        quantity: item.qty
+      }))
+    }));
+    const transactions = [...orders, ...reservations]
+      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+      .slice((page - 1) * limit, page * limit);
+    const total = orderCount + reservationCount;
 
     res.json({
       success: true,
@@ -305,13 +552,28 @@ const getAllTransactions = async (req, res) => {
 // Get Transaction by ID
 const getTransactionById = async (req, res) => {
   try {
-    const transaction = await Order.findById(req.params.id)
+    let transaction = await Order.findOne({ _id: req.params.id, code: { $exists: false } })
       .populate('userId')
       .populate('mechanicId')
       .populate('items.productId');
 
     if (!transaction) {
-      return res.status(404).json({ success: false, message: 'Transaction not found' });
+      const reservation = await Reservation.findOne({ _id: req.params.id, code: { $exists: true } }).populate('customerId', 'firstName lastName email');
+      if (!reservation) {
+        return res.status(404).json({ success: false, message: 'Transaction not found' });
+      }
+      transaction = {
+        ...reservation.toObject(),
+        userId: reservation.customerId,
+        status: 'completed',
+        totalPrice: reservation.total,
+        items: reservation.items.map((item) => ({
+          productId: item.productId,
+          productName: item.name,
+          price: item.unitPrice,
+          quantity: item.qty
+        }))
+      };
     }
 
     res.json({
@@ -344,8 +606,8 @@ const createTransaction = async (req, res) => {
 // Update Transaction
 const updateTransaction = async (req, res) => {
   try {
-    const transaction = await Order.findByIdAndUpdate(
-      req.params.id,
+    const transaction = await Order.findOneAndUpdate(
+      { _id: req.params.id, code: { $exists: false } },
       req.body,
       { new: true, runValidators: true }
     );
@@ -368,7 +630,7 @@ const updateTransaction = async (req, res) => {
 // Delete Transaction
 const deleteTransaction = async (req, res) => {
   try {
-    const transaction = await Order.findByIdAndDelete(req.params.id);
+    const transaction = await Order.findOneAndDelete({ _id: req.params.id, code: { $exists: false } });
 
     if (!transaction) {
       return res.status(404).json({ success: false, message: 'Transaction not found' });
@@ -389,16 +651,29 @@ const getAllInventory = async (req, res) => {
   try {
     const { page = 1, limit = 15 } = req.query;
 
-    const inventory = await Product.find()
+    const inventory = await Product.find({ isActive: { $ne: false } })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .sort({ createdAt: -1 });
+    const activeReservations = await Reservation.find({
+      code: { $exists: true },
+      status: { $in: ['Pending Down Payment', 'Payment Submitted', 'Reserved'] },
+      'items.productId': { $in: inventory.map((item) => item._id) }
+    }).select('items.productId');
+    const activeProductIds = new Set(
+      activeReservations.flatMap((reservation) => reservation.items.map((item) => item.productId.toString()))
+    );
+    const inventoryWithAvailability = inventory.map((item) => ({
+      ...item.toObject(),
+      available: Number(item.quantity || 0) - Number(item.reservedQty || 0),
+      hasActiveReservation: activeProductIds.has(item._id.toString())
+    }));
 
-    const total = await Product.countDocuments();
+    const total = await Product.countDocuments({ isActive: { $ne: false } });
 
     res.json({
       success: true,
-      data: inventory,
+      data: inventoryWithAvailability,
       pagination: {
         totalRecords: total,
         totalPages: Math.ceil(total / limit),
@@ -414,7 +689,7 @@ const getAllInventory = async (req, res) => {
 // Get Inventory Item
 const getInventoryItem = async (req, res) => {
   try {
-    const item = await Product.findById(req.params.id);
+    const item = await Product.findOne({ _id: req.params.id, isActive: { $ne: false } });
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Item not found' });
@@ -433,6 +708,14 @@ const getInventoryItem = async (req, res) => {
 // Add Inventory Item
 const addInventoryItem = async (req, res) => {
   try {
+    const fieldErrors = validateProductInput(req.body);
+    if (Object.keys(fieldErrors).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please correct the highlighted fields.',
+        fieldErrors
+      });
+    }
     const item = new Product(req.body);
     await item.save();
 
@@ -450,14 +733,46 @@ const addInventoryItem = async (req, res) => {
 // Update Inventory Item
 const updateInventoryItem = async (req, res) => {
   try {
-    const item = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+    const fieldErrors = validateProductInput(req.body);
+    if (Object.keys(fieldErrors).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please correct the highlighted fields.',
+        fieldErrors
+      });
+    }
+    const currentItem = await Product.findById(req.params.id);
+    if (!currentItem) {
+      return res.status(404).json({ success: false, message: 'Item not found' });
+    }
+    if (Number(req.body.quantity) < Number(currentItem.reservedQty || 0)) {
+      return res.status(400).json({
+        success: false,
+        message: `Stock cannot be lower than the ${currentItem.reservedQty} units currently reserved.`
+      });
+    }
+    const item = await Product.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        $or: [
+          { reservedQty: { $lte: Number(req.body.quantity) } },
+          { reservedQty: { $exists: false } }
+        ]
+      },
+      {
+        name: req.body.name.trim(),
+        price: Number(req.body.price),
+        quantity: Number(req.body.quantity),
+        category: req.body.category.trim()
+      },
       { new: true, runValidators: true }
     );
 
     if (!item) {
-      return res.status(404).json({ success: false, message: 'Item not found' });
+      return res.status(409).json({
+        success: false,
+        message: 'Stock changed while saving. It cannot be set below the quantity currently reserved.'
+      });
     }
 
     res.json({
@@ -474,15 +789,27 @@ const updateInventoryItem = async (req, res) => {
 // Delete Inventory Item
 const deleteInventoryItem = async (req, res) => {
   try {
-    const item = await Product.findByIdAndDelete(req.params.id);
+    const item = await Product.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Item not found' });
     }
 
+    const activeReservation = await hasActiveProductReservation(item._id);
+    if (activeReservation) {
+      return res.status(409).json({
+        success: false,
+        message: 'This item cannot be deleted while it has an active reservation.'
+      });
+    }
+
+    const { archived } = await archiveOrDeleteProduct(item);
     res.json({
       success: true,
-      message: 'Inventory item deleted successfully'
+      archived,
+      message: archived
+        ? 'Inventory item archived because it is referenced by past records'
+        : 'Inventory item deleted successfully'
     });
   } catch (error) {
     console.error('[deleteInventoryItem] error', error);
@@ -495,15 +822,23 @@ const getSalesReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const query = { status: { $in: revenueStatuses } };
+    const reportEndDate = endDate ? new Date(endDate) : null;
+    if (reportEndDate) reportEndDate.setHours(23, 59, 59, 999);
 
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
+      if (reportEndDate) query.createdAt.$lte = reportEndDate;
     }
 
-    const report = await Order.aggregate([
-      { $match: query },
+    const forfeitureDateQuery = startDate || endDate ? {
+      refundDecisionAt: {
+        ...(startDate ? { $gte: new Date(startDate) } : {}),
+        ...(reportEndDate ? { $lte: reportEndDate } : {})
+      }
+    } : {};
+    const [orderReport, reservationReport, forfeitureReport] = await Promise.all([Order.aggregate([
+      { $match: { ...query, code: { $exists: false } } },
       {
         $group: {
           _id: null,
@@ -512,11 +847,40 @@ const getSalesReport = async (req, res) => {
           avgOrderValue: { $avg: revenueAmount }
         }
       }
-    ]);
+    ]), Reservation.aggregate([
+      { $match: { status: 'Completed', code: { $exists: true }, ...(query.createdAt ? { completedAt: query.createdAt } : {}) } },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: '$total' },
+          totalOrders: { $sum: 1 },
+          avgOrderValue: { $avg: '$total' }
+        }
+      }
+    ]), Reservation.aggregate([
+      {
+        $match: {
+          code: { $exists: true },
+          status: { $in: ['Cancelled', 'Expired'] },
+          refundDecision: 'forfeited',
+          ...forfeitureDateQuery
+        }
+      },
+      { $group: { _id: null, forfeitedDownPayments: { $sum: '$amountPaid' } } }
+    ])]);
+    const orderSummary = orderReport[0] || { totalSales: 0, totalOrders: 0, avgOrderValue: 0 };
+    const reservationSummary = reservationReport[0] || { totalSales: 0, totalOrders: 0, avgOrderValue: 0 };
+    const totalOrders = orderSummary.totalOrders + reservationSummary.totalOrders;
+    const report = [{
+      totalSales: orderSummary.totalSales + reservationSummary.totalSales,
+      totalOrders,
+      avgOrderValue: totalOrders ? (orderSummary.totalSales + reservationSummary.totalSales) / totalOrders : 0,
+      forfeitedDownPayments: forfeitureReport[0]?.forfeitedDownPayments || 0
+    }];
 
     res.json({
       success: true,
-      data: report[0] || { totalSales: 0, totalOrders: 0, avgOrderValue: 0 }
+      data: report[0] || { totalSales: 0, totalOrders: 0, avgOrderValue: 0, forfeitedDownPayments: 0 }
     });
   } catch (error) {
     console.error('[getSalesReport] error', error);
@@ -527,7 +891,7 @@ const getSalesReport = async (req, res) => {
 // Get Inventory Report
 const getInventoryReport = async (req, res) => {
   try {
-    const lowStockItems = await Product.find({ quantity: { $lt: 5 } });
+    const lowStockItems = await Product.find({ quantity: { $lt: 5 }, isActive: { $ne: false } });
     const totalInventoryValue = await Product.aggregate([
       { $group: { _id: null, totalValue: { $sum: { $multiply: ['$price', '$quantity'] } } } }
     ]);
@@ -536,7 +900,7 @@ const getInventoryReport = async (req, res) => {
       success: true,
       data: {
         lowStockItems,
-        totalItems: await Product.countDocuments(),
+        totalItems: await Product.countDocuments({ isActive: { $ne: false } }),
         totalInventoryValue: totalInventoryValue[0]?.totalValue || 0
       }
     });

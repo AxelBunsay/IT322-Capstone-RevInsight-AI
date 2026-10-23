@@ -1,6 +1,77 @@
 const Mechanic = require('../models/mechanic');
+const ServiceRequest = require('../models/serviceRequest');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+const getMechanicsSummary = async (req, res) => {
+  try {
+    const now = new Date();
+    const manilaNow = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const manilaStart = new Date(
+      Date.UTC(
+        manilaNow.getUTCFullYear(),
+        manilaNow.getUTCMonth(),
+        manilaNow.getUTCDate(),
+      ) -
+        8 * 60 * 60 * 1000,
+    );
+    const manilaEnd = new Date(manilaStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const [summaryRows, repairRows, mechanics] = await Promise.all([
+      ServiceRequest.aggregate([
+        { $match: { status: 'completed' } },
+        {
+          $group: {
+            _id: null,
+            totalRepairs: { $sum: 1 },
+            totalLaborToday: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $gte: ['$completedAt', manilaStart] },
+                      { $lt: ['$completedAt', manilaEnd] }
+                    ]
+                  },
+                  { $ifNull: ['$laborFee', 0] },
+                  0
+                ]
+              }
+            }
+          }
+        }
+      ]),
+      ServiceRequest.aggregate([
+        { $match: { status: 'completed' } },
+        {
+          $group: {
+            _id: { $ifNull: ['$mechanicId', '$mechanic'] },
+            totalRepairs: { $sum: 1 }
+          }
+        }
+      ]),
+      Mechanic.find().select('_id').lean()
+    ]);
+
+    const repairsByMechanic = new Map(
+      repairRows
+        .filter((row) => row._id)
+        .map((row) => [String(row._id), row.totalRepairs]),
+    );
+
+    res.status(200).json({
+      totalLaborToday: summaryRows[0]?.totalLaborToday || 0,
+      totalRepairs: summaryRows[0]?.totalRepairs || 0,
+      mechanics: mechanics.map((mechanic) => ({
+        mechanicId: String(mechanic._id),
+        totalRepairs: repairsByMechanic.get(String(mechanic._id)) || 0
+      }))
+    });
+  } catch (error) {
+    console.error('[getMechanicsSummary] error', error);
+    res.status(500).json({ message: 'Failed to load mechanics summary. Please try again.' });
+  }
+};
 
 const createMechanic = async (req, res) => {
     try {
@@ -284,5 +355,6 @@ module.exports = {
   listAllMechanics,
   listAvailableMechanics,
   deleteMechanic,
-  updateMechanic
+  updateMechanic,
+  getMechanicsSummary
 };

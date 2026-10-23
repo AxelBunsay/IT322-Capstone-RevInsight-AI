@@ -2,6 +2,8 @@ const Order = require('../../models/orderingModels/order');
 const Cart = require('../../models/orderingModels/cart');
 const Product = require('../../models/product');
 const User = require('../../models/user');
+const Reservation = require('../../models/orderingModels/reservation');
+const { expireReservations } = require('../reservationController');
 
 const getCustomerPhone = async (userId) => {
   const user = await User.findById(userId);
@@ -24,7 +26,7 @@ const checkout = async (req, res) => {
     }
 
     for (const item of cart.items) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findOne({ _id: item.productId, isActive: { $ne: false } });
       if (!product) {
         return res.status(400).json({
           success: false,
@@ -32,10 +34,11 @@ const checkout = async (req, res) => {
         });
       }
 
-      if (product.quantity < item.quantity) {
+      const availableQuantity = Math.max(0, product.quantity - Number(product.reservedQty || 0));
+      if (availableQuantity < item.quantity) {
         return res.status(400).json({
           success: false,
-          message: `Not enough stock for ${product.name}. Only ${product.quantity} available.`
+          message: `Not enough stock for ${product.name}. Only ${availableQuantity} available.`
         });
       }
     }
@@ -61,7 +64,20 @@ const reorderOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const order = await Order.findOne({ _id: req.params.orderId, customerPhone: user.phoneNumber });
+    let order = await Order.findOne({ _id: req.params.orderId, customerPhone: user.phoneNumber, code: { $exists: false } });
+    if (!order) {
+      const reservation = await Reservation.findOne({ _id: req.params.orderId, customerId: user._id, code: { $exists: true } });
+      if (reservation) {
+        order = {
+          items: reservation.items.map((item) => ({
+            productId: item.productId,
+            productName: item.name,
+            price: item.unitPrice,
+            quantity: item.qty
+          }))
+        };
+      }
+    }
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
@@ -77,13 +93,13 @@ const reorderOrder = async (req, res) => {
 
     const warnings = [];
     for (const orderItem of order.items) {
-      const product = await Product.findById(orderItem.productId);
+      const product = await Product.findOne({ _id: orderItem.productId, isActive: { $ne: false } });
       if (!product) {
         warnings.push(`${orderItem.productName} is no longer available and was skipped.`);
         continue;
       }
 
-      const availableQuantity = Math.max(0, product.quantity);
+      const availableQuantity = Math.max(0, product.quantity - Number(product.reservedQty || 0));
       if (availableQuantity === 0) {
         warnings.push(`${product.name} is out of stock and was skipped.`);
         continue;
@@ -135,13 +151,34 @@ const reorderOrder = async (req, res) => {
 // Get customer orders
 const getCustomerOrders = async (req, res) => {
   try {
+    await expireReservations();
     const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const orders = await Order.find({ customerPhone: user.phoneNumber }).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: orders.length, orders });
+    const [orders, reservations] = await Promise.all([
+      Order.find({ customerPhone: user.phoneNumber, code: { $exists: false } }).sort({ createdAt: -1 }),
+      Reservation.find({ customerId: user._id, code: { $exists: true } }).sort({ createdAt: -1 })
+    ]);
+    const reservationOrders = reservations.map((reservation) => ({
+      _id: reservation._id,
+      code: reservation.code,
+      customerName: reservation.customerName,
+      customerPhone: reservation.customerPhone,
+      items: reservation.items.map((item) => ({
+        productId: item.productId,
+        productName: item.name,
+        price: item.unitPrice,
+        quantity: item.qty
+      })),
+      totalPrice: reservation.total,
+      status: reservation.status,
+      createdAt: reservation.createdAt,
+      reservation
+    }));
+    const allOrders = [...orders, ...reservationOrders].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+    res.status(200).json({ success: true, count: allOrders.length, orders: allOrders, reservations });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

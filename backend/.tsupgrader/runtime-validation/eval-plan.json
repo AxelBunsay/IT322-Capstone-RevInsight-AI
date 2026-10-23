@@ -1,0 +1,28 @@
+{
+  "projectType": "server",
+  "assertions": [
+    {
+      "name": "tests-pass",
+      "kind": "process",
+      "command": "npm",
+      "args": ["test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "admin-notifications-require-auth",
+      "kind": "http-probe",
+      "startCommand": "npm",
+      "startArgs": ["run", "start"],
+      "env": {
+        "MONGODB_URI": "mongodb://127.0.0.1:1/validation",
+        "PORT": "5199"
+      },
+      "url": "http://127.0.0.1:5199/api/admin/notifications",
+      "verificationMethod": "http-status",
+      "expected": "401",
+      "timeoutSeconds": 60
+    }
+  ]
+}

@@ -17,11 +17,16 @@ const chatRoutes = require('./routes/chat');
 const cartRoutes = require('./routes/orderingRoutes/cart');
 const orderRoutes = require('./routes/orderingRoutes/order');
 const serviceRequestRoutes = require('./routes/serviceRequest');
+const customerServiceRoutes = require('./routes/customerServices');
 const mechanicPartsRoutes = require('./routes/mechanicParts');
 const paymentRoutes = require('./routes/payment');
+const reservationRoutes = require('./routes/reservations');
+const notificationRoutes = require('./routes/notifications');
 
 const mongoose = require('mongoose');
 const Admin = require('./models/adminModels/admin');
+const ReservationSettings = require('./models/reservationSettings');
+const { expireReservations } = require('./controllers/reservationController');
 
 const app = express();
 
@@ -120,6 +125,11 @@ mongoose
   .then(async () => {
     console.log('MongoDB connected');
     await ensureAdminUser();
+    await ReservationSettings.getDefaults();
+    const reservationExpiryInterval = setInterval(() => {
+      expireReservations().catch(error => console.error('Reservation expiry check failed:', error));
+    }, 15 * 60 * 1000);
+    reservationExpiryInterval.unref();
   })
   .catch(err => console.log('MongoDB connection error:', err));
 
@@ -129,10 +139,13 @@ app.use('/api/mechanics', mechanicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin/services', serviceRoutes);
+app.use('/api/services', customerServiceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reservations', reservationRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/mechanic', mechanicPartsRoutes);
 app.use('/api/payments', paymentRoutes);

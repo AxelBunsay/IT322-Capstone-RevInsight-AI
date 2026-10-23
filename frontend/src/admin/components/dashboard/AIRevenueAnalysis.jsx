@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { adminApi } from '../../services/adminApi';
 
 const peso = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
-const compactPeso = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', notation: 'compact', maximumFractionDigits: 0 });
 
 const quarterLabels = ['24 Q2', '24 Q3', '24 Q4', '25 Q1', '25 Q2', '25 Q3', '25 Q4', '26 Q1'];
 const quarterNames = ['2024 Q2', '2024 Q3', '2024 Q4', '2025 Q1', '2025 Q2', '2025 Q3', '2025 Q4', '2026 Q1'];
@@ -21,7 +21,7 @@ const cardDefinitions = [
   { id: 'customer', icon: '♟', title: 'Customer composition', kind: 'trend' },
   { id: 'season', icon: '◌', title: 'Seasonality & forecast', kind: 'trend' },
   { id: 'margin', icon: '$', title: 'Margin signal', kind: 'trend' },
-  { id: 'ops', icon: '◷', title: 'Operational drag', kind: 'trend' }
+  { id: 'ops', icon: '◷', title: 'Operational drag on revenue', kind: 'trend' }
 ];
 
 const rawQuarterTransactions = [
@@ -99,6 +99,44 @@ function percentChange(current, previous) {
   return previous ? ((current - previous) / previous) * 100 : 0;
 }
 
+function signedPercent(value) {
+  return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+}
+
+function calculateForecast(values, quarterIndex) {
+  if (quarterIndex < 4 || !values[quarterIndex - 4]) return { available: false };
+
+  const current = values[quarterIndex];
+  const lastYear = values[quarterIndex - 4];
+  const quarterlyGrowth = values.slice(1, quarterIndex + 1).map((value, index) => value / values[index] - 1);
+  const averageGrowth = quarterlyGrowth.reduce((sum, value) => sum + value, 0) / quarterlyGrowth.length;
+  const growthVariance = quarterlyGrowth.reduce((sum, value) => sum + ((value - averageGrowth) ** 2), 0) / quarterlyGrowth.length;
+  const band = Math.max(.04, Math.sqrt(growthVariance));
+  const expectedValue = current * (1 + ((current - lastYear) / lastYear) * .5);
+  const quarterMatch = quarterNames[quarterIndex].match(/^(\d{4}) Q([1-4])$/);
+  const nextQuarterNumber = Number(quarterMatch[2]) % 4 + 1;
+  const nextYear = Number(quarterMatch[1]) + (nextQuarterNumber === 1 ? 1 : 0);
+  const targetQuarter = `${nextYear} Q${nextQuarterNumber}`;
+  const seasonalPreviousIndex = quarterIndex - 4;
+  const seasonalNextIndex = quarterIndex - 3;
+  const seasonalChange = seasonalNextIndex >= 0
+    ? percentChange(values[seasonalNextIndex], values[seasonalPreviousIndex])
+    : null;
+
+  return {
+    available: true,
+    expected: Math.round(expectedValue),
+    low: Math.round(expectedValue * (1 - band)),
+    high: Math.round(expectedValue * (1 + band)),
+    targetQuarter,
+    targetLabel: `Q${nextQuarterNumber}*`,
+    actual: values[quarterIndex + 1],
+    currentQuarterChange: percentChange(current, values[quarterIndex - 1]),
+    currentYearChange: percentChange(current, lastYear),
+    seasonalChange
+  };
+}
+
 function getTier(items, thresholds = defaultThresholds) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const ranked = items.map((item) => ({ ...item, share: total ? (item.value / total) * 100 : 0 })).sort((a, b) => b.share - a.share);
@@ -108,27 +146,51 @@ function getTier(items, thresholds = defaultThresholds) {
   return { tier, ranked };
 }
 
-function LineChart({ values, labels, color = '#f26a1b' }) {
+function LineChart({ values, labels, color = '#e8630f', estimate = null }) {
+  const gradientId = useId().replaceAll(':', '');
   const width = 700;
   const height = 190;
   const max = Math.max(...values, 1);
   const min = Math.min(...values, 0);
   const range = max - min || 1;
-  const points = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * width},${height - ((value - min) / range) * 125 - 25}`).join(' ');
+  const actualWidth = width;
+  const viewWidth = estimate ? width + 90 : width;
+  const points = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * actualWidth},${height - ((value - min) / range) * 125 - 25}`).join(' ');
   const area = `0,${height} ${points} ${width},${height}`;
+  const actualPoints = points.split(' ');
+  const lastPoint = actualPoints.at(-1)?.split(',').map(Number);
+  const estimateY = estimate
+    ? Math.max(25, Math.min(height - 25, height - ((estimate.value - min) / range) * 125 - 25))
+    : 0;
+  const estimateX = width + 75;
 
   return (
-    <div className="ai-revenue-chart" role="img" aria-label="Revenue trend chart">
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-        <defs><linearGradient id="ai-revenue-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={color} stopOpacity=".25" /><stop offset="1" stopColor={color} stopOpacity="0" /></linearGradient></defs>
-        <polygon points={area} fill="url(#ai-revenue-fill)" />
+    <div className={`ai-revenue-chart${estimate ? ' has-estimate' : ''}`} role="img" aria-label="Revenue trend chart">
+      <svg viewBox={`0 0 ${viewWidth} ${height}`} preserveAspectRatio="none">
+        <defs><linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={color} stopOpacity=".35" /><stop offset="1" stopColor={color} stopOpacity="0" /></linearGradient></defs>
+        <polygon points={area} fill={`url(#${gradientId})`} />
         <polyline points={points} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
         {values.map((value, index) => {
-          const [x, y] = points.split(' ')[index].split(',');
+          const [x, y] = actualPoints[index].split(',');
           return <circle key={`${labels[index]}-${value}`} cx={x} cy={y} r={index === values.length - 1 ? 5 : 3} fill="#fff" stroke={color} strokeWidth="3" />;
         })}
+        {estimate && lastPoint && (
+          <>
+            <line
+              className="ai-revenue-chart__estimate-line"
+              x1={lastPoint[0]}
+              y1={lastPoint[1]}
+              x2={estimateX}
+              y2={estimateY}
+            />
+            <circle className="ai-revenue-chart__estimate-dot" cx={estimateX} cy={estimateY} r="5" />
+          </>
+        )}
       </svg>
-      <div className="ai-revenue-chart__labels">{labels.map((label) => <span key={label}>{label}</span>)}</div>
+      <div className="ai-revenue-chart__labels">
+        {labels.map((label) => <span key={label}>{label}</span>)}
+        {estimate && <span>{estimate.label}</span>}
+      </div>
     </div>
   );
 }
@@ -178,12 +240,17 @@ function AIRevenueAnalysis({ dashboardData }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportMonth, setReportMonth] = useState(null);
+  const [forfeitedDownPayments, setForfeitedDownPayments] = useState(0);
+  const [reportError, setReportError] = useState('');
   const [transactionDrilldown, setTransactionDrilldown] = useState(null);
   const [thresholds, setThresholds] = useState(defaultThresholds);
   const liveRevenue = Number(dashboardData?.stats?.revenue?.value || 0);
+  const collectedAmount = Number(dashboardData?.stats?.collected || 0);
+  const outstandingAmount = Number(dashboardData?.stats?.outstanding || 0);
   const revenue = useMemo(() => baseRevenue.map((value, index) => index === baseRevenue.length - 1 && liveRevenue ? liveRevenue : value), [liveRevenue]);
   const currentRevenue = revenue[qIdx];
   const previousRevenue = revenue[qIdx - 1] || revenue[qIdx];
+  const forecast = useMemo(() => calculateForecast(revenue, qIdx), [qIdx, revenue]);
   const { year: reportYear, startMonth: reportStartMonth } = getQuarterParts(quarterNames[qIdx]);
   const quarterReportRows = quarterTransactions[qIdx] || [];
   const reportRows = reportMonth === null
@@ -216,10 +283,57 @@ function AIRevenueAnalysis({ dashboardData }) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [modalId]);
 
+  useEffect(() => {
+    if (!reportOpen) return undefined;
+    let active = true;
+    const monthOffset = reportMonth ?? 0;
+    const start = new Date(reportYear, reportStartMonth + monthOffset, 1);
+    const end = new Date(reportYear, reportStartMonth + (reportMonth === null ? 3 : monthOffset + 1), 0);
+    const dateOnly = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    adminApi.getSalesReport({ startDate: dateOnly(start), endDate: dateOnly(end) })
+      .then((response) => {
+        if (active) {
+          setForfeitedDownPayments(Number(response.data?.forfeitedDownPayments || 0));
+          setReportError('');
+        }
+      })
+      .catch((error) => {
+        if (active) setReportError(error.message || 'Forfeited down payments could not be loaded.');
+      });
+    return () => { active = false; };
+  }, [reportMonth, reportOpen, reportStartMonth, reportYear]);
+
   function renderTrendModal() {
     if (modalId === 'revenue') return { headline: `${percentChange(currentRevenue, previousRevenue).toFixed(1)}% QoQ`, detail: 'Revenue trend across the last eight quarters', chart: <LineChart values={revenue} labels={quarterLabels} />, callout: 'Revenue is moving upward with a healthy quarter-over-quarter signal.', recs: ['Keep the strongest service and parts bundles visible to repeat customers.', 'Compare the next quarter against the same quarter last year.', 'Investigate any two-quarter decline before it becomes a pattern.'] };
     if (modalId === 'customer') return { headline: `${100 - newCustomerShare[qIdx]}% repeat customers`, detail: `${newCustomerShare[qIdx]}% of revenue comes from new customers`, chart: <HorizontalBars items={[{ name: 'Repeat customers', share: 100 - newCustomerShare[qIdx] }, { name: 'New customers', share: newCustomerShare[qIdx] }]} />, callout: 'Repeat revenue is generally more predictable and gives the team a stable base.', recs: ['Create a return-visit offer for customers who completed a job this quarter.', 'Track new-customer share beside repeat revenue, not as a standalone target.', 'Ask service advisors to recommend the next maintenance milestone.'] };
-    if (modalId === 'season') return { headline: qIdx >= 4 ? `${compactPeso.format(revenue[qIdx] * 1.06)} projected` : 'Not enough history', detail: qIdx >= 4 ? 'Naive projection for the next quarter' : 'A full year of history is needed before forecasting', chart: qIdx >= 4 ? <LineChart values={[...revenue, revenue[qIdx] * 1.06]} labels={[...quarterLabels, 'Next']} /> : null, callout: qIdx >= 4 ? 'The projection is directional and should be paired with current inventory and demand signals.' : 'The analysis will show a forecast after four quarters of history are available.', recs: ['Treat the projection as a planning input, not a guaranteed target.', 'Compare projected demand with parts lead times and stock levels.', 'Refresh the forecast after each completed quarter.'] };
+    if (modalId === 'season') {
+      const forecastBasis = forecast.available
+        ? [
+            `Last year, ${quarterNames[qIdx - 3]} moved ${signedPercent(forecast.seasonalChange)} from ${quarterNames[qIdx - 4]}, so ${forecast.targetQuarter} may follow a similar seasonal pattern.`,
+            `This quarter grew ${signedPercent(forecast.currentQuarterChange)} from last quarter and ${signedPercent(forecast.currentYearChange)} from the same quarter last year.`
+          ]
+        : [];
+      const actualInRange = forecast.actual >= forecast.low && forecast.actual <= forecast.high;
+      return {
+        headline: forecast.available ? `${peso.format(forecast.expected)} expected next quarter` : 'Limited history',
+        detail: forecast.available ? `Estimate for ${forecast.targetQuarter}` : 'Need 5+ quarters for an estimate',
+        chart: forecast.available
+          ? <LineChart
+              values={revenue.slice(0, qIdx + 1)}
+              labels={quarterLabels.slice(0, qIdx + 1)}
+              estimate={{ value: forecast.expected, label: forecast.targetLabel }}
+            />
+          : null,
+        callout: forecast.available
+          ? `Likely range: ${peso.format(forecast.low)} to ${peso.format(forecast.high)}. This estimate uses this quarter's revenue, last year's growth, and how much revenue has moved between quarters so far.`
+          : 'Showing trend only until more quarters are logged.',
+        forecastBasis,
+        actualResult: forecast.available && forecast.actual !== undefined
+          ? `Actual result: ${peso.format(forecast.actual)}. That is ${actualInRange ? 'inside' : 'outside'} the range above.`
+          : null,
+        recs: ['Treat the estimate as a planning input, not a target.', 'Compare projected demand with parts lead times and stock levels.', 'Refresh the forecast after each completed quarter.']
+      };
+    }
     if (modalId === 'margin') return { headline: `${partsMargin[qIdx]}% parts margin`, detail: 'Parts revenue less parts cost, divided by parts revenue', chart: <LineChart values={partsMargin} labels={quarterLabels} color="#2e9e5b" />, callout: `Rejected additional-findings revenue is ${peso.format(rejectedRevenue)} and should be reviewed separately.`, recs: ['Review low-margin parts before expanding their stock position.', 'Pair high-margin parts with labor recommendations where appropriate.', 'Keep rejected findings visible so approved-but-unbilled work is not lost.'] };
     return { headline: `${overdue[qIdx]}% jobs overdue`, detail: peso.format(rejectedRevenue) + ' in approved-but-unbilled findings', chart: <LineChart values={overdue} labels={quarterLabels} color="#d6402b" />, callout: 'Overdue work creates operational drag and can delay otherwise earned revenue.', recs: ['Review overdue jobs in the weekly service-request meeting.', 'Assign an owner and next action to every approved-but-unbilled finding.', 'Compare overdue percentage with mechanic capacity before accepting new work.'] };
   }
@@ -246,19 +360,72 @@ function AIRevenueAnalysis({ dashboardData }) {
       )}
       <div className="ai-revenue-summary">
         <div><span>Total revenue - {quarterNames[qIdx]}</span><strong>{peso.format(currentRevenue)}</strong><em className={percentChange(currentRevenue, previousRevenue) >= 0 ? 'is-positive' : 'is-negative'}>{percentChange(currentRevenue, previousRevenue) >= 0 ? '▲' : '▼'} {Math.abs(percentChange(currentRevenue, previousRevenue)).toFixed(1)}% QoQ</em><small>{baseJobs[qIdx]} jobs · avg {peso.format(currentRevenue / baseJobs[qIdx])} per job</small></div>
-        <LineChart values={revenue} labels={quarterLabels} />
+        <div className="ai-revenue-summary__chart">
+          <LineChart
+            values={revenue.slice(0, qIdx + 1)}
+            labels={quarterLabels.slice(0, qIdx + 1)}
+            estimate={forecast.available ? { value: forecast.expected, label: forecast.targetLabel } : null}
+          />
+          {forecast.available && (
+            <>
+              <p className="ai-revenue-estimate-note">*Next quarter (estimate): {peso.format(forecast.expected)} · likely {peso.format(forecast.low)} to {peso.format(forecast.high)}</p>
+              <div className="ai-revenue-estimate-legend"><span><i className="is-actual" />Actual</span><span><i className="is-estimate" />AI estimate</span></div>
+            </>
+          )}
+        </div>
       </div>
       <div className="ai-revenue-collected-row">
-        <div><span>Collected</span><strong>{peso.format(currentRevenue * 0.82)}</strong></div>
-        <div><span>Outstanding</span><strong>{peso.format(currentRevenue * 0.18)}</strong></div>
-        <div><span>Collection</span><strong>{Math.round((currentRevenue * 0.82 / currentRevenue) * 100)}%</strong></div>
+        <div><span>Collected</span><strong>{peso.format(collectedAmount)}</strong></div>
+        <div><span>Outstanding</span><strong>{peso.format(outstandingAmount)}</strong></div>
+        <div><span>Collection</span><strong>{collectedAmount + outstandingAmount ? Math.round((collectedAmount / (collectedAmount + outstandingAmount)) * 100) : 0}%</strong></div>
       </div>
       <div className="ai-revenue-cards">
         {cardDefinitions.map((card) => {
-          const isNegative = (card.id === 'margin' && qIdx > 0 && partsMargin[qIdx] < partsMargin[qIdx - 1]) || (card.id === 'ops' && overdue[qIdx] > overdue[qIdx - 1]);
-          let value = card.id === 'revenue' ? peso.format(currentRevenue) : card.id === 'mix' ? `${Math.round((parts / currentRevenue) * 100)}% from Parts` : card.id === 'service' ? '40% from Brake service' : card.id === 'mechanic' ? '31% from Miguel Santos' : card.id === 'customer' ? `${100 - newCustomerShare[qIdx]}% repeat customers` : card.id === 'season' ? (qIdx >= 4 ? 'Forecast ready' : 'More history needed') : card.id === 'margin' ? `${partsMargin[qIdx]}% parts margin` : `${overdue[qIdx]}% jobs overdue`;
-          const pill = card.id === 'mix' ? 'High risk' : card.id === 'service' || card.id === 'mechanic' ? 'Normal risk' : card.id === 'season' ? 'Projection available' : card.id === 'revenue' ? `${percentChange(currentRevenue, previousRevenue) >= 0 ? '+' : ''}${percentChange(currentRevenue, previousRevenue).toFixed(1)}% QoQ` : card.id === 'customer' ? `+${newCustomerShare[qIdx] - newCustomerShare[qIdx - 1] || 0}.0% new-customer share` : card.id === 'margin' ? `${isNegative ? '-' : '+'}${Math.abs(partsMargin[qIdx] - (partsMargin[qIdx - 1] || partsMargin[qIdx])).toFixed(1)}% vs last Q` : `${isNegative ? '+' : '-'}${Math.abs(overdue[qIdx] - (overdue[qIdx - 1] || overdue[qIdx])).toFixed(1)}% vs last Q`;
-          return <button type="button" className="ai-revenue-card" key={card.id} onClick={() => setModalId(card.id)}><div className="ai-revenue-card__top"><span className="ai-revenue-card__icon">{card.icon}</span><em className={`ai-revenue-pill ${isNegative ? 'is-bad' : card.id === 'mix' ? 'is-bad' : card.id === 'season' ? 'is-warn' : 'is-good'}`}>{pill}</em></div><strong>{card.title}</strong><b>{value}</b><small>{card.id === 'revenue' ? `${percentChange(currentRevenue, revenue[Math.max(0, qIdx - 4)]).toFixed(1)}% vs same quarter last year` : card.id === 'mix' ? 'Top category share of total revenue' : card.id === 'service' ? 'Share of revenue from one service type' : card.id === 'mechanic' ? 'Revenue generated by top mechanic' : card.id === 'customer' ? 'Repeat revenue is generally more predictable' : card.id === 'season' ? 'Pattern-based projection for next quarter' : card.id === 'margin' ? '(Parts revenue - parts cost) ÷ parts revenue' : peso.format(rejectedRevenue) + ' in approved-but-unbilled findings'}</small></button>;
+          const customerShareChange = newCustomerShare[qIdx] - (newCustomerShare[qIdx - 1] ?? newCustomerShare[qIdx]);
+          const revenueGrowth = percentChange(currentRevenue, previousRevenue);
+          const isNegative = (card.id === 'revenue' && revenueGrowth < 0) || (card.id === 'customer' && customerShareChange < 0) || (card.id === 'margin' && qIdx > 0 && partsMargin[qIdx] < partsMargin[qIdx - 1]) || (card.id === 'ops' && overdue[qIdx] > overdue[qIdx - 1]);
+          const value = card.id === 'revenue' ? peso.format(currentRevenue) : card.id === 'mix' ? `${Math.round((parts / currentRevenue) * 100)}% from Parts` : card.id === 'service' ? '40% from Brake service' : card.id === 'mechanic' ? '31% from Miguel Santos' : card.id === 'customer' ? `${100 - newCustomerShare[qIdx]}% repeat customers` : card.id === 'season' ? (forecast.available ? `${peso.format(forecast.expected)} expected` : 'Limited history') : card.id === 'margin' ? `${partsMargin[qIdx]}% parts margin` : `${overdue[qIdx]}% jobs overdue`;
+          const pill = card.id === 'mix' ? 'High risk' : card.id === 'service' || card.id === 'mechanic' ? 'Normal risk' : card.id === 'season' ? (forecast.available ? 'Estimate' : 'Need 5+ quarters') : card.id === 'revenue' ? `${signedPercent(revenueGrowth)} QoQ` : card.id === 'customer' ? `${signedPercent(customerShareChange)} new-customer share` : card.id === 'margin' ? `${signedPercent(partsMargin[qIdx] - (partsMargin[qIdx - 1] ?? partsMargin[qIdx]))} vs last Q` : `${signedPercent(overdue[qIdx] - overdue[qIdx - 1])} vs last Q`;
+          const pillTone = card.id === 'mix' || isNegative
+            ? 'is-bad'
+            : card.id === 'season'
+              ? forecast.available ? 'is-neutral' : 'is-warn'
+              : 'is-good';
+
+          return (
+            <button
+              type="button"
+              className="ai-revenue-card"
+              key={card.id}
+              onClick={() => setModalId(card.id)}
+            >
+              <div className="ai-revenue-card__top">
+                <span className="ai-revenue-card__icon">{card.icon}</span>
+                <em className={`ai-revenue-pill ${pillTone}`}>{pill}</em>
+              </div>
+              <strong>{card.title}</strong>
+              <b>{value}</b>
+              <small>
+                {card.id === 'season'
+                  ? forecast.available
+                    ? `Likely range ${peso.format(forecast.low)} to ${peso.format(forecast.high)} for ${forecast.targetQuarter}`
+                    : 'Showing trend only until more quarters are logged'
+                  : card.id === 'revenue'
+                  ? `${percentChange(currentRevenue, revenue[Math.max(0, qIdx - 4)]).toFixed(1)}% vs same quarter last year`
+                  : card.id === 'mix'
+                    ? 'Top category share of total revenue'
+                    : card.id === 'service'
+                      ? 'Share of revenue from one service type'
+                      : card.id === 'mechanic'
+                        ? 'Revenue generated by top mechanic'
+                        : card.id === 'customer'
+                          ? 'Repeat revenue is generally more predictable'
+                          : card.id === 'margin'
+                              ? '(Parts revenue - parts cost) ÷ parts revenue'
+                              : `${peso.format(rejectedRevenue)} in approved-but-unbilled findings`}
+              </small>
+            </button>
+          );
         })}
       </div>
       {settingsOpen && (
@@ -301,6 +468,8 @@ function AIRevenueAnalysis({ dashboardData }) {
             <div className="ai-revenue-report__summary">
               <strong>{reportMonthName ? `${reportMonthName} ${reportYear}` : quarterNames[qIdx]} Sales Report</strong>
               <span>Generated {new Date().toLocaleDateString('en-PH', { day: 'numeric', month: 'long', year: 'numeric' })} · Total: {peso.format(reportTotal)} ({peso.format(reportPaid)} paid, {peso.format(reportOutstanding)} outstanding)</span>
+              <span>Forfeited down payments: {peso.format(forfeitedDownPayments)} <em>(reported separately; not sales revenue)</em></span>
+              {reportError && <span className="ai-revenue-report__error" role="alert">{reportError}</span>}
             </div>
             <div className="ai-revenue-report__month-tabs" role="group" aria-label="Filter report by month">
               <button type="button" className={reportMonth === null ? 'is-active' : ''} aria-pressed={reportMonth === null} onClick={() => setReportMonth(null)}>Full quarter</button>
@@ -345,7 +514,46 @@ function AIRevenueAnalysis({ dashboardData }) {
           </section>
         </div>
       )}
-      {modal && <div className="ai-revenue-modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalId(null); }}><section className="ai-revenue-modal" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title"><button type="button" className="ai-revenue-modal__close" aria-label="Close analysis" onClick={() => setModalId(null)}>×</button><p className="ai-revenue-modal__eyebrow">{quarterNames[qIdx]} analysis</p><h2 id="ai-modal-title">{modal.title}</h2>{modal.kind === 'risk' ? <><div className="ai-revenue-tier-tabs">{['Normal', 'Moderate', 'High'].map((tier) => <span className={riskData.tier === tier ? 'is-active' : ''} key={tier}>{tier}</span>)}</div><div className={`ai-revenue-callout is-${riskData.tier.toLowerCase()}`}><strong>{riskData.tier} concentration</strong><span>{riskData.label} contributes {Math.round((riskData.ranked[0]?.share || 0))}% of revenue.</span></div><HorizontalBars items={riskData.ranked} /><div className="ai-revenue-thresholds__note">Threshold reference: Moderate at {thresholds.topCategory}% top category / {thresholds.topTwo}% top two; High at {thresholds.highTop}% top category / {thresholds.highTopTwo}% top two.</div><h3>Why this risk level</h3><ul className="ai-revenue-modal-list">{riskCopy.why.map((item) => <li key={item}>{item}</li>)}</ul><h3>Recommended actions</h3><ol className="ai-revenue-modal-list ai-revenue-modal-list--numbered">{riskCopy.recs.map((item) => <li key={item}>{item}</li>)}</ol><button type="button" className="ai-revenue-view-transactions" onClick={() => { setTransactionDrilldown({ title: modal.title, rows: getDrilldownTransactions({ kind: modal.id, quarterIndex: qIdx, label: riskData.label }) }); setModalId(null); }}>View transactions →</button></> : <><strong className="ai-revenue-modal__headline">{trendModal.headline}</strong><p className="ai-revenue-modal__detail">{trendModal.detail}</p>{trendModal.chart}<div className="ai-revenue-callout is-normal">{trendModal.callout}</div><h3>Recommended actions</h3><ol className="ai-revenue-modal-list ai-revenue-modal-list--numbered">{trendModal.recs.map((item) => <li key={item}>{item}</li>)}</ol><button type="button" className="ai-revenue-view-transactions" onClick={() => { setTransactionDrilldown({ title: modal.title, rows: getDrilldownTransactions({ kind: modal.id, quarterIndex: qIdx, label: riskData.label }) }); setModalId(null); }}>View transactions →</button></>}</section></div>}
+      {modal && (
+        <div className="ai-revenue-modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalId(null); }}>
+          <section className="ai-revenue-modal" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">
+            <button type="button" className="ai-revenue-modal__close" aria-label="Close analysis" onClick={() => setModalId(null)}>×</button>
+            <p className="ai-revenue-modal__eyebrow">
+              {modalId === 'season' ? `AI Forecast · ${forecast.available ? forecast.targetQuarter : 'Limited history'}` : `${quarterNames[qIdx]} analysis`}
+            </p>
+            <h2 id="ai-modal-title">{modalId === 'season' ? trendModal.headline : modal.title}</h2>
+            {modal.kind === 'risk' ? (
+              <>
+                <div className="ai-revenue-tier-tabs">{['Normal', 'Moderate', 'High'].map((tier) => <span className={riskData.tier === tier ? 'is-active' : ''} key={tier}>{tier}</span>)}</div>
+                <div className={`ai-revenue-callout is-${riskData.tier.toLowerCase()}`}><strong>{riskData.tier} concentration</strong><span>{riskData.label} contributes {Math.round((riskData.ranked[0]?.share || 0))}% of revenue.</span></div>
+                <HorizontalBars items={riskData.ranked} />
+                <div className="ai-revenue-thresholds__note">Threshold reference: Moderate at {thresholds.topCategory}% top category / {thresholds.topTwo}% top two; High at {thresholds.highTop}% top category / {thresholds.highTopTwo}% top two.</div>
+                <h3>Why this risk level</h3>
+                <ul className="ai-revenue-modal-list">{riskCopy.why.map((item) => <li key={item}>{item}</li>)}</ul>
+                <h3>Recommended actions</h3>
+                <ol className="ai-revenue-modal-list ai-revenue-modal-list--numbered">{riskCopy.recs.map((item) => <li key={item}>{item}</li>)}</ol>
+                <button type="button" className="ai-revenue-view-transactions" onClick={() => { setTransactionDrilldown({ title: modal.title, rows: getDrilldownTransactions({ kind: modal.id, quarterIndex: qIdx, label: riskData.label }) }); setModalId(null); }}>View transactions →</button>
+              </>
+            ) : (
+              <>
+                {modalId !== 'season' && <><strong className="ai-revenue-modal__headline">{trendModal.headline}</strong><p className="ai-revenue-modal__detail">{trendModal.detail}</p></>}
+                {trendModal.chart}
+                <div className="ai-revenue-callout is-normal">{trendModal.callout}</div>
+                {trendModal.actualResult && <div className="ai-revenue-callout is-normal">{trendModal.actualResult}</div>}
+                {trendModal.forecastBasis?.length > 0 && (
+                  <>
+                    <h3>What the forecast is based on</h3>
+                    <ul className="ai-revenue-modal-list">{trendModal.forecastBasis.map((item) => <li key={item}>{item}</li>)}</ul>
+                  </>
+                )}
+                <h3>{modalId === 'season' ? 'AI recommendations' : 'Recommended actions'}</h3>
+                <ol className="ai-revenue-modal-list ai-revenue-modal-list--numbered">{trendModal.recs.map((item) => <li key={item}>{item}</li>)}</ol>
+                <button type="button" className="ai-revenue-view-transactions" onClick={() => { setTransactionDrilldown({ title: modal.title, rows: getDrilldownTransactions({ kind: modal.id, quarterIndex: qIdx, label: riskData.label }) }); setModalId(null); }}>View transactions →</button>
+              </>
+            )}
+          </section>
+        </div>
+      )}
       {transactionDrilldown && (
         <div className="ai-revenue-modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setTransactionDrilldown(null); }}>
           <section className="ai-revenue-modal ai-revenue-drilldown" role="dialog" aria-modal="true" aria-labelledby="ai-drilldown-title">

@@ -33,7 +33,7 @@ export default function LoginRequiredAlert({ isOpen, onClose }) {
         <p className="login-required-alert__eyebrow">Access required</p>
         <h2 id="login-required-alert-title">You need to login first</h2>
         <p className="login-required-alert__message">
-          Sign in to access this section and continue shopping with your saved cart and orders.
+          Sign in to access this section and continue with your Reservation Cart and reservations.
         </p>
 
         <div className="login-required-alert__actions">

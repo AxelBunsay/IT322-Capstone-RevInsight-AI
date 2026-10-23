@@ -1,4 +1,5 @@
 const statusLabels = {
+  pending: 'Available to accept', assigned: 'Assigned to you',
   'awaiting-response': 'Awaiting your response', confirmed: 'Awaiting your response',
   inspection: 'Inspection', accepted: 'Inspection', 'in-progress': 'In progress',
   'waiting-parts': 'Waiting for parts', 'waiting-for-parts': 'Waiting for parts',
@@ -27,7 +28,7 @@ export function JobTable({ jobs, onSelect }) {
   </table></div>;
 }
 
-export function JobDialog({ job, onClose, actions, onAction, busy }) {
+export function JobDialog({ job, onClose, actions, onAction, busy, error = '' }) {
   if (!job) return null;
   const labels = { accept: 'Accept job', decline: 'Decline', start: 'Start work', 'waiting-parts': 'Wait for parts', 'quality-check': 'Send to quality check', complete: 'Mark complete' };
   return <div className="mechanic-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
@@ -36,6 +37,7 @@ export function JobDialog({ job, onClose, actions, onAction, busy }) {
       <span className="mechanic-eyebrow">{job.jobId || job._id}</span><h2 id="job-dialog-title">{job.serviceType || job.service || 'Service job'}</h2>
       <p>{job.description || 'Review the job details and update its status when work progresses.'}</p>
       <dl className="mechanic-job-details"><div><dt>Customer</dt><dd>{job.customerName || job.customer?.name || 'Customer'}</dd></div><div><dt>Vehicle</dt><dd>{job.vehicle || job.vehicleModel || 'Motorcycle'} · {job.plate || job.plateNumber || '—'}</dd></div><div><dt>Status</dt><dd><StatusBadge status={job.status || 'confirmed'} /></dd></div><div><dt>Priority</dt><dd>{job.priority || 'Normal'}</dd></div></dl>
+      {error && <p className="mechanic-alert" role="alert">{error}</p>}
       <div className="mechanic-dialog-actions job-dialog-actions">{actions.map((action) => <button className={action === 'decline' ? 'button-secondary danger' : 'button-primary'} type="button" key={action} disabled={busy} onClick={() => onAction(job, action)}>{labels[action] || action}</button>)}<button className="button-secondary" type="button" onClick={onClose}>Close</button></div>
     </section>
   </div>;

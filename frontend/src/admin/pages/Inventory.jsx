@@ -2,6 +2,42 @@ import { useEffect, useState } from "react";
 import { adminApi as api } from "../services/adminApi";
 import { AdminDialog, AdminPageFrame } from "./ManagementPageComponents";
 
+const validateItemForm = (form) => {
+  const errors = {};
+  const name = form.name.trim();
+  const price = Number(form.price);
+  const stock = Number(form.quantity);
+
+  if (name.length < 2 || name.length > 80) errors.name = "Name must be 2 to 80 characters.";
+  if (form.price === "" || !Number.isFinite(price) || price < 1 || price > 99999) {
+    errors.price = "Price must be from 1 to 99,999.";
+  }
+  if (form.quantity === "" || !Number.isInteger(stock) || stock < 0 || stock > 9999) {
+    errors.quantity = "Stock must be a whole number from 0 to 9,999.";
+  }
+  if (!form.category.trim()) errors.category = "Category is required.";
+  return errors;
+};
+
+const validateServiceForm = (form) => {
+  const errors = {};
+  const name = form.name.trim();
+  const price = Number(form.price);
+  const mechanicFee = Number(form.mechanicFee);
+
+  if (name.length < 2 || name.length > 80) errors.name = "Name must be 2 to 80 characters.";
+  if (form.description.length > 300) errors.description = "Description must be 300 characters or fewer.";
+  if (form.price === "" || !Number.isFinite(price) || price < 0.01 || price > 999999.99) {
+    errors.price = "Price must be from 0.01 to 999,999.99.";
+  }
+  if (form.mechanicFee === "" || !Number.isFinite(mechanicFee) || mechanicFee < 0 || mechanicFee > 999999.99) {
+    errors.mechanicFee = "Mechanic fee must be from 0 to 999,999.99.";
+  } else if (Number.isFinite(price) && mechanicFee > price) {
+    errors.mechanicFee = "Mechanic fee cannot be greater than the service price.";
+  }
+  return errors;
+};
+
 function Inventory() {
   const [search, setSearch] = useState("");
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -15,19 +51,17 @@ function Inventory() {
     quantity: "",
     category: "",
   });
+  const [itemFormErrors, setItemFormErrors] = useState({});
+  const [itemFormError, setItemFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [activeTab, setActiveTab] = useState("items");
-  const [laborRates, setLaborRates] = useState([]);
-  const [isLoadingRates, setIsLoadingRates] = useState(true);
-  const [editingRateId, setEditingRateId] = useState("");
-  const [rateDraft, setRateDraft] = useState("");
-  const [isSavingRate, setIsSavingRate] = useState(false);
   const [services, setServices] = useState([]);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
   const [serviceRefreshKey, setServiceRefreshKey] = useState(0);
+  const [editingService, setEditingService] = useState(null);
   const [isAddingService, setIsAddingService] = useState(false);
   const [serviceForm, setServiceForm] = useState({
     name: "",
@@ -35,8 +69,12 @@ function Inventory() {
     price: "",
     mechanicFee: "",
   });
+  const [serviceFormErrors, setServiceFormErrors] = useState({});
   const [serviceFormError, setServiceFormError] = useState("");
   const [isSavingService, setIsSavingService] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -58,6 +96,9 @@ function Inventory() {
                   minimumFractionDigits: 2,
                 })}`,
                 stock: item.quantity,
+                reserved: Number(item.reservedQty || 0),
+                available: Number(item.available ?? (item.quantity - Number(item.reservedQty || 0))),
+                hasActiveReservation: Boolean(item.hasActiveReservation),
               })),
             );
             setTotalPages(response.pagination?.totalPages || 1);
@@ -81,28 +122,6 @@ function Inventory() {
       window.clearInterval(refreshInterval);
     };
   }, [page, refreshKey]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    api
-      .getServiceLaborRates()
-      .then((response) => {
-        if (isMounted) setLaborRates(response.rates || []);
-      })
-      .catch((fetchError) => {
-        if (isMounted) {
-          setError(fetchError.message || "Failed to load service rates");
-        }
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingRates(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -135,6 +154,8 @@ function Inventory() {
   const openItemDialog = (item = null) => {
     setEditingItem(item);
     setIsAdding(!item);
+    setItemFormErrors({});
+    setItemFormError("");
     setForm(
       item
         ? {
@@ -149,6 +170,10 @@ function Inventory() {
 
   const saveItem = async (event) => {
     event.preventDefault();
+    const validationErrors = validateItemForm(form);
+    setItemFormErrors(validationErrors);
+    setItemFormError("");
+    if (Object.keys(validationErrors).length) return;
     setIsSaving(true);
     setError("");
 
@@ -169,120 +194,104 @@ function Inventory() {
       setIsAdding(false);
       setPage(1);
       setRefreshKey((key) => key + 1);
+      setToast(editingItem ? "Item updated successfully." : "Item added successfully.");
     } catch (saveError) {
-      setError(saveError.message || "Failed to save inventory item");
+      setItemFormErrors(saveError.fieldErrors || {});
+      setItemFormError(saveError.message || "Failed to save inventory item");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const removeItem = async (item) => {
-    if (!window.confirm(`Delete ${item.name}?`)) return;
-
-    try {
-      await api.deleteInventory(item.id);
-      setPage(1);
-      setRefreshKey((key) => key + 1);
-    } catch (deleteError) {
-      setError(deleteError.message || "Failed to delete inventory item");
-    }
-  };
-
-  const saveLaborRate = async (rate) => {
-    if (!rateDraft.trim()) {
-      setError("Enter a valid non-negative labor fee.");
-      return;
-    }
-    const laborFee = Number(rateDraft);
-    if (!Number.isFinite(laborFee) || laborFee < 0) {
-      setError("Enter a valid non-negative labor fee.");
-      return;
-    }
-
-    setIsSavingRate(true);
-    setError("");
-    try {
-      const response = await api.updateServiceLaborRate(rate._id, laborFee);
-      setLaborRates((currentRates) =>
-        currentRates.map((currentRate) =>
-          currentRate._id === rate._id ? response.rate : currentRate,
-        ),
-      );
-      setEditingRateId("");
-      setRateDraft("");
-    } catch (saveError) {
-      setError(saveError.message || "Failed to update service labor fee");
-    } finally {
-      setIsSavingRate(false);
-    }
+  const openServiceDialog = (service = null) => {
+    setEditingService(service);
+    setIsAddingService(!service);
+    setServiceFormErrors({});
+    setServiceFormError("");
+    setServiceForm(service
+      ? {
+          name: service.name,
+          description: service.description || "",
+          price: String(service.price),
+          mechanicFee: String(service.mechanicFee ?? 0),
+        }
+      : { name: "", description: "", price: "", mechanicFee: "" });
   };
 
   const saveService = async (event) => {
     event.preventDefault();
-    setIsSavingService(true);
+    const validationErrors = validateServiceForm(serviceForm);
+    setServiceFormErrors(validationErrors);
     setServiceFormError("");
+    if (Object.keys(validationErrors).length) return;
+    setIsSavingService(true);
 
     try {
-      await api.createService({
-        name: serviceForm.name,
+      const payload = {
+        name: serviceForm.name.trim(),
         description: serviceForm.description,
         price: Number(serviceForm.price),
         mechanicFee: Number(serviceForm.mechanicFee),
-      });
+      };
+      if (editingService) await api.updateService(editingService._id, payload);
+      else await api.createService(payload);
       setIsAddingService(false);
+      setEditingService(null);
       setServiceForm({ name: "", description: "", price: "", mechanicFee: "" });
       setServiceRefreshKey((key) => key + 1);
-      setToast("Service added successfully.");
+      setToast(editingService ? "Service updated successfully." : "Service added successfully.");
     } catch (saveError) {
-      setServiceFormError(saveError.message || "Failed to add service");
+      setServiceFormErrors(saveError.fieldErrors || {});
+      setServiceFormError(saveError.message || "Failed to save service");
     } finally {
       setIsSavingService(false);
     }
   };
 
-  const removeService = async (service) => {
-    if (!window.confirm(`Are you sure you want to delete ${service.name}? This can't be undone.`)) return;
-
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    setDeleteError("");
     try {
-      await api.deleteService(service._id);
-      setLaborRates((currentRates) =>
-        currentRates.filter(
-          (rate) =>
-            rate.serviceType.trim().toLowerCase() !==
-            service.name.trim().toLowerCase(),
-        ),
-      );
-      setServiceRefreshKey((key) => key + 1);
-      setToast("Service deleted successfully.");
+      const result = deleteTarget.type === "service"
+        ? await api.deleteService(deleteTarget.id)
+        : await api.deleteInventory(deleteTarget.id);
+      if (deleteTarget.type === "service") {
+        setServiceRefreshKey((key) => key + 1);
+      } else {
+        setRefreshKey((key) => key + 1);
+      }
+      setPage(1);
+      setDeleteTarget(null);
+      setToast(result.archived ? "Archived (kept in past records)" : "Deleted");
     } catch (deleteError) {
-      setError(deleteError.message || "Failed to delete service");
+      setDeleteError(deleteError.message || "Failed to delete record");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const filteredItems = inventoryItems.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase()),
   );
-  const filteredLaborRates = laborRates.filter((rate) =>
-    rate.serviceType.toLowerCase().includes(search.toLowerCase()),
+  const serviceRows = services.filter((service) =>
+    `${service.name} ${service.description || ""}`.toLowerCase().includes(search.toLowerCase()),
   );
-  const matchedLaborRateIds = new Set();
-  const serviceRows = services.map((service) => {
-    const matchingRate = laborRates.find((rate) =>
-      rate.serviceType.trim().toLowerCase() === service.name.trim().toLowerCase(),
-    );
-    if (matchingRate) matchedLaborRateIds.add(matchingRate._id);
-    return { service, rate: matchingRate || null };
-  }).filter(({ service, rate }) =>
-    `${service.name} ${service.description}`.toLowerCase().includes(search.toLowerCase())
-      || rate?.serviceType.toLowerCase().includes(search.toLowerCase()),
-  );
-  filteredLaborRates.forEach((rate) => {
-    if (!matchedLaborRateIds.has(rate._id)) serviceRows.push({ service: null, rate });
-  });
+  const serviceTotalPages = Math.max(1, Math.ceil(serviceRows.length / 15));
+  const visibleServiceRows = serviceRows.slice((page - 1) * 15, page * 15);
 
   const closeItemDialog = () => {
     setEditingItem(null);
     setIsAdding(false);
+  };
+  const closeServiceDialog = () => {
+    if (isSavingService) return;
+    setIsAddingService(false);
+    setEditingService(null);
+  };
+  const openDeleteDialog = (target) => {
+    setDeleteError("");
+    setDeleteTarget(target);
   };
 
   return (
@@ -303,7 +312,10 @@ function Inventory() {
               role="tab"
               aria-selected={activeTab === "items"}
               aria-controls="items-panel"
-              onClick={() => setActiveTab("items")}
+              onClick={() => {
+                setPage(1);
+                setActiveTab("items");
+              }}
             >
               Items
             </button>
@@ -314,19 +326,28 @@ function Inventory() {
               role="tab"
               aria-selected={activeTab === "services"}
               aria-controls="services-panel"
-              onClick={() => setActiveTab("services")}
+              onClick={() => {
+                setPage(1);
+                setActiveTab("services");
+              }}
             >
               Services
             </button>
           </div>
-          {activeTab === "services" && (
+          {activeTab === "items" ? (
+            <button
+              className="btn-primary"
+              type="button"
+              onClick={() => openItemDialog()}
+            >
+              + Add Item
+            </button>
+          ) : (
             <button
               className="btn-primary"
               type="button"
               onClick={() => {
-                setServiceForm({ name: "", description: "", price: "", mechanicFee: "" });
-                setServiceFormError("");
-                setIsAddingService(true);
+                openServiceDialog();
               }}
             >
               + Add Service
@@ -343,16 +364,12 @@ function Inventory() {
               <div className="inventory-header">
                 <input
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setPage(1);
+                    setSearch(event.target.value);
+                  }}
                   placeholder="Search items..."
                 />
-                <button
-                  className="btn-primary"
-                  type="button"
-                  onClick={() => openItemDialog()}
-                >
-                  + ADD
-                </button>
               </div>
               <div className="inventory-info">
                 {isLoading ? "Loading..." : filteredItems.length} inventory
@@ -366,6 +383,8 @@ function Inventory() {
                       <th>CATEGORY</th>
                       <th>PRICE</th>
                       <th>STOCK</th>
+                      <th>RESERVED</th>
+                      <th>AVAILABLE</th>
                       <th>ACTIONS</th>
                     </tr>
                   </thead>
@@ -382,6 +401,10 @@ function Inventory() {
                         >
                           {item.stock}
                         </td>
+                        <td>{item.reserved}</td>
+                        <td className={item.available <= 5 ? "stock-text low" : "stock-text"}>
+                          {item.available}
+                        </td>
                         <td>
                           <button
                             className="btn-small btn-edit"
@@ -393,10 +416,15 @@ function Inventory() {
                           <button
                             className="btn-small btn-delete"
                             type="button"
-                            onClick={() => removeItem(item)}
+                            disabled={item.hasActiveReservation}
+                            title={item.hasActiveReservation ? "Cannot delete an item with an active reservation." : undefined}
+                            onClick={() => openDeleteDialog({ type: "item", id: item.id, name: item.name })}
                           >
                             Delete
                           </button>
+                          {item.hasActiveReservation && (
+                            <small className="inventory-field-error">Active reservation</small>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -437,109 +465,83 @@ function Inventory() {
               <div className="inventory-header">
                 <input
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setPage(1);
+                    setSearch(event.target.value);
+                  }}
                   placeholder="Search services..."
                 />
               </div>
               <div className="inventory-info">
-                {isLoadingRates || isLoadingServices ? "Loading..." : serviceRows.length}{" "}
-                services · default labor fee per completed service
+                {isLoadingServices ? "Loading..." : serviceRows.length}{" "}
+                services · mechanic fee per completed service
               </div>
-              <div className="inventory-table-scroll">
-                <table className="inventory-table">
+              <table className="inventory-table">
                   <thead>
                     <tr>
                       <th>SERVICE</th>
                       <th>PRICE</th>
-                      <th>DEFAULT LABOR FEE</th>
+                      <th>MECHANIC FEE</th>
                       <th>ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {serviceRows.map(({ service, rate }) => (
-                      <tr key={service?._id || `labor-rate-${rate._id}`}>
-                        <td>{service?.name || rate.serviceType}</td>
-                        <td className="price-text">
-                          {service
-                            ? `₱${Number(service.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
-                            : "—"}
-                        </td>
-                        <td className="price-text">
-                          {rate && editingRateId === rate._id ? (
-                            <input
-                              className="service-fee-input"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={rateDraft}
-                              aria-label={`Default labor fee for ${rate.serviceType}`}
-                              onChange={(event) =>
-                                setRateDraft(event.target.value)
-                              }
-                            />
-                          ) : rate ? (
-                            `₱${Number(rate.laborFee).toLocaleString("en-PH", {
-                              minimumFractionDigits: 2,
-                            })}`
-                          ) : (
-                            `₱${Number(service.mechanicFee || 0).toLocaleString("en-PH", {
-                              minimumFractionDigits: 2,
-                            })}`
+                    {visibleServiceRows.map((service) => (
+                      <tr key={service._id}>
+                        <td>
+                          <span>{service.name}</span>
+                          {service.description && (
+                            <small className="inventory-service-description" title={service.description}>
+                              {service.description}
+                            </small>
                           )}
                         </td>
+                        <td className="price-text">
+                          {`₱${Number(service.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+                        </td>
+                        <td className="price-text">
+                          {`₱${Number(service.mechanicFee || 0).toLocaleString("en-PH", {
+                              minimumFractionDigits: 2,
+                            })}`}
+                        </td>
                         <td>
-                          {rate && editingRateId === rate._id ? (
-                            <>
-                              <button
-                                className="btn-small btn-edit"
-                                type="button"
-                                disabled={isSavingRate}
-                                onClick={() => saveLaborRate(rate)}
-                              >
-                                {isSavingRate ? "Saving..." : "Save"}
-                              </button>
-                              <button
-                                className="btn-small"
-                                type="button"
-                                disabled={isSavingRate}
-                                onClick={() => {
-                                  setEditingRateId("");
-                                  setRateDraft("");
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                            {rate && (
                             <button
                               className="btn-small btn-edit"
                               type="button"
-                              onClick={() => {
-                                setEditingRateId(rate._id);
-                                setRateDraft(String(rate.laborFee));
-                              }}
+                              onClick={() => openServiceDialog(service)}
                             >
-                              Edit fee
+                              Edit
                             </button>
-                            )}
-                            {service && (
-                              <button
-                                className="btn-small btn-delete"
-                                type="button"
-                                onClick={() => removeService(service)}
-                              >
-                                Delete
-                              </button>
-                            )}
-                            </>
-                          )}
+                            <button
+                              className="btn-small btn-delete"
+                              type="button"
+                              onClick={() => openDeleteDialog({ type: "service", id: service._id, name: service.name })}
+                            >
+                              Delete
+                            </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
+              </table>
+              <div className="pagination-container" aria-label="Services pagination">
+                <button
+                  className={`pagination-button${page === 1 ? " disabled" : ""}`}
+                  type="button"
+                  disabled={page === 1}
+                  onClick={() => setPage((currentPage) => currentPage - 1)}
+                >
+                  Previous
+                </button>
+                <span className="pagination-page">Page {page} of {serviceTotalPages}</span>
+                <button
+                  className={`pagination-button${page >= serviceTotalPages ? " disabled" : ""}`}
+                  type="button"
+                  disabled={page >= serviceTotalPages}
+                  onClick={() => setPage((currentPage) => currentPage + 1)}
+                >
+                  Next
+                </button>
               </div>
             </div>
           )}
@@ -550,52 +552,65 @@ function Inventory() {
           title={editingItem ? "Edit Inventory Item" : "Add Inventory Item"}
           onClose={closeItemDialog}
         >
-          <form className="admin-dialog-form" onSubmit={saveItem}>
+          <form className="admin-dialog-form" noValidate onSubmit={saveItem}>
+            {itemFormError && <p className="admin-dialog-error" role="alert">{itemFormError}</p>}
             <label>
-              Item name
+              Name
               <input
-                required
-                minLength="3"
+                minLength="2"
+                maxLength="80"
+                aria-invalid={Boolean(itemFormErrors.name)}
                 value={form.name}
-                onChange={(event) =>
-                  setForm({ ...form, name: event.target.value })
-                }
+                onChange={(event) => {
+                  setForm({ ...form, name: event.target.value });
+                  setItemFormErrors((errors) => ({ ...errors, name: "" }));
+                }}
               />
+              {itemFormErrors.name && <small className="inventory-field-error">{itemFormErrors.name}</small>}
             </label>
             <label>
               Price
               <input
-                required
-                min="0"
+                min="1"
+                max="99999"
                 step="0.01"
                 type="number"
+                aria-invalid={Boolean(itemFormErrors.price)}
                 value={form.price}
-                onChange={(event) =>
-                  setForm({ ...form, price: event.target.value })
-                }
+                onChange={(event) => {
+                  setForm({ ...form, price: event.target.value });
+                  setItemFormErrors((errors) => ({ ...errors, price: "" }));
+                }}
               />
+              {itemFormErrors.price && <small className="inventory-field-error">{itemFormErrors.price}</small>}
             </label>
             <label>
-              Quantity
+              Stock
               <input
-                required
                 min="0"
+                max="9999"
+                step="1"
                 type="number"
+                aria-invalid={Boolean(itemFormErrors.quantity)}
                 value={form.quantity}
-                onChange={(event) =>
-                  setForm({ ...form, quantity: event.target.value })
-                }
+                onChange={(event) => {
+                  setForm({ ...form, quantity: event.target.value });
+                  setItemFormErrors((errors) => ({ ...errors, quantity: "" }));
+                }}
               />
+              {itemFormErrors.quantity && <small className="inventory-field-error">{itemFormErrors.quantity}</small>}
             </label>
             <label>
               Category
               <input
-                required
+                aria-invalid={Boolean(itemFormErrors.category)}
                 value={form.category}
-                onChange={(event) =>
-                  setForm({ ...form, category: event.target.value })
-                }
+                onChange={(event) => {
+                  setForm({ ...form, category: event.target.value });
+                  setItemFormErrors((errors) => ({ ...errors, category: "" }));
+                }}
               />
+              {itemFormErrors.category && <small className="inventory-field-error">{itemFormErrors.category}</small>}
             </label>
             <div className="admin-dialog-actions">
               <button
@@ -612,67 +627,121 @@ function Inventory() {
           </form>
         </AdminDialog>
       )}
-      {isAddingService && (
+      {(isAddingService || editingService) && (
         <AdminDialog
-          title="Add Service"
-          onClose={() => {
-            if (!isSavingService) setIsAddingService(false);
-          }}
+          title={editingService ? "Edit Service" : "Add Service"}
+          onClose={closeServiceDialog}
         >
-          <form className="admin-dialog-form" onSubmit={saveService}>
+          <form className="admin-dialog-form" noValidate onSubmit={saveService}>
             {serviceFormError && <p className="admin-dialog-error" role="alert">{serviceFormError}</p>}
             <label>
               Name
               <input
-                required
+                minLength="2"
+                maxLength="80"
+                aria-invalid={Boolean(serviceFormErrors.name)}
                 value={serviceForm.name}
-                onChange={(event) => setServiceForm({ ...serviceForm, name: event.target.value })}
+                onChange={(event) => {
+                  setServiceForm({ ...serviceForm, name: event.target.value });
+                  setServiceFormErrors((errors) => ({ ...errors, name: "" }));
+                }}
               />
+              {serviceFormErrors.name && <small className="inventory-field-error">{serviceFormErrors.name}</small>}
             </label>
             <label>
               Description
               <textarea
-                required
+                maxLength="300"
+                aria-invalid={Boolean(serviceFormErrors.description)}
                 value={serviceForm.description}
-                onChange={(event) => setServiceForm({ ...serviceForm, description: event.target.value })}
+                onChange={(event) => {
+                  setServiceForm({ ...serviceForm, description: event.target.value });
+                  setServiceFormErrors((errors) => ({ ...errors, description: "" }));
+                }}
               />
+              <small className="inventory-description-count">{serviceForm.description.length}/300</small>
+              {serviceFormErrors.description && <small className="inventory-field-error">{serviceFormErrors.description}</small>}
             </label>
             <label>
               Price
               <input
-                required
-                min="0"
+                min="0.01"
+                max="999999.99"
                 step="0.01"
                 type="number"
+                aria-invalid={Boolean(serviceFormErrors.price)}
                 value={serviceForm.price}
-                onChange={(event) => setServiceForm({ ...serviceForm, price: event.target.value })}
+                onChange={(event) => {
+                  setServiceForm({ ...serviceForm, price: event.target.value });
+                  setServiceFormErrors((errors) => ({ ...errors, price: "", mechanicFee: "" }));
+                }}
               />
+              {serviceFormErrors.price && <small className="inventory-field-error">{serviceFormErrors.price}</small>}
             </label>
             <label>
               Mechanic Fee
               <input
-                required
                 min="0"
+                max="999999.99"
                 step="0.01"
                 type="number"
+                aria-invalid={Boolean(serviceFormErrors.mechanicFee)}
                 value={serviceForm.mechanicFee}
-                onChange={(event) => setServiceForm({ ...serviceForm, mechanicFee: event.target.value })}
+                onChange={(event) => {
+                  setServiceForm({ ...serviceForm, mechanicFee: event.target.value });
+                  setServiceFormErrors((errors) => ({ ...errors, mechanicFee: "" }));
+                }}
               />
+              {serviceFormErrors.mechanicFee && <small className="inventory-field-error">{serviceFormErrors.mechanicFee}</small>}
             </label>
             <div className="admin-dialog-actions">
               <button
                 className="btn-small"
                 type="button"
                 disabled={isSavingService}
-                onClick={() => setIsAddingService(false)}
+                onClick={closeServiceDialog}
               >
                 Cancel
               </button>
               <button className="btn-primary" type="submit" disabled={isSavingService}>
-                {isSavingService ? "Saving..." : "Add Service"}
+                {isSavingService ? "Saving..." : editingService ? "Save" : "Add Service"}
               </button>
             </div>
           </form>
+        </AdminDialog>
+      )}
+      {deleteTarget && (
+        <AdminDialog
+          title="Confirm deletion"
+          onClose={() => {
+            if (!isDeleting) setDeleteTarget(null);
+          }}
+        >
+          {deleteError && <p className="admin-dialog-error" role="alert">{deleteError}</p>}
+          <p className="inventory-delete-message">
+            Delete &quot;{deleteTarget.name}&quot;? This cannot be undone.
+          </p>
+          <div className="admin-dialog-actions">
+            <button
+              className="btn-small"
+              type="button"
+              disabled={isDeleting}
+              onClick={() => {
+                setDeleteTarget(null);
+                setDeleteError("");
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-small btn-delete"
+              type="button"
+              disabled={isDeleting}
+              onClick={confirmDelete}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </button>
+          </div>
         </AdminDialog>
       )}
     </AdminPageFrame>
