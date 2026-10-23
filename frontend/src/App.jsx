@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Link, Routes, Route } from 'react-router-dom';
 import AuthProvider from './context/AuthProvider';
 import { AdminApp } from './admin';
 import Cart from './Customer/react/Cart';
@@ -19,6 +19,18 @@ import MechanicJobs from './Mechanic/MechanicJobs';
 import MechanicProfile from './Mechanic/MechanicProfile';
 import MechanicAuthGuard from './Mechanic/MechanicAuthGuard';
 import { CustomerPrototypeProvider } from './Customer/react/CustomerPrototypeProvider';
+import { CustomerPage } from './Customer/react/CustomerLayout';
+
+function NotFoundPage() {
+  return (
+    <CustomerPage title="Page not found" description="The page you requested could not be found.">
+      <div className="customer-empty">
+        <p>Check the address or return to the shop to continue browsing.</p>
+        <Link className="customer-primary-button" to="/customer/shop">Back to shop</Link>
+      </div>
+    </CustomerPage>
+  );
+}
 
 function App() {
   return (
@@ -46,6 +58,7 @@ function App() {
         <Route path="/mechanic/dashboard" element={<MechanicAuthGuard><MechanicDashboard /></MechanicAuthGuard>} />
         <Route path="/mechanic/jobs" element={<MechanicAuthGuard><MechanicJobs /></MechanicAuthGuard>} />
         <Route path="/mechanic/profile" element={<MechanicAuthGuard><MechanicProfile /></MechanicAuthGuard>} />
+          <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </CustomerPrototypeProvider>
       </AuthProvider>

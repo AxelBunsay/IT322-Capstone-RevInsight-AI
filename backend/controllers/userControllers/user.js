@@ -187,7 +187,9 @@ const registerRequest = async (req, res) => {
         phoneNumber,
         otp: {
           code: verificationOtp,
-          expiresAt: verificationOtpExpiry
+          expiresAt: verificationOtpExpiry,
+          attempts: 0,
+          lastSentAt: new Date()
         }
       },
       {
@@ -208,8 +210,7 @@ const registerRequest = async (req, res) => {
     console.error('[registerRequest] error:', error);
 
     return res.status(500).json({
-      message: 'Failed to register user',
-      error: error.message
+      message: 'Failed to register user'
     });
   }
 };
@@ -238,7 +239,29 @@ const verifyOtp = async (req, res) => {
       });
     }
 
+    if (Number(pendingUser.otp.attempts || 0) >= 5) {
+      return res.status(423).json({
+        message: 'OTP verification is locked after too many incorrect attempts. Request a new code to continue.'
+      });
+    }
+
     if (pendingUser.otp.code !== otp) {
+      const updatedPendingUser = await PendingUser.findOneAndUpdate(
+        {
+          _id: pendingUser._id,
+          $or: [
+            { 'otp.attempts': { $lt: 5 } },
+            { 'otp.attempts': { $exists: false } }
+          ]
+        },
+        { $inc: { 'otp.attempts': 1 } },
+        { new: true }
+      );
+      if (!updatedPendingUser || Number(updatedPendingUser.otp.attempts) >= 5) {
+        return res.status(423).json({
+          message: 'OTP verification is locked after too many incorrect attempts. Request a new code to continue.'
+        });
+      }
       return res.status(400).json({
         message: 'Invalid OTP.'
       });
@@ -280,8 +303,7 @@ const verifyOtp = async (req, res) => {
     console.error('[verifyOtp] error:', error);
 
     return res.status(500).json({
-      message: 'Failed to verify OTP',
-      error: error.message
+      message: 'Failed to verify OTP'
     });
   }
 };
@@ -299,12 +321,6 @@ const resendOtp = async (req, res) => {
       });
     }
 
-    if (!pendingUser) {
-      return res.status(404).json({
-        message: 'User not found'
-      });
-    }
-
     if (pendingUser.isEmailVerified) {
       return res.status(400).json({
         message: 'Email is already verified'
@@ -319,24 +335,41 @@ const resendOtp = async (req, res) => {
       Date.now() + 10 * 60 * 1000
     );
 
-    pendingUser.otp = {
-      code: newOtp,
-      expiresAt: newOtpExpiry
-    };
-
-    await pendingUser.save();
-    await sendVerificationEmail(pendingUser, newOtp);
+    const cooldownCutoff = new Date(Date.now() - 60 * 1000);
+    const updatedPendingUser = await PendingUser.findOneAndUpdate(
+      {
+        _id: pendingUser._id,
+        $or: [
+          { 'otp.lastSentAt': { $lte: cooldownCutoff } },
+          { 'otp.lastSentAt': { $exists: false } }
+        ]
+      },
+      {
+        $set: {
+          'otp.code': newOtp,
+          'otp.expiresAt': newOtpExpiry,
+          'otp.attempts': 0,
+          'otp.lastSentAt': new Date()
+        }
+      },
+      { new: true, runValidators: true }
+    );
+    if (!updatedPendingUser) {
+      return res.status(429).json({
+        message: 'Please wait 60 seconds before requesting another verification code.'
+      });
+    }
+    await sendVerificationEmail(updatedPendingUser, newOtp);
 
     return res.status(200).json({
       message: 'A new OTP was sent to your email.',
-      email: pendingUser.email
+      email: updatedPendingUser.email
     });
   } catch (error) {
     console.error('[resendOtp] error:', error);
 
     return res.status(500).json({
-      message: 'Failed to resend OTP',
-      error: error.message
+      message: 'Failed to resend OTP'
     });
   }
 };

@@ -21,6 +21,7 @@ const serviceRequestRoutes = require('./routes/serviceRequest');
 const customerServiceRoutes = require('./routes/customerServices');
 const mechanicPartsRoutes = require('./routes/mechanicParts');
 const paymentRoutes = require('./routes/payment');
+const { stripeWebhook } = require('./controllers/paymentController');
 const reservationRoutes = require('./routes/reservations');
 const notificationRoutes = require('./routes/notifications');
 
@@ -69,7 +70,13 @@ app.use(
   })
 );
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com']
+    }
+  }
+}));
 
 app.use(
   '/api',
@@ -80,6 +87,8 @@ app.use(
     legacyHeaders: false
   })
 );
+
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
@@ -121,6 +130,11 @@ const ensureAdminUser = async () => {
   }
 };
 
+if (!mongoUri) {
+  console.error('MongoDB connection error: MONGODB_URI is not configured.');
+  process.exit(1);
+}
+
 mongoose
   .connect(mongoUri)
   .then(async () => {
@@ -132,7 +146,10 @@ mongoose
     }, 15 * 60 * 1000);
     reservationExpiryInterval.unref();
   })
-  .catch(err => console.log('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 // Routes
 app.use('/api/users', userRoutes);
@@ -161,64 +178,17 @@ app.use((req, res, next) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  const status = Number(error.status || error.statusCode);
+  const statusCode = status >= 400 && status < 600 ? status : 500;
+  if (statusCode >= 500) console.error('[express] unhandled error:', error);
+  return res.status(statusCode).json({
+    success: false,
+    message: statusCode >= 500 ? 'An unexpected server error occurred.' : error.message
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
-
-  // Print mounted routes for easier debugging of running instance
-  try {
-    console.log('Registered routes (mounted):');
-
-    if (app && app._router && Array.isArray(app._router.stack)) {
-      app._router.stack.forEach(m => {
-        try {
-          if (m && m.route && m.route.path) {
-            const methods = Object.keys(m.route.methods)
-              .join(',')
-              .toUpperCase();
-
-            console.log(
-              methods.padEnd(8),
-              m.route.path
-            );
-
-            return;
-          }
-
-          // Mounted routers can expose their own stack under handle.stack
-          const handleStack = m && m.handle && m.handle.stack;
-
-          if (Array.isArray(handleStack)) {
-            const mount =
-              m && m.regexp && m.regexp.source
-                ? m.regexp.source
-                : '<router>';
-
-            handleStack.forEach(r => {
-              if (r && r.route && r.route.path) {
-                const methods = Object.keys(r.route.methods)
-                  .join(',')
-                  .toUpperCase();
-
-                console.log(
-                  methods.padEnd(8),
-                  `${mount} -> ${r.route.path}`
-                );
-              }
-            });
-
-            return;
-          }
-        } catch (innerE) {
-          // Ignore individual layer errors
-        }
-      });
-    } else {
-      console.log('No router stack available to print.');
-    }
-  } catch (e) {
-    console.error(
-      'Error printing routes:',
-      e && e.stack ? e.stack : e
-    );
-  }
 });

@@ -4,8 +4,6 @@ const serviceRequestController = require('../controllers/serviceRequestControlle
 const { authorizeRoles } = require('../middleware/authorize');
 const paymentUpload = require('../middleware/paymentUpload');
 
-// User creates a service request
-router.post('/', authorizeRoles('customer'), serviceRequestController.createServiceRequest);
 // User gets their own service requests
 router.get('/my', authorizeRoles('customer'), serviceRequestController.getUserServiceRequests);
 router.post('/:id/payment', authorizeRoles('customer'), (req, res, next) => {

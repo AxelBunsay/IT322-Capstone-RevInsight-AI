@@ -23,10 +23,13 @@ const validateItemForm = (form) => {
 const validateServiceForm = (form) => {
   const errors = {};
   const name = form.name.trim();
+  const category = form.category.trim();
   const price = Number(form.price);
   const mechanicFee = Number(form.mechanicFee);
+  const durationMinutes = Number(form.durationMinutes);
 
   if (name.length < 2 || name.length > 80) errors.name = "Name must be 2 to 80 characters.";
+  if (category.length < 1 || category.length > 80) errors.category = "Category must be 1 to 80 characters.";
   if (form.description.length > 300) errors.description = "Description must be 300 characters or fewer.";
   if (form.price === "" || !Number.isFinite(price) || price < 0.01 || price > 999999.99) {
     errors.price = "Price must be from 0.01 to 999,999.99.";
@@ -35,6 +38,9 @@ const validateServiceForm = (form) => {
     errors.mechanicFee = "Mechanic fee must be from 0 to 999,999.99.";
   } else if (Number.isFinite(price) && mechanicFee > price) {
     errors.mechanicFee = "Mechanic fee cannot be greater than the service price.";
+  }
+  if (form.durationMinutes === "" || !Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 1440) {
+    errors.durationMinutes = "Duration must be a whole number from 1 to 1,440 minutes.";
   }
   return errors;
 };
@@ -75,6 +81,8 @@ function Inventory() {
     description: "",
     price: "",
     mechanicFee: "",
+    category: "General",
+    durationMinutes: "60",
   });
   const [serviceFormErrors, setServiceFormErrors] = useState({});
   const [serviceFormError, setServiceFormError] = useState("");
@@ -231,8 +239,10 @@ function Inventory() {
           description: service.description || "",
           price: String(service.price),
           mechanicFee: String(service.mechanicFee ?? 0),
+          category: service.category || "General",
+          durationMinutes: String(service.durationMinutes || 60),
         }
-      : { name: "", description: "", price: "", mechanicFee: "" });
+      : { name: "", description: "", price: "", mechanicFee: "", category: "General", durationMinutes: "60" });
   };
 
   const saveService = async (event) => {
@@ -249,12 +259,14 @@ function Inventory() {
         description: serviceForm.description,
         price: Number(serviceForm.price),
         mechanicFee: Number(serviceForm.mechanicFee),
+        category: serviceForm.category.trim(),
+        durationMinutes: Number(serviceForm.durationMinutes),
       };
       if (editingService) await api.updateService(editingService._id, payload);
       else await api.createService(payload);
       setIsAddingService(false);
       setEditingService(null);
-      setServiceForm({ name: "", description: "", price: "", mechanicFee: "" });
+      setServiceForm({ name: "", description: "", price: "", mechanicFee: "", category: "General", durationMinutes: "60" });
       setServiceRefreshKey((key) => key + 1);
       setToast(editingService ? "Service updated successfully." : "Service added successfully.");
     } catch (saveError) {
@@ -546,7 +558,9 @@ function Inventory() {
                   <thead>
                     <tr>
                       <th>SERVICE</th>
+                      <th>CATEGORY</th>
                       <th>PRICE</th>
+                      <th>DURATION</th>
                       <th>MECHANIC FEE</th>
                       <th>ACTIONS</th>
                     </tr>
@@ -562,9 +576,11 @@ function Inventory() {
                             </small>
                           )}
                         </td>
+                        <td>{service.category || "General"}</td>
                         <td className="price-text">
                           {`₱${Number(service.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
                         </td>
+                        <td>{Number(service.durationMinutes) || 60} min</td>
                         <td className="price-text">
                           {`₱${Number(service.mechanicFee || 0).toLocaleString("en-PH", {
                               minimumFractionDigits: 2,
@@ -743,6 +759,35 @@ function Inventory() {
               />
               <small className="inventory-description-count">{serviceForm.description.length}/300</small>
               {serviceFormErrors.description && <small className="inventory-field-error">{serviceFormErrors.description}</small>}
+            </label>
+            <label>
+              Category
+              <input
+                maxLength="80"
+                aria-invalid={Boolean(serviceFormErrors.category)}
+                value={serviceForm.category}
+                onChange={(event) => {
+                  setServiceForm({ ...serviceForm, category: event.target.value });
+                  setServiceFormErrors((errors) => ({ ...errors, category: "" }));
+                }}
+              />
+              {serviceFormErrors.category && <small className="inventory-field-error">{serviceFormErrors.category}</small>}
+            </label>
+            <label>
+              Duration (minutes)
+              <input
+                min="1"
+                max="1440"
+                step="1"
+                type="number"
+                aria-invalid={Boolean(serviceFormErrors.durationMinutes)}
+                value={serviceForm.durationMinutes}
+                onChange={(event) => {
+                  setServiceForm({ ...serviceForm, durationMinutes: event.target.value });
+                  setServiceFormErrors((errors) => ({ ...errors, durationMinutes: "" }));
+                }}
+              />
+              {serviceFormErrors.durationMinutes && <small className="inventory-field-error">{serviceFormErrors.durationMinutes}</small>}
             </label>
             <label>
               Price

@@ -3,7 +3,6 @@ const ServiceLaborRate = require("../models/serviceLaborRate");
 const Mechanic = require("../models/mechanic");
 const BusinessRecord = require("../models/businessRecord");
 const User = require("../models/user");
-const Service = require("../models/service");
 const Notification = require("../models/notification");
 const mongoose = require("mongoose");
 const ReservationSettings = require("../models/reservationSettings");
@@ -114,19 +113,27 @@ const mechanicAcceptJob = async (req, res) => {
   }
 };
 
-const syncCompletedServiceBusinessRecord = async (serviceRequest) => {
+const syncCompletedServiceBusinessRecord = async (serviceRequest, session = null) => {
   if (!serviceRequest || serviceRequest.status !== "completed") return null;
 
-  const user = await User.findById(serviceRequest.user).lean();
-  const mechanic = await Mechanic.findById(
+  const userQuery = User.findById(serviceRequest.user);
+  const mechanicQuery = Mechanic.findById(
     serviceRequest.mechanicId || serviceRequest.mechanic,
-  ).lean();
-  const existingRecord = await BusinessRecord.findOne({
+  );
+  const existingRecordQuery = BusinessRecord.findOne({
     recordType: "service",
     sourceId: serviceRequest._id,
-  })
-    .select("completedAt")
-    .lean();
+  }).select("completedAt");
+  if (session) {
+    userQuery.session(session);
+    mechanicQuery.session(session);
+    existingRecordQuery.session(session);
+  }
+  const [user, mechanic, existingRecord] = await Promise.all([
+    userQuery.lean(),
+    mechanicQuery.lean(),
+    existingRecordQuery.lean()
+  ]);
 
   const customerName = user
     ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
@@ -157,8 +164,72 @@ const syncCompletedServiceBusinessRecord = async (serviceRequest) => {
   return BusinessRecord.findOneAndUpdate(
     { recordType: "service", sourceId: serviceRequest._id },
     businessRecordData,
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, new: true, setDefaultsOnInsert: true, ...(session ? { session } : {}) },
   );
+};
+
+const serviceStatusTransitions = {
+  confirmed: ["accepted", "declined"],
+  assigned: ["in-progress", "declined"],
+  accepted: ["in-progress"],
+  "in-progress": ["completed"]
+};
+
+const transitionServiceRequestStatus = async ({ requestId, mechanicId, status, startTime }) => {
+  if (!mongoose.Types.ObjectId.isValid(requestId) || !mongoose.Types.ObjectId.isValid(mechanicId)) {
+    throw Object.assign(new Error("Service request and mechanic IDs are required."), { status: 400 });
+  }
+  const session = await mongoose.startSession();
+  let result;
+  try {
+    await session.withTransaction(async () => {
+      const request = await ServiceRequest.findById(requestId).session(session);
+      if (!request) throw Object.assign(new Error("Service request not found"), { status: 404 });
+      if (String(request.mechanic || request.mechanicId) !== String(mechanicId)) {
+        throw Object.assign(new Error("You can only update your assigned jobs"), { status: 403 });
+      }
+      if (!serviceStatusTransitions[request.status]?.includes(status)) {
+        throw Object.assign(new Error(`Cannot change status from ${request.status} to ${status}`), { status: 400 });
+      }
+      if (startTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
+        throw Object.assign(new Error("Start time must use 24-hour HH:mm format."), { status: 400 });
+      }
+
+      const now = new Date();
+      result = await ServiceRequest.findOneAndUpdate(
+        {
+          _id: request._id,
+          status: request.status,
+          $or: [{ mechanic: mechanicId }, { mechanicId }]
+        },
+        {
+          $set: {
+            status,
+            updatedAt: now,
+            ...(startTime && !request.startTime ? { startTime } : {}),
+            ...(status === "completed" ? { completedAt: now, mechanicId } : {})
+          },
+          $push: {
+            statusHistory: {
+              status,
+              timestamp: now,
+              note: `Status updated to ${status}`
+            }
+          }
+        },
+        { new: true, runValidators: true, session }
+      );
+      if (!result) {
+        throw Object.assign(new Error("This job changed before the update could be saved."), { status: 409 });
+      }
+      if (status === "completed") {
+        await syncCompletedServiceBusinessRecord(result, session);
+      }
+    });
+  } finally {
+    await session.endSession();
+  }
+  return result;
 };
 
 const getServiceLaborRates = async (req, res) => {
@@ -246,89 +317,6 @@ const updateServiceRequestLaborFee = async (req, res) => {
   } catch (error) {
     console.error("[updateServiceRequestLaborFee] error", error);
     res.status(500).json({ message: "Failed to update service labor fee" });
-  }
-};
-
-// User creates a service request
-const createServiceRequest = async (req, res) => {
-  try {
-    const {
-      serviceType,
-      description,
-      mechanicId,
-      estimatedPrice,
-      scheduledDate,
-    } = req.body;
-    const userId = req.user.userId;
-
-    if (!serviceType || !description) {
-      return res
-        .status(400)
-        .json({ message: "Service type and description are required" });
-    }
-    let mechanic = null;
-    if (mechanicId) {
-      mechanic = await Mechanic.findOne({
-        _id: mechanicId,
-        isActive: true,
-      });
-      if (!mechanic)
-        return res
-          .status(400)
-          .json({ message: "Selected mechanic is not available" });
-    }
-    if (scheduledDate && Number.isNaN(Date.parse(scheduledDate))) {
-      return res
-        .status(400)
-        .json({ message: "A valid scheduled date is required" });
-    }
-    if (
-      scheduledDate &&
-      new Date(scheduledDate) < new Date(new Date().setHours(0, 0, 0, 0))
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Scheduled date cannot be in the past" });
-    }
-
-    const serviceNamePattern = new RegExp(`^\\s*${serviceType.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i");
-    const configuredService = await Service.findOne({ name: serviceNamePattern }).lean();
-    if (configuredService?.isActive === false) {
-      return res.status(400).json({ message: "This service is no longer available" });
-    }
-    const serviceLaborRate = await ServiceLaborRate.findOne({
-      serviceType: serviceNamePattern,
-    }).lean();
-    if (serviceLaborRate?.isActive === false) {
-      return res.status(400).json({ message: "This service is no longer available" });
-    }
-    const serviceRequest = await ServiceRequest.create({
-      user: userId,
-      customerId: userId,
-      serviceId: req.body.serviceId || null,
-      serviceType,
-      description,
-      notes: req.body.notes || "",
-      vehicle: req.body.vehicle || "",
-      mechanic: mechanic?._id || null,
-      mechanicId: mechanic?._id || null,
-      estimatedPrice: Number(estimatedPrice) || 0,
-      laborFee: configuredService?.mechanicFee ?? serviceLaborRate?.laborFee ?? 50,
-      scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
-      startTime: req.body.startTime || null,
-      endTime: req.body.endTime || null,
-      status: mechanic ? "confirmed" : "pending",
-    });
-
-    res.status(201).json({
-      message: "Service request created",
-      serviceRequest,
-    });
-  } catch (error) {
-    console.error("[createServiceRequest] error", error);
-    res
-      .status(500)
-      .json({ message: "Failed to create service request. Please try again." });
   }
 };
 
@@ -541,75 +529,16 @@ const getAllServiceRequests = async (req, res) => {
 const updateJobStatus = async (req, res) => {
   try {
     const { requestId, status } = req.body;
-    const validStatuses = ["in-progress", "completed", "declined"];
+    const validStatuses = Object.values(serviceStatusTransitions).flat();
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
-    const serviceRequest = await ServiceRequest.findById(requestId);
-    if (!serviceRequest)
-      return res.status(404).json({ message: "Service request not found" });
-    if (
-      !serviceRequest.mechanic ||
-      serviceRequest.mechanic.toString() !== req.user.userId
-    ) {
-      return res
-        .status(403)
-        .json({ message: "You can only update your assigned jobs" });
-    }
-    const allowedTransitions = {
-      confirmed: ["declined"],
-      assigned: ["in-progress", "declined"],
-      accepted: ["in-progress"],
-      "in-progress": ["completed"],
-    };
-    if (!allowedTransitions[serviceRequest.status]?.includes(status)) {
-      return res.status(400).json({
-        message: `Cannot change status from ${serviceRequest.status} to ${status}`,
-      });
-    }
-
-    if (status === "completed") {
-      const completedAt = new Date();
-      const completedJob = await ServiceRequest.findOneAndUpdate(
-        {
-          _id: requestId,
-          mechanic: req.user.userId,
-          status: "in-progress",
-        },
-        {
-          $set: {
-            status: "completed",
-            completedAt,
-            mechanicId: req.user.userId,
-            updatedAt: completedAt,
-          },
-          $push: {
-            statusHistory: {
-              status: "completed",
-              timestamp: completedAt,
-              note: "Status updated to completed",
-            },
-          },
-        },
-        { new: true, runValidators: true },
-      );
-      if (!completedJob) {
-        return res.status(409).json({
-          message: "This job has already been completed or is no longer in progress.",
-        });
-      }
-
-      await syncCompletedServiceBusinessRecord(completedJob);
-      return res.status(200).json({
-        message: "Job status updated",
-        serviceRequest: completedJob,
-      });
-    }
-
-    serviceRequest.status = status;
-    await serviceRequest.save();
-    if (status === "declined" || status === "cancelled") await releaseServiceSlot(serviceRequest);
-    await syncCompletedServiceBusinessRecord(serviceRequest);
+    const serviceRequest = await transitionServiceRequestStatus({
+      requestId,
+      mechanicId: req.user.userId,
+      status
+    });
+    if (status === "declined") await releaseServiceSlot(serviceRequest);
 
     res.status(200).json({
       message: "Job status updated",
@@ -617,6 +546,7 @@ const updateJobStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("[updateJobStatus] error", error);
+    if (error.status) return res.status(error.status).json({ message: error.message });
     res
       .status(500)
       .json({ message: "Failed to update job status. Please try again." });
@@ -706,7 +636,6 @@ const getMechanicJobs = async (req, res) => {
 };
 
 module.exports = {
-  createServiceRequest,
   submitServicePayment,
   reviewServicePayment,
   assignMechanic,
@@ -719,4 +648,6 @@ module.exports = {
   getServiceLaborRates,
   updateServiceLaborRate,
   updateServiceRequestLaborFee,
+  syncCompletedServiceBusinessRecord,
+  transitionServiceRequestStatus,
 };

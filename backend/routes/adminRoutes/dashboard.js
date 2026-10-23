@@ -19,7 +19,6 @@ router.get('/analytics/revenue-concentration', protect, dashboardController.getR
 router.get('/business-records', protect, dashboardController.getBusinessRecords);
 router.get('/transactions', protect, dashboardController.getAllTransactions);
 router.get('/transactions/:id', protect, dashboardController.getTransactionById);
-router.post('/transactions', protect, dashboardController.createTransaction);
 router.put('/transactions/:id', protect, dashboardController.updateTransaction);
 router.delete('/transactions/:id', protect, dashboardController.deleteTransaction);
 

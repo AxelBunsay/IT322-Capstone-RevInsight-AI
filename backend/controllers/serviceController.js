@@ -106,7 +106,9 @@ const createService = async (req, res) => {
       name: req.body.name.trim(),
       description: req.body.description.trim(),
       price: Number(req.body.price),
-      mechanicFee: Number(req.body.mechanicFee)
+      mechanicFee: Number(req.body.mechanicFee),
+      category: (req.body.category || 'General').trim(),
+      durationMinutes: Number(req.body.durationMinutes ?? 60)
     });
     await ServiceLaborRate.updateOne(
       { serviceType: service.name },
@@ -140,6 +142,8 @@ const updateService = async (req, res) => {
     service.description = (req.body.description ?? service.description).trim();
     service.price = Number(req.body.price ?? service.price);
     service.mechanicFee = Number(req.body.mechanicFee ?? service.mechanicFee);
+    service.category = (req.body.category ?? service.category ?? 'General').trim();
+    service.durationMinutes = Number(req.body.durationMinutes ?? service.durationMinutes ?? 60);
     await service.save();
     if (existingService.name !== service.name) {
       await ServiceLaborRate.updateOne(

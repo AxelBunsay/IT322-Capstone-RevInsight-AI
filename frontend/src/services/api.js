@@ -107,7 +107,6 @@ export const api = {
   markCustomerNotificationRead: (id) => request(`/api/notifications/${id}/read`, { method: 'POST', tokenKey: 'customerToken' }),
   cancelCustomerReservation: (reservationId, reason) => request(`/api/reservations/${reservationId}/cancel`, { method: 'POST', body: JSON.stringify({ reason }), tokenKey: 'customerToken' }),
   reorder: (orderId) => request(`/api/orders/${orderId}/reorder`, { method: 'POST', tokenKey: 'customerToken' }),
-  createServiceRequest: (serviceRequest) => request('/api/service-requests', { method: 'POST', body: JSON.stringify(serviceRequest), tokenKey: 'customerToken' }),
   getCustomerServiceRequests: () => request('/api/service-requests/my', { tokenKey: 'customerToken' }),
   submitServiceRequestPayment: (requestId, payment) => {
     const body = new FormData();

@@ -18,6 +18,7 @@ const {
   removePublicImage
 } = require('../utils/paymentReceipt');
 const { createPaymentDecisionNotification } = require('../utils/paymentNotifications');
+const { canTransitionReservationStatus } = require('../utils/reservationStatus');
 
 const validStatuses = ['Pending Down Payment', 'Payment Submitted', 'Reserved', 'Completed', 'Cancelled', 'Expired'];
 const money = (amount) => Math.round((amount + Number.EPSILON) * 100) / 100;
@@ -77,12 +78,14 @@ async function expireReservations() {
         await session.withTransaction(async () => {
           const reservation = await Reservation.findOne({ _id: candidate._id, code: { $exists: true } }).session(session);
           if (!reservation) return;
-          if (reservation.status === 'Pending Down Payment' && (reservation.paymentDueAt ? reservation.paymentDueAt <= now : reservation.createdAt <= new Date(now.getTime() - settings.pendingPaymentHours * 60 * 60 * 1000))) {
+          if (reservation.status === 'Pending Down Payment' && (reservation.paymentDueAt ? reservation.paymentDueAt <= now : reservation.createdAt <= new Date(now.getTime() - settings.pendingPaymentHours * 60 * 60 * 1000))
+            && canTransitionReservationStatus(reservation.status, 'Expired')) {
             reservation.status = 'Expired';
             reservation.expiredAt = now;
             reservation.cancelReason = 'The down payment deadline passed.';
             await reservation.save({ session });
-          } else if (reservation.status === 'Reserved' && reservation.reservedUntil <= now) {
+          } else if (reservation.status === 'Reserved' && reservation.reservedUntil <= now
+            && canTransitionReservationStatus(reservation.status, 'Expired')) {
             await releaseReservedStock(reservation, session);
             reservation.status = 'Expired';
             reservation.expiredAt = now;
@@ -232,7 +235,7 @@ const submitPayment = async (req, res) => {
     await expireReservations();
     const reservation = await Reservation.findOne({ _id: req.params.id, customerId: req.user.userId, code: { $exists: true } });
     if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found.' });
-    if (reservation.status !== 'Pending Down Payment') {
+    if (!canTransitionReservationStatus(reservation.status, 'Payment Submitted')) {
       return res.status(409).json({ success: false, message: 'Payment can only be submitted for a pending down payment.' });
     }
     const settings = await getSettings();
@@ -249,7 +252,7 @@ const submitPayment = async (req, res) => {
         status: 'Pending Down Payment',
         code: { $exists: true }
       }).session(session);
-      if (!current) throw Object.assign(new Error('Payment can only be submitted for a pending down payment.'), { status: 409 });
+      if (!current || !canTransitionReservationStatus(current.status, 'Payment Submitted')) throw Object.assign(new Error('Payment can only be submitted for a pending down payment.'), { status: 409 });
       const submittedAt = new Date();
       await claimPaymentReference({ reference, recordType: 'item', recordId: current._id, session });
       current.paymentReference = reference;
@@ -400,7 +403,7 @@ const confirmReservation = async (req, res) => {
     await session.withTransaction(async () => {
       const reservation = await Reservation.findOne({ _id: req.params.id, code: { $exists: true } }).session(session);
       if (!reservation) throw Object.assign(new Error('Reservation not found.'), { status: 404 });
-      if (reservation.status !== 'Payment Submitted') {
+      if (!canTransitionReservationStatus(reservation.status, 'Reserved')) {
         throw Object.assign(new Error('Only submitted payments can be confirmed.'), { status: 409 });
       }
       for (const item of reservation.items) {
@@ -456,7 +459,7 @@ const rejectReservation = async (req, res) => {
     await session.withTransaction(async () => {
       reservation = await Reservation.findOne({ _id: req.params.id, code: { $exists: true } }).session(session);
       if (!reservation) throw Object.assign(new Error('Reservation not found.'), { status: 404 });
-      if (reservation.status !== 'Payment Submitted') {
+      if (!canTransitionReservationStatus(reservation.status, 'Pending Down Payment')) {
         throw Object.assign(new Error('Only submitted payments can be rejected.'), { status: 409 });
       }
       reservation.status = 'Pending Down Payment';
@@ -499,7 +502,7 @@ const completeReservation = async (req, res) => {
     await session.withTransaction(async () => {
       const reservation = await Reservation.findOne({ _id: req.params.id, code: { $exists: true } }).session(session);
       if (!reservation) throw Object.assign(new Error('Reservation not found.'), { status: 404 });
-      if (reservation.status !== 'Reserved') throw Object.assign(new Error('Only reserved items can be completed.'), { status: 409 });
+      if (!canTransitionReservationStatus(reservation.status, 'Completed')) throw Object.assign(new Error('Only reserved items can be completed.'), { status: 409 });
       for (const item of reservation.items) {
         const product = await Product.findById(item.productId).session(session);
         if (!product || Number(product.reservedQty || 0) < item.qty || product.quantity < item.qty) {
@@ -564,7 +567,7 @@ async function cancelReservation(req, res, isRefundDecisionOnly = false) {
           throw Object.assign(new Error('A refund decision is only required for expired reservations with a confirmed down payment.'), { status: 409 });
         }
       } else {
-        if (reservation.status === 'Completed' || reservation.status === 'Cancelled') {
+        if (!canTransitionReservationStatus(reservation.status, 'Cancelled')) {
           throw Object.assign(new Error('This reservation can no longer be cancelled.'), { status: 409 });
         }
         if ((reservation.status === 'Reserved' || reservation.status === 'Expired' && reservation.amountPaid > 0) && !refundDecision && !reservation.refundDecision) {
@@ -779,6 +782,7 @@ module.exports = {
   completeReservation,
   cancelAdminReservation,
   decideExpiredRefund,
+  canTransitionReservationStatus,
   getPublicSettings,
   getShopSettings,
   getBookingSchedule,

@@ -1,7 +1,10 @@
 import dashboardMock from '../data/dashboardMock.json';
 import { request } from '../../services/api';
+import inventoryConfig from '../../../../shared/inventory.json';
 
 const confirmedStatuses = new Set(['completed', 'paid']);
+const { LOW_STOCK_THRESHOLD } = inventoryConfig;
+// In dev, VITE_ADMIN_USE_MOCKS=false uses the real API instead of demo data.
 const useDemoData = import.meta.env.DEV && import.meta.env.VITE_ADMIN_USE_MOCKS !== 'false';
 
 function unwrapRows(response) {
@@ -116,11 +119,11 @@ function makeDashboardData(stats, orders, inventory) {
   });
 
   const inventoryHealth = inventory.reduce((health, item) => {
-    const quantity = Number(item.quantity || 0);
-    if (quantity <= 0) health.out += 1;
-    else if (quantity <= 10) {
+    const available = Math.max(0, Number(item.quantity || 0) - Number(item.reservedQty || 0));
+    if (available <= 0) health.out += 1;
+    else if (available <= LOW_STOCK_THRESHOLD) {
       health.low += 1;
-      health.lowItems.push({ id: item._id, name: item.name, quantity });
+      health.lowItems.push({ id: item._id, name: item.name, quantity: available });
     } else health.inStock += 1;
     return health;
   }, { inStock: 0, low: 0, out: 0, lowItems: [] });
@@ -175,6 +178,18 @@ export const adminApi = {
   getQuarterlySales: () => request('/api/dashboard/dashboard/quarterly'),
   getRevenueConcentration: () => request('/api/dashboard/analytics/revenue-concentration'),
   getRevenueRisk: () => request('/api/dashboard/analytics/revenue-risk'),
+  askRevenueAI: (question) => request('/api/admin/revenue/ask-ai', {
+    method: 'POST',
+    body: JSON.stringify({ question })
+  }),
+  getRevenueAnalysisData: async () => {
+    const [quarterly, risk, concentration] = await Promise.all([
+      adminApi.getQuarterlySales(),
+      adminApi.getRevenueRisk(),
+      adminApi.getRevenueConcentration()
+    ]);
+    return { quarterly, risk, concentration };
+  },
   getDashboardData: async () => {
     if (useDemoData) return dashboardMock;
     const [statsResponse, orders, inventory] = await Promise.all([adminApi.getDashboardStats(), getOrders(), getInventoryItems()]);
@@ -249,3 +264,5 @@ export const adminApi = {
   confirmServiceRequest: (requestId, mechanicId) => request('/api/service-requests/assign', { method: 'PUT', body: JSON.stringify({ requestId, mechanicId }) }),
   updateAdminServiceRequestStatus: (requestId, status) => request('/api/service-requests/status/admin', { method: 'PUT', body: JSON.stringify({ requestId, status }) })
 };
+
+export { makeDashboardData };
