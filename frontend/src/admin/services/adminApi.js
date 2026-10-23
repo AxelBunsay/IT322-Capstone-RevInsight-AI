@@ -185,8 +185,8 @@ export const adminApi = {
     return makeSeries(await getOrders(), period);
   },
   getInventory: (page = 1, limit = 15) => request(`/api/dashboard/inventory?page=${page}&limit=${limit}`),
-  createInventory: (item) => request('/api/dashboard/inventory', { method: 'POST', body: JSON.stringify(item) }),
-  updateInventory: (id, item) => request(`/api/dashboard/inventory/${id}`, { method: 'PUT', body: JSON.stringify(item) }),
+  createInventory: (item) => request('/api/dashboard/inventory', { method: 'POST', body: item }),
+  updateInventory: (id, item) => request(`/api/dashboard/inventory/${id}`, { method: 'PUT', body: item }),
   deleteInventory: (id) => request(`/api/dashboard/inventory/${id}`, { method: 'DELETE' }),
   getBusinessRecords: (query = {}) => {
     const params = new URLSearchParams();

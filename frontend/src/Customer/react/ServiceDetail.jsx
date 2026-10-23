@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../services/api';
 import { CustomerPage } from './CustomerLayout';
 import { useCustomerPrototype } from './useCustomerPrototype';
+import { clearCustomerAuthAction, readCustomerAuthAction, saveCustomerAuthAction } from './customerAuthAction';
 import '../styles/customer-flow.css';
 
 function formatDuration(minutes) {
@@ -74,7 +75,12 @@ export default function ServiceDetail() {
   const [loadedServiceId, setLoadedServiceId] = useState('');
   const [serviceRetryKey, setServiceRetryKey] = useState(0);
   const isLoadingService = loadedServiceId !== serviceId;
-  const [bookingDate, setBookingDate] = useState(() => location.state?.bookingDate || manilaDateKey());
+  const [bookingDate, setBookingDate] = useState(() => {
+    const action = location.state?.resumeAction ? readCustomerAuthAction() : null;
+    return action?.type === 'service' && action.serviceId === serviceId
+      ? action.date
+      : location.state?.bookingDate || manilaDateKey();
+  });
   const [timeSlot, setTimeSlot] = useState('');
   const [vehicle, setVehicle] = useState('');
   const [notes, setNotes] = useState('');
@@ -87,6 +93,8 @@ export default function ServiceDetail() {
   const [isFindingNext, setIsFindingNext] = useState(false);
   const [showVehicleForm, setShowVehicleForm] = useState(false);
   const [vehicleForm, setVehicleForm] = useState({ make: '', model: '', year: '', plate: '' });
+  const resumedActionRef = useRef('');
+  const resumeRequestedRef = useRef(Boolean(location.state?.resumeAction));
   const today = manilaDateKey();
 
   useEffect(() => {
@@ -115,15 +123,45 @@ export default function ServiceDetail() {
       setSchedule(response);
       setSlots(response.slots || []);
       setClosedMessage(response.open ? '' : response.closedMessage || '');
+      if (resumeRequestedRef.current) {
+        const action = readCustomerAuthAction();
+        if (action?.type === 'service' && action.serviceId === serviceId && action.date === date && action.returnPath === location.pathname) {
+          const actionKey = `${action.createdAt}:${action.serviceId}:${action.date}:${action.time}`;
+          if (resumedActionRef.current !== actionKey) {
+            resumedActionRef.current = actionKey;
+            const matchingSlot = response.slots?.find((slot) => slot.startTime === action.time);
+            if (matchingSlot?.status === 'available') {
+              setTimeSlot(action.time);
+              setVehicle('');
+              setBookingError('Choose a saved motorcycle to continue with this booking.');
+            } else {
+              setTimeSlot('');
+              setBookingError('That booking time is no longer available. Please choose another time.');
+            }
+            clearCustomerAuthAction();
+            resumeRequestedRef.current = false;
+            navigate(location.pathname, { replace: true, state: null });
+          }
+        } else {
+          clearCustomerAuthAction();
+          resumeRequestedRef.current = false;
+          navigate(location.pathname, { replace: true, state: null });
+        }
+      }
     } catch (error) {
       setSchedule(error.details || null);
       setSlots([]);
       setClosedMessage('');
       setAvailabilityError(error.message || 'Booking times could not be loaded.');
+      if (resumeRequestedRef.current) {
+        clearCustomerAuthAction();
+        resumeRequestedRef.current = false;
+        navigate(location.pathname, { replace: true, state: null });
+      }
     } finally {
       setIsLoadingSlots(false);
     }
-  }, [serviceId]);
+  }, [location.pathname, navigate, serviceId]);
 
   useEffect(() => {
     if (service) void Promise.resolve().then(() => loadSlots(bookingDate));
@@ -201,6 +239,19 @@ export default function ServiceDetail() {
 
   const addBooking = async () => {
     if (!canAddBooking || !selectedSlot) return;
+    const customerToken = localStorage.getItem('customerToken');
+    if (!customerToken || customerToken === 'prototype-guest') {
+      saveCustomerAuthAction({
+        type: 'service',
+        returnPath: location.pathname,
+        serviceId: service._id,
+        date: bookingDate,
+        time: timeSlot,
+        motorcycle: vehicle.trim()
+      });
+      navigate('/customer/login');
+      return;
+    }
     setBookingError('');
     try {
       const latest = await api.getServiceSlots(service._id, bookingDate);

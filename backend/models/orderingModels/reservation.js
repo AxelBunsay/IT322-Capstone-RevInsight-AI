@@ -7,6 +7,7 @@ const reservationItemSchema = new mongoose.Schema({
     required: true
   },
   name: { type: String, required: true },
+  imageUrl: { type: String, default: '' },
   unitPrice: { type: Number, required: true, min: 0 },
   qty: { type: Number, required: true, min: 1 },
   lineTotal: { type: Number, required: true, min: 0 }

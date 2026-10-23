@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const dashboardController = require('../../controllers/adminControllers/dashboardController');
 const { protect } = require('../../middleware/adminAuth');
+const productImageUpload = require('../../middleware/productImageUpload');
 
 // Dashboard Routes
 router.get('/dashboard', protect, dashboardController.getDashboardStats);
@@ -25,8 +26,8 @@ router.delete('/transactions/:id', protect, dashboardController.deleteTransactio
 // Inventory Routes
 router.get('/inventory', protect, dashboardController.getAllInventory);
 router.get('/inventory/:id', protect, dashboardController.getInventoryItem);
-router.post('/inventory', protect, dashboardController.addInventoryItem);
-router.put('/inventory/:id', protect, dashboardController.updateInventoryItem);
+router.post('/inventory', protect, productImageUpload, dashboardController.addInventoryItem);
+router.put('/inventory/:id', protect, productImageUpload, dashboardController.updateInventoryItem);
 router.delete('/inventory/:id', protect, dashboardController.deleteInventoryItem);
 
 // Reports

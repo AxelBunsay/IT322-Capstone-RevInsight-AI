@@ -8,6 +8,7 @@ function formatBusinessRecord(record) {
     ...record,
     id: record.isReservation ? record.code : record._id,
     customer: record.customer || "Unknown",
+    customerPhone: record.customer === "Deleted customer" ? "" : record.customerPhone,
     date: new Date(record.completedAt || record.createdAt).toLocaleDateString(
       "en-PH",
     ),
@@ -54,7 +55,8 @@ const formatMoney = (value) => `₱${Number(value || 0).toLocaleString("en-PH", 
 
 function formatReservationRecord(reservation) {
   const customer = reservation.customerId;
-  const customerName = customer && typeof customer === "object"
+  const isDeletedCustomer = Boolean(customer && typeof customer === "object" && customer.isDeleted);
+  const customerName = customer && typeof customer === "object" && !customer.isDeleted
     ? `${customer.firstName || ""} ${customer.lastName || ""}`.trim()
     : "";
 
@@ -64,8 +66,8 @@ function formatReservationRecord(reservation) {
     isReservation: true,
     recordType: "product",
     recordLabel: "Item",
-    customer: customerName || reservation.customerName || "Unknown",
-    customerPhone: (customer && typeof customer === "object" ? customer.phoneNumber : "") || reservation.customerPhone || "",
+    customer: isDeletedCustomer ? "Deleted customer" : customerName || reservation.customerName || "Unknown",
+    customerPhone: isDeletedCustomer ? "" : (customer && typeof customer === "object" ? customer.phoneNumber : "") || reservation.customerPhone || "",
     date: new Date(reservation.createdAt).toLocaleString("en-PH"),
     items: (reservation.items || []).map((item) => `${item.name} × ${item.qty}`).join(", ") || "N/A",
     reservationItems: reservation.items || [],
@@ -92,7 +94,7 @@ function formatServiceRequestRecord(request) {
     isServiceRequest: true,
     recordType: "service",
     recordLabel: "Service",
-    customer: customerName || customer.email || "Unknown",
+    customer: customer.isDeleted ? "Deleted customer" : customerName || customer.email || "Unknown",
     date: request.scheduledDate
       ? new Date(request.scheduledDate).toLocaleDateString("en-PH")
       : new Date(request.createdAt).toLocaleDateString("en-PH"),
@@ -669,6 +671,7 @@ function Transactions() {
                       {activeTab === "items" && transaction.reservationItems.length
                         ? transaction.reservationItems.map((item) => (
                             <span className="transaction-reservation-item" key={item.productId || item.name}>
+                              {item.imageUrl && <img src={item.imageUrl} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}
                               {item.name} × {item.qty} · {formatMoney(item.lineTotal)}
                             </span>
                           ))

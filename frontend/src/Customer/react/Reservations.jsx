@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { CustomerPage } from './CustomerLayout';
 import { useCustomerPrototype } from './useCustomerPrototype';
+import ProductImage from './ProductImage';
 import '../styles/customer-flow.css';
 
 const money = (value) => `₱${Number(value || 0).toLocaleString('en-PH', { maximumFractionDigits: 2 })}`;
@@ -26,7 +27,7 @@ function ItemReservationCard({ reservation }) {
     <div className="customer-reservation-card-top">
       <div>
         <span className="customer-cart-item-kind">RESERVATION · {reservation.code}</span>
-        <h2>{reservation.items.map((item) => `${item.name} × ${item.qty}`).join(', ')}</h2>
+        <div className="customer-reservation-item-list">{reservation.items.map((item) => <span className="customer-reservation-item-row" key={item.productId}><ProductImage src={item.imageUrl} alt="" className="customer-inline-product-image" fallback={<span className="customer-inline-product-placeholder" aria-hidden="true">▣</span>} /><strong>{item.name} × {item.qty}</strong></span>)}</div>
         <p>{keyDate}</p>
       </div>
       <span className={`customer-status-pill ${statusClass(reservation.status)}`}>{reservation.status}</span>

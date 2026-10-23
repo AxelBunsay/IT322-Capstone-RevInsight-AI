@@ -136,7 +136,14 @@ const createReservation = async (req, res) => {
         return res.status(409).json({ success: false, message: `Only ${available} of ${product.name} are currently available.` });
       }
       const unitPrice = money(product.price);
-      items.push({ productId: product._id, name: product.name, unitPrice, qty: requested.qty, lineTotal: money(unitPrice * requested.qty) });
+      items.push({
+        productId: product._id,
+        name: product.name,
+        imageUrl: product.imageUrl || product.image || '',
+        unitPrice,
+        qty: requested.qty,
+        lineTotal: money(unitPrice * requested.qty)
+      });
     }
 
     const total = money(items.reduce((sum, item) => sum + item.lineTotal, 0));
@@ -349,7 +356,7 @@ const getAdminReservations = async (req, res) => {
       ];
     }
     const populateAdminReservation = (builder) => builder
-      .populate('customerId', 'firstName lastName email phoneNumber')
+      .populate('customerId', 'firstName lastName email phoneNumber name isDeleted')
       .populate('verifiedBy', 'username')
       .populate('refundDecisionBy', 'username');
     let reservations;

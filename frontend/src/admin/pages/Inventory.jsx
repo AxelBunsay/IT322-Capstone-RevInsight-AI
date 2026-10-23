@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { adminApi as api } from "../services/adminApi";
 import { AdminDialog, AdminPageFrame } from "./ManagementPageComponents";
+import ProductImage from "../../Customer/react/ProductImage";
 
 const validateItemForm = (form) => {
   const errors = {};
@@ -54,6 +55,12 @@ function Inventory() {
   const [itemFormErrors, setItemFormErrors] = useState({});
   const [itemFormError, setItemFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [imageFileName, setImageFileName] = useState("");
+  const [imageError, setImageError] = useState("");
+  const [removeImage, setRemoveImage] = useState(false);
+  const imageInputRef = useRef(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -156,6 +163,11 @@ function Inventory() {
     setIsAdding(!item);
     setItemFormErrors({});
     setItemFormError("");
+    setImageFile(null);
+    setImagePreview(item?.imageUrl || item?.image || "");
+    setImageFileName("");
+    setImageError("");
+    setRemoveImage(false);
     setForm(
       item
         ? {
@@ -178,11 +190,13 @@ function Inventory() {
     setError("");
 
     try {
-      const payload = {
-        ...form,
-        price: Number(form.price),
-        quantity: Number(form.quantity),
-      };
+      const payload = new FormData();
+      payload.append("name", form.name);
+      payload.append("price", String(Number(form.price)));
+      payload.append("quantity", String(Number(form.quantity)));
+      payload.append("category", form.category);
+      if (imageFile) payload.append("image", imageFile);
+      if (removeImage) payload.append("removeImage", "true");
 
       if (editingItem) {
         await api.updateInventory(editingItem.id, payload);
@@ -192,6 +206,9 @@ function Inventory() {
 
       setEditingItem(null);
       setIsAdding(false);
+      if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+      setImageFile(null);
+      setImagePreview("");
       setPage(1);
       setRefreshKey((key) => key + 1);
       setToast(editingItem ? "Item updated successfully." : "Item added successfully.");
@@ -281,8 +298,57 @@ function Inventory() {
   const visibleServiceRows = serviceRows.slice((page - 1) * 15, page * 15);
 
   const closeItemDialog = () => {
+    if (isSaving) return;
+    if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
     setEditingItem(null);
     setIsAdding(false);
+    setImageFile(null);
+    setImagePreview("");
+    setImageFileName("");
+    setImageError("");
+    setRemoveImage(false);
+  };
+  const selectItemImage = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setImageError("");
+    setImageFileName(file.name);
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const acceptedTypes = new Map([
+      ["image/png", "png"],
+      ["image/jpeg", "jpg"],
+      ["image/webp", "webp"]
+    ]);
+    const expectedExtension = acceptedTypes.get(file.type);
+    if (!expectedExtension || (extension !== expectedExtension && !(expectedExtension === "jpg" && extension === "jpeg"))) {
+      if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+      setImageFile(null);
+      setImagePreview(removeImage ? "" : editingItem?.imageUrl || editingItem?.image || "");
+      setImageError("Choose a PNG, JPG, or WEBP image.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+      setImageFile(null);
+      setImagePreview(removeImage ? "" : editingItem?.imageUrl || editingItem?.image || "");
+      setImageError("Image must be 2 MB or smaller.");
+      return;
+    }
+
+    if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setRemoveImage(false);
+  };
+  const removeItemImage = () => {
+    if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setImageFile(null);
+    setImagePreview("");
+    setImageFileName("");
+    setImageError("");
+    setRemoveImage(true);
   };
   const closeServiceDialog = () => {
     if (isSavingService) return;
@@ -391,7 +457,7 @@ function Inventory() {
                   <tbody>
                     {filteredItems.map((item) => (
                       <tr key={item.id}>
-                        <td>{item.name}</td>
+                        <td><span className="inventory-item-name"><ProductImage src={item.imageUrl || item.image} alt="" className="inventory-item-thumbnail" loading="lazy" width={80} fallback={<span className="inventory-item-thumbnail is-placeholder">{String(item.category || "?").charAt(0).toUpperCase()}</span>} /><span>{item.name}</span></span></td>
                         <td>{item.category}</td>
                         <td className="price-text">{item.price}</td>
                         <td
@@ -612,6 +678,22 @@ function Inventory() {
               />
               {itemFormErrors.category && <small className="inventory-field-error">{itemFormErrors.category}</small>}
             </label>
+            <div className="inventory-image-field">
+              <span>Image <small>(optional)</small></span>
+              <div className="inventory-image-controls">
+                {imagePreview && !removeImage
+                  ? <img className="inventory-image-preview" src={imagePreview} alt="Product image preview" />
+                  : <div className="inventory-image-preview is-empty" aria-label="No product image selected">No image</div>}
+                <div className="inventory-image-actions">
+                  <input ref={imageInputRef} type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" onChange={selectItemImage} hidden />
+                  <button className="btn-small" type="button" onClick={() => imageInputRef.current?.click()}>{imagePreview && !removeImage ? "Replace" : "Choose image"}</button>
+                  {imagePreview && !removeImage && <button className="btn-small btn-delete" type="button" onClick={removeItemImage}>Remove</button>}
+                  <small className="inventory-image-filename">{imageFileName || (imagePreview ? "Current image" : "No image selected")}</small>
+                </div>
+              </div>
+              {imageError && <small className="inventory-field-error" role="alert">{imageError}</small>}
+              <small>PNG, JPG, or WEBP · up to 2 MB</small>
+            </div>
             <div className="admin-dialog-actions">
               <button
                 className="btn-small"
@@ -621,7 +703,7 @@ function Inventory() {
                 Cancel
               </button>
               <button className="btn-primary" type="submit" disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Item"}
+                {isSaving ? imageFile ? "Uploading image..." : "Saving..." : "Save Item"}
               </button>
             </div>
           </form>

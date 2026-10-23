@@ -6,10 +6,11 @@ import '../styles/shared.css';
 import '../styles/customer-flow.css';
 
 export function CustomerAuthGuard({ children }) {
+  const location = useLocation();
   const customerToken = localStorage.getItem('customerToken');
   const hasCustomerAccount = Boolean(customerToken && customerToken !== 'prototype-guest');
 
-  return hasCustomerAccount ? children : <Navigate to="/customer/login" replace />;
+  return hasCustomerAccount ? children : <Navigate to="/customer/login" replace state={{ from: location }} />;
 }
 
 export function CustomerHeader() {
@@ -175,8 +176,11 @@ export function CustomerPage({ title, description, children, includeHeader = tru
 
 export function CustomerAuthShell({ activeTab, children }) {
   return <main className="customer-auth-page">
-    <CustomerHeader />
     <section className="customer-auth-showcase">
+      <Link className="customer-auth-brand" to="/customer/shop">
+        <span className="customer-auth-logo" aria-hidden="true">🔧</span>
+        <span><strong>Manoy&apos;s Motorcycle</strong><small>Parts, Accessories &amp; Services</small></span>
+      </Link>
       <div className="customer-auth-copy">
         <p className="customer-auth-eyebrow">MANOY&apos;S MOTORCYCLE PARTS &amp; ACCESSORIES</p>
         <h1>Everything your ride needs.</h1>
@@ -189,6 +193,7 @@ export function CustomerAuthShell({ activeTab, children }) {
       </div>
     </section>
     <section className="customer-auth-panel">
+      <Link className="customer-auth-back" to="/customer/shop">← Back to shop</Link>
       <div className="customer-auth-content">
         <nav className="customer-auth-tabs" aria-label="Customer account">
           <Link className={activeTab === 'login' ? 'active' : ''} to="/customer/login">Sign In</Link>
@@ -197,6 +202,5 @@ export function CustomerAuthShell({ activeTab, children }) {
         {children}
       </div>
     </section>
-    <CustomerFooter />
   </main>;
 }

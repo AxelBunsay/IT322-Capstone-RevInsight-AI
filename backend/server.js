@@ -7,6 +7,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const userRoutes = require('./routes/user');
+const customerRoutes = require('./routes/customer');
 const mechanicRoutes = require('./routes/mechanic');
 const adminRoutes = require('./routes/adminRoutes/admin');
 const productRoutes = require('./routes/adminRoutes/product');
@@ -135,6 +136,7 @@ mongoose
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/customers', customerRoutes);
 app.use('/api/mechanics', mechanicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);

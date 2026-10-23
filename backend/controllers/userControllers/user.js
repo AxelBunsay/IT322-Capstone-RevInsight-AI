@@ -1,9 +1,13 @@
 const User = require('../../models/user');
 const PendingUser = require('../../models/pendingUser');
+const Reservation = require('../../models/orderingModels/reservation');
+const ServiceRequest = require('../../models/serviceRequest');
+const Notification = require('../../models/notification');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE,
@@ -348,6 +352,10 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    if (user.isDeleted) {
+      return res.status(401).json({ message: 'This customer account has been deleted.' });
+    }
+
     // Check if email is verified
     if (!user.isEmailVerified) {
       return res.status(401).json({ message: 'Please verify your email first' });
@@ -448,6 +456,159 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const updateMyProfile = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      {
+        $set: {
+          firstName: req.body.firstName.trim(),
+          lastName: req.body.lastName.trim(),
+          phoneNumber: req.body.phoneNumber.trim()
+        }
+      },
+      { new: true, runValidators: true }
+    );
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ message: 'Customer account not found.' });
+    }
+
+    return res.status(200).json({
+      message: 'Profile updated successfully.',
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber
+      }
+    });
+  } catch (error) {
+    console.error('[updateMyProfile] error', error);
+    return res.status(500).json({ message: 'Failed to update profile. Please try again.' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body || {};
+    if (
+      typeof currentPassword !== 'string' || !currentPassword
+      || typeof newPassword !== 'string' || !newPassword
+      || typeof confirmPassword !== 'string' || !confirmPassword
+    ) {
+      return res.status(400).json({ message: 'Current password, new password, and confirmation are required.' });
+    }
+    if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters and include a letter and a number.' });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'New password and confirmation do not match.' });
+    }
+
+    const user = await User.findById(req.user.userId).select('+password');
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ message: 'Customer account not found.' });
+    }
+    if (!(await bcrypt.compare(currentPassword, user.password))) {
+      return res.status(401).json({ message: 'Current password is incorrect.' });
+    }
+    if (await bcrypt.compare(newPassword, user.password)) {
+      return res.status(400).json({ message: 'New password must be different from your current password.' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    return res.status(200).json({ message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('[changePassword] error', error);
+    return res.status(500).json({ message: 'Failed to change password. Please try again.' });
+  }
+};
+
+const deleteAccount = async (req, res) => {
+  try {
+    const { password, confirmation } = req.body || {};
+    if (typeof password !== 'string' || !password) {
+      return res.status(400).json({ message: 'Your password is required to delete your account.' });
+    }
+    if (typeof confirmation !== 'string' || confirmation !== 'DELETE') {
+      return res.status(400).json({ message: 'Type DELETE to confirm account deletion.' });
+    }
+
+    const user = await User.findById(req.user.userId).select('+password');
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ message: 'Customer account not found.' });
+    }
+    if (!(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: 'Password is incorrect.' });
+    }
+
+    const [activeReservation, activeBooking] = await Promise.all([
+      Reservation.exists({
+        customerId: user._id,
+        status: { $in: ['Pending Down Payment', 'Payment Submitted', 'Reserved'] }
+      }),
+      ServiceRequest.exists({
+        $or: [{ user: user._id }, { customerId: user._id }],
+        status: { $in: ['pending', 'assigned', 'in-progress'] }
+      })
+    ]);
+    if (activeReservation || activeBooking) {
+      return res.status(409).json({
+        message: 'Finish or cancel your active reservations and bookings first.',
+        records: {
+          reservations: Boolean(activeReservation),
+          bookings: Boolean(activeBooking)
+        }
+      });
+    }
+
+    const deletedAt = new Date();
+    const session = await mongoose.startSession();
+    let result;
+    try {
+      await session.withTransaction(async () => {
+        result = await User.updateOne(
+          { _id: user._id, isDeleted: { $ne: true } },
+          {
+            $set: {
+              isDeleted: true,
+              deletedAt,
+              name: 'Deleted customer',
+              firstName: 'Deleted',
+              lastName: 'customer',
+              email: `deleted-${user._id}@deleted.local`,
+              phoneNumber: null,
+              isActive: false
+            },
+            $unset: {
+              password: 1,
+              passwordHash: 1,
+              savedVehicles: 1,
+              profileImage: 1
+            }
+          },
+          { session }
+        );
+        if (result.modifiedCount === 1) {
+          await Notification.deleteMany({ audience: 'customer', customerId: user._id }, { session });
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
+    if (result.modifiedCount !== 1) {
+      return res.status(409).json({ message: 'This customer account has already been deleted.' });
+    }
+
+    return res.status(200).json({ message: 'Your account was deleted.' });
+  } catch (error) {
+    console.error('[deleteAccount] error', error);
+    return res.status(500).json({ message: 'Failed to delete account. Please try again.' });
+  }
+};
+
 // Get purchase history
 const getPurchaseHistory = async (req, res) => {
   try {
@@ -492,6 +653,9 @@ module.exports = {
   login,
   getProfile,
   updateProfile,
+  updateMyProfile,
+  changePassword,
+  deleteAccount,
   getPurchaseHistory,
   getReceipts
 };

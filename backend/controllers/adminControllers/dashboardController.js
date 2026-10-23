@@ -8,6 +8,13 @@ const Reservation = require('../../models/orderingModels/reservation');
 const { validateProductInput } = require('../../utils/inventoryValidation');
 const { archiveOrDeleteProduct, hasActiveProductReservation } = require('../../utils/safeDeleteInventoryRecord');
 const { expireReservations } = require('../reservationController');
+const {
+  uploadProductImage,
+  getProductImagePublicId,
+  removeProductImageSafely
+} = require('../../utils/productImage');
+
+const isRemoveImageRequested = (value) => value === true || value === 'true';
 
 const revenueStatuses = ['completed', 'Paid'];
 const revenueAmount = { $ifNull: ['$totalPrice', '$totalAmount'] };
@@ -444,8 +451,32 @@ const getBusinessRecords = async (req, res) => {
         (reservation.items || []).reduce((total, item) => total + Number(item.qty || 0), 0)
       ])
     ]);
+    const serviceRequests = records.some((record) => record.recordType === 'service')
+      ? await ServiceRequest.find({
+        _id: {
+          $in: records
+            .filter((record) => record.recordType === 'service')
+            .map((record) => record.sourceId)
+        }
+      }).select('user customerId').lean()
+      : [];
+    const linkedCustomerIds = [
+      ...reservationRows.map((reservation) => reservation.customerId).filter(Boolean),
+      ...serviceRequests.flatMap((request) => [request.user, request.customerId].filter(Boolean))
+    ];
+    const deletedCustomerIds = new Set(
+      (linkedCustomerIds.length
+        ? await User.find({ _id: { $in: linkedCustomerIds }, isDeleted: true }).select('_id').lean()
+        : []).map((customer) => String(customer._id))
+    );
+    const deletedServiceRequestIds = new Set(
+      serviceRequests
+        .filter((request) => deletedCustomerIds.has(String(request.user || request.customerId)))
+        .map((request) => String(request._id))
+    );
     const recordsWithQuantity = records.map((record) => ({
       ...record.toObject(),
+      ...(deletedServiceRequestIds.has(String(record.sourceId)) ? { customer: 'Deleted customer' } : {}),
       quantity: quantitiesByOrderId.get(record.sourceId.toString()),
       paid: record.recordType === 'product' ? Number(record.amount || 0) : null,
       balance: record.recordType === 'product' ? 0 : null
@@ -458,7 +489,9 @@ const getBusinessRecords = async (req, res) => {
         recordType: 'product',
         isReservation: true,
         sourceId: reservation._id,
-        customer: reservation.customerName || 'Unknown',
+        customer: deletedCustomerIds.has(String(reservation.customerId))
+          ? 'Deleted customer'
+          : reservation.customerName || 'Unknown',
         itemName: (reservation.items || []).map((item) => item.name).join(', '),
         amount: Number(reservation.total || 0),
         paid: Number(reservation.amountPaid || 0),
@@ -707,6 +740,7 @@ const getInventoryItem = async (req, res) => {
 
 // Add Inventory Item
 const addInventoryItem = async (req, res) => {
+  let uploadedImage;
   try {
     const fieldErrors = validateProductInput(req.body);
     if (Object.keys(fieldErrors).length) {
@@ -716,7 +750,14 @@ const addInventoryItem = async (req, res) => {
         fieldErrors
       });
     }
-    const item = new Product(req.body);
+    if (req.file) uploadedImage = await uploadProductImage(req.file);
+    const item = new Product({
+      name: req.body.name,
+      price: req.body.price,
+      quantity: req.body.quantity,
+      category: req.body.category,
+      ...(uploadedImage || {})
+    });
     await item.save();
 
     res.status(201).json({
@@ -725,13 +766,17 @@ const addInventoryItem = async (req, res) => {
       data: item
     });
   } catch (error) {
+    if (uploadedImage?.imagePublicId) {
+      await removeProductImageSafely(uploadedImage.imagePublicId, 'addInventoryItem.rollback');
+    }
     console.error('[addInventoryItem] error', error);
-    res.status(500).json({ success: false, message: 'Failed to add inventory item. Please try again.' });
+    res.status(error.status || 500).json({ success: false, message: error.message || 'Failed to add inventory item. Please try again.' });
   }
 };
 
 // Update Inventory Item
 const updateInventoryItem = async (req, res) => {
+  let uploadedImage;
   try {
     const fieldErrors = validateProductInput(req.body);
     if (Object.keys(fieldErrors).length) {
@@ -751,6 +796,14 @@ const updateInventoryItem = async (req, res) => {
         message: `Stock cannot be lower than the ${currentItem.reservedQty} units currently reserved.`
       });
     }
+    if (req.file) uploadedImage = await uploadProductImage(req.file);
+    const oldImagePublicId = currentItem.imagePublicId
+      || getProductImagePublicId(currentItem.imageUrl || currentItem.image);
+    const imageUpdate = uploadedImage
+      ? { ...uploadedImage, image: uploadedImage.imageUrl }
+      : isRemoveImageRequested(req.body.removeImage)
+        ? { image: null, imageUrl: null, imagePublicId: null }
+        : {};
     const item = await Product.findOneAndUpdate(
       {
         _id: req.params.id,
@@ -763,16 +816,24 @@ const updateInventoryItem = async (req, res) => {
         name: req.body.name.trim(),
         price: Number(req.body.price),
         quantity: Number(req.body.quantity),
-        category: req.body.category.trim()
+        category: req.body.category.trim(),
+        ...imageUpdate
       },
       { new: true, runValidators: true }
     );
 
     if (!item) {
+      if (uploadedImage?.imagePublicId) {
+        await removeProductImageSafely(uploadedImage.imagePublicId, 'updateInventoryItem.rollback');
+      }
       return res.status(409).json({
         success: false,
         message: 'Stock changed while saving. It cannot be set below the quantity currently reserved.'
       });
+    }
+
+    if ((uploadedImage || isRemoveImageRequested(req.body.removeImage)) && oldImagePublicId) {
+      await removeProductImageSafely(oldImagePublicId, 'updateInventoryItem');
     }
 
     res.json({
@@ -781,8 +842,11 @@ const updateInventoryItem = async (req, res) => {
       data: item
     });
   } catch (error) {
+    if (uploadedImage?.imagePublicId) {
+      await removeProductImageSafely(uploadedImage.imagePublicId, 'updateInventoryItem.rollback');
+    }
     console.error('[updateInventoryItem] error', error);
-    res.status(500).json({ success: false, message: 'Failed to update inventory item. Please try again.' });
+    res.status(error.status || 500).json({ success: false, message: error.message || 'Failed to update inventory item. Please try again.' });
   }
 };
 
@@ -804,6 +868,12 @@ const deleteInventoryItem = async (req, res) => {
     }
 
     const { archived } = await archiveOrDeleteProduct(item);
+    if (!archived) {
+      await removeProductImageSafely(
+        item.imagePublicId || getProductImagePublicId(item.imageUrl || item.image),
+        'deleteInventoryItem'
+      );
+    }
     res.json({
       success: true,
       archived,

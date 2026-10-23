@@ -52,9 +52,19 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(credentials)
   }),
-  updateCustomerProfile: (profile) => request('/api/users/profile', {
+  updateCustomerProfile: (profile) => request('/api/customers/me', {
     method: 'PUT',
     body: JSON.stringify(profile),
+    tokenKey: 'customerToken'
+  }),
+  changeCustomerPassword: (passwords) => request('/api/customers/me/password', {
+    method: 'POST',
+    body: JSON.stringify(passwords),
+    tokenKey: 'customerToken'
+  }),
+  deleteCustomerAccount: (confirmation) => request('/api/customers/me', {
+    method: 'DELETE',
+    body: JSON.stringify(confirmation),
     tokenKey: 'customerToken'
   }),
   registerCustomer: (userData) => request('/api/users/register-request', {

@@ -102,9 +102,14 @@ export function CustomerPrototypeProvider({ children }) {
   const updateProfile = (profile) => setState((current) => ({ ...current, profile: { ...current.profile, ...profile } }));
   const addVehicle = (vehicle) => setState((current) => ({ ...current, vehicles: [...current.vehicles, { ...vehicle, id: `VEH-${Date.now()}` }] }));
   const addAddress = (address) => setState((current) => ({ ...current, addresses: [...current.addresses, { ...address, id: `ADDR-${Date.now()}` }] }));
+  const clearCustomerData = () => {
+    setState({ cart: [], wishlist: [], orders: [], reservations: [], vehicles: [], addresses: [], profile: {} });
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('customerUser');
+  };
 
   return (
-    <CustomerPrototypeContext.Provider value={{ ...state, addCartItem, updateCartItem, setCartItemStock, removeCartItem, replaceCartItem, toggleWishlist, placeOrder, updateProfile, addVehicle, addAddress }}>
+    <CustomerPrototypeContext.Provider value={{ ...state, addCartItem, updateCartItem, setCartItemStock, removeCartItem, replaceCartItem, toggleWishlist, placeOrder, updateProfile, addVehicle, addAddress, clearCustomerData }}>
       {children}
     </CustomerPrototypeContext.Provider>
   );

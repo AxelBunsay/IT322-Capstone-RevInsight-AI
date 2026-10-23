@@ -32,6 +32,32 @@ const validateUpdateProfile = (req, res, next) => {
   next();
 };
 
+const validateCustomerProfile = (req, res, next) => {
+  const { firstName, lastName, phoneNumber } = req.body || {};
+
+  if (typeof firstName !== 'string' || !firstName.trim()) {
+    return res.status(400).json({ message: 'First name is required.' });
+  }
+  if (typeof lastName !== 'string' || !lastName.trim()) {
+    return res.status(400).json({ message: 'Last name is required.' });
+  }
+  if (typeof phoneNumber !== 'string') {
+    return res.status(400).json({ message: 'Phone number is required.' });
+  }
+
+  const digits = phoneNumber.replace(/\D/g, '');
+  const localNumber = digits.startsWith('63')
+    ? digits.slice(2)
+    : digits.startsWith('0')
+      ? digits.slice(1)
+      : digits;
+  if (!/^9\d{9}$/.test(localNumber)) {
+    return res.status(400).json({ message: 'Enter a valid Philippine mobile number.' });
+  }
+
+  next();
+};
+
 const validateCreateMechanic = (req, res, next) => {
   const { email, password, firstName, lastName, phoneNumber, specialization, yearsOfExperience } = req.body;
 
@@ -91,6 +117,7 @@ module.exports = {
   validateRegister,
   validateLogin,
   validateUpdateProfile,
+  validateCustomerProfile,
   validateCreateMechanic,
   validateUpdateMechanic
 };

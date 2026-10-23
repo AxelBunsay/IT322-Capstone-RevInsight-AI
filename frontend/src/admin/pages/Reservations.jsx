@@ -197,7 +197,7 @@ function Reservations() {
             return <article className="reservation-admin-item" key={reservation._id}>
               <div className="reservation-admin-item-heading"><div><strong>{reservation.code}</strong><span>{reservation.status}</span></div><small>{new Date(reservation.createdAt).toLocaleString('en-PH')}</small></div>
               <p className="reservation-admin-customer">{customerName || 'Customer'} {customer?.phoneNumber || reservation.customerPhone}</p>
-              <ul>{reservation.items.map((item) => <li key={item.productId}>{item.name} × {item.qty} · {money(item.lineTotal)}</li>)}</ul>
+              <ul className="reservation-admin-line-items">{reservation.items.map((item) => <li key={item.productId}>{item.imageUrl && <img src={item.imageUrl} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}<span>{item.name} × {item.qty} · {money(item.lineTotal)}</span></li>)}</ul>
               <div className="reservation-admin-summary"><span>Total <strong>{money(reservation.total)}</strong></span><span>Down payment <strong>{money(reservation.downPaymentAmount)}</strong></span><span>Balance <strong>{money(reservation.balanceDue)}</strong></span></div>
               {reservation.paymentReference && <p className="reservation-admin-payment">Payment: {reservation.paymentMethod} · Ref {reservation.paymentReference}{reservation.paymentProofUrl && <> · <a href={reservation.paymentProofUrl} target="_blank" rel="noreferrer">View proof</a></>}</p>}
               {reservation.rejectionReason && <p className="reservation-admin-payment">Last rejection: {reservation.rejectionReason}</p>}
