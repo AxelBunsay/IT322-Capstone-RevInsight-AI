@@ -32,6 +32,12 @@ export default function ProductDetail() {
   }, [productId]);
 
   useEffect(() => {
+    if (!actionNotice) return undefined;
+    const timeout = window.setTimeout(() => setActionNotice(''), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [actionNotice]);
+
+  useEffect(() => {
     if (!location.state?.resumeAction || !product) return undefined;
     const action = readCustomerAuthAction();
     if (!action || action.type !== 'item' || action.itemId !== productId || action.returnPath !== location.pathname) {
@@ -94,7 +100,7 @@ export default function ProductDetail() {
 
   return <CustomerPage title={product.name} description="Product details and availability.">
     <div className="customer-flow-page">
-      {actionNotice && <p className={actionNotice.startsWith('Added') ? 'customer-success' : 'customer-error'} role="status">{actionNotice}</p>}
+      {actionNotice && !actionNotice.startsWith('Added') && <p className="customer-error" role="alert">{actionNotice}</p>}
       <nav className="customer-breadcrumbs" aria-label="Breadcrumb"><Link to="/customer/shop">Shop</Link><span>/</span><span>{product.category}</span><span>/</span><span>{product.name}</span></nav>
       <section className="customer-detail-layout">
         <div className={`customer-detail-art product-tone-${product.category}`} aria-label={`${product.name} product image`}><ProductImage src={product.imageUrl || product.image} alt={product.name} className="customer-detail-product-image" fallback={<><span aria-hidden="true">{product.icon}</span><small>{product.category}</small></>} /></div>
@@ -112,5 +118,10 @@ export default function ProductDetail() {
         </div>
       </section>
     </div>
+    {actionNotice === 'Added to Reservation Cart' && <div className="shop-added-toast" role="status" aria-live="polite">
+      <span>Added to Reservation Cart</span>
+      <Link to="/customer/cart">View cart</Link>
+      <button type="button" aria-label="Dismiss notification" onClick={() => setActionNotice('')}>×</button>
+    </div>}
   </CustomerPage>;
 }
