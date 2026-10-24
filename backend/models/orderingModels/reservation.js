@@ -16,6 +16,7 @@ const reservationItemSchema = new mongoose.Schema({
 const paymentSubmissionSchema = new mongoose.Schema({
   reference: { type: String, required: true },
   paymentProofPublicId: { type: String, required: true },
+  format: { type: String, default: 'jpg' },
   submittedAt: { type: Date, required: true },
   status: { type: String, enum: ['Payment Submitted', 'Confirmed', 'Rejected'], default: 'Payment Submitted' },
   rejectionReason: { type: String, default: '' },
@@ -44,6 +45,7 @@ const reservationSchema = new mongoose.Schema({
   paymentReference: { type: String, default: '' },
   paymentProofUrl: { type: String, default: '' },
   paymentProofPublicId: { type: String, default: '' },
+  paymentProofFormat: { type: String, default: 'jpg' },
   paymentSubmissions: { type: [paymentSubmissionSchema], default: [] },
   rejectionReason: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },

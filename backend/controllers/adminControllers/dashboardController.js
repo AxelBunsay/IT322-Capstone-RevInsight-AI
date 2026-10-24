@@ -871,6 +871,7 @@ const getInventoryReport = async (req, res) => {
 const getMechanicsReport = async (req, res) => {
   try {
     const mechanicsReport = await Mechanic.aggregate([
+      { $match: { isActive: { $ne: false } } },
       {
         $lookup: {
           from: 'servicerequests',

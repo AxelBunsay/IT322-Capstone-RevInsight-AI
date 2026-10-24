@@ -237,8 +237,6 @@ export const adminApi = {
     const suffix = params.toString() ? `?${params.toString()}` : '';
     return request(`/api/service-requests${suffix}`);
   },
-  getServiceLaborRates: () => request('/api/service-requests/labor-rates'),
-  updateServiceLaborRate: (id, laborFee) => request(`/api/service-requests/labor-rates/${id}`, { method: 'PUT', body: JSON.stringify({ laborFee }) }),
   getServices: () => request('/api/admin/services', { cache: 'no-store' }),
   getReservationSettings: () => request('/api/admin/reservations/settings'),
   updateReservationSettings: (settings) => request('/api/admin/reservations/settings', { method: 'PUT', body: JSON.stringify(settings) }),
@@ -257,19 +255,21 @@ export const adminApi = {
     const suffix = params.toString() ? `?${params.toString()}` : '';
     return request(`/api/admin/reservations${suffix}`);
   },
+  getReservationReceipts: (id) => request(`/api/admin/reservations/${encodeURIComponent(id)}/receipts`),
+  getServiceRequestReceipts: (id) => request(`/api/service-requests/${encodeURIComponent(id)}/payment-receipts`),
   confirmReservation: (id) => request(`/api/admin/reservations/${id}/confirm`, { method: 'POST' }),
   rejectReservation: (id, reason) => request(`/api/admin/reservations/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   confirmServicePayment: (id) => request(`/api/admin/service-requests/${id}/confirm-payment`, { method: 'POST' }),
   rejectServicePayment: (id, reason) => request(`/api/admin/service-requests/${id}/reject-payment`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  markServicePaidAtShop: (id) => request(`/api/admin/service-requests/${id}/paid-at-shop`, { method: 'POST' }),
   completeReservation: (id) => request(`/api/admin/reservations/${id}/complete`, { method: 'POST' }),
   cancelReservation: (id, reason, refundDecision) => request(`/api/admin/reservations/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason, refundDecision }) }),
   decideExpiredReservationRefund: (id, refundDecision) => request(`/api/admin/reservations/${id}/refund-decision`, { method: 'POST', body: JSON.stringify({ refundDecision }) }),
   createService: (service) => request('/api/admin/services', { method: 'POST', body: JSON.stringify(service) }),
   updateService: (id, service) => request(`/api/admin/services/${id}`, { method: 'PUT', body: JSON.stringify(service) }),
   deleteService: (id) => request(`/api/admin/services/${id}`, { method: 'DELETE' }),
-  updateServiceRequestLaborFee: (requestId, laborFee) => request('/api/service-requests/labor-fee', { method: 'PUT', body: JSON.stringify({ requestId, laborFee }) }),
   confirmServiceRequest: (requestId, mechanicId) => request('/api/service-requests/assign', { method: 'PUT', body: JSON.stringify({ requestId, mechanicId }) }),
-  updateAdminServiceRequestStatus: (requestId, status) => request('/api/service-requests/status/admin', { method: 'PUT', body: JSON.stringify({ requestId, status }) })
+  updateAdminServiceRequestStatus: (requestId, status, details = {}) => request('/api/service-requests/status/admin', { method: 'PUT', body: JSON.stringify({ requestId, status, ...details }) })
 };
 
 export { makeDashboardData };

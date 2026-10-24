@@ -12,15 +12,18 @@ const {
   validateReference,
   uploadReceipt,
   claimPaymentReference,
-  getAuthorizedReceiptUrl,
+  getTemporaryReceiptUrl,
   removeReceipt,
   uploadPublicImage,
   removePublicImage
 } = require('../utils/paymentReceipt');
 const { createPaymentDecisionNotification } = require('../utils/paymentNotifications');
 const { canTransitionReservationStatus } = require('../utils/reservationStatus');
+const { expireServiceBookings } = require('./serviceRequestController');
 
 const validStatuses = ['Pending Down Payment', 'Payment Submitted', 'Reserved', 'Completed', 'Cancelled', 'Expired'];
+const EXPIRY_BATCH_SIZE = 500;
+const MAX_EXPIRY_ROUNDS = 20;
 const money = (amount) => Math.round((amount + Number.EPSILON) * 100) / 100;
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -54,27 +57,45 @@ async function releaseReservedStock(reservation, session) {
 }
 
 async function expireReservations() {
-  const settings = await getSettings();
+  try {
+    await expireServiceBookings();
+  } catch (error) {
+    console.error('[expireReservations] service booking expiry pass failed; continuing', error);
+  }
   const now = new Date();
-  let expiredCandidates;
-  do {
-    expiredCandidates = await Reservation.find({
-      code: { $exists: true },
-      $or: [
-        {
-          status: 'Pending Down Payment',
-          $or: [
-            { paymentDueAt: { $lte: now } },
-            { paymentDueAt: null, createdAt: { $lte: new Date(now.getTime() - settings.pendingPaymentHours * 60 * 60 * 1000) } }
-          ]
-        },
-        { status: 'Reserved', reservedUntil: { $lte: now } }
-      ]
-    }).select('_id').limit(500);
+  let settings;
+  try {
+    settings = await getSettings();
+  } catch (error) {
+    console.error('[expireReservations] unable to load reservation settings; skipping expiry pass', error);
+    return;
+  }
 
+  for (let round = 0; round < MAX_EXPIRY_ROUNDS; round += 1) {
+    let expiredCandidates;
+    try {
+      expiredCandidates = await Reservation.find({
+        code: { $exists: true },
+        $or: [
+          {
+            status: 'Pending Down Payment',
+            $or: [
+              { paymentDueAt: { $lte: now } },
+              { paymentDueAt: null, createdAt: { $lte: new Date(now.getTime() - settings.pendingPaymentHours * 60 * 60 * 1000) } }
+            ]
+          },
+          { status: 'Reserved', reservedUntil: { $lte: now } }
+        ]
+      }).select('_id').limit(EXPIRY_BATCH_SIZE);
+    } catch (error) {
+      console.error('[expireReservations] unable to load expired reservations; skipping expiry pass', error);
+      return;
+    }
+    if (!expiredCandidates.length) return;
     for (const candidate of expiredCandidates) {
-      const session = await mongoose.startSession();
+      let session;
       try {
+        session = await mongoose.startSession();
         await session.withTransaction(async () => {
           const reservation = await Reservation.findOne({ _id: candidate._id, code: { $exists: true } }).session(session);
           if (!reservation) return;
@@ -93,11 +114,21 @@ async function expireReservations() {
             await reservation.save({ session });
           }
         });
+      } catch (error) {
+        console.error(`[expireReservations] failed to expire reservation ${candidate._id}; continuing`, error);
       } finally {
-        await session.endSession();
+        if (session) {
+          try {
+            await session.endSession();
+          } catch (error) {
+            console.error(`[expireReservations] failed to close session for reservation ${candidate._id}`, error);
+          }
+        }
       }
     }
-  } while (expiredCandidates.length === 500);
+    if (expiredCandidates.length < EXPIRY_BATCH_SIZE) return;
+  }
+  console.error(`[expireReservations] stopped after ${MAX_EXPIRY_ROUNDS} rounds; more expired reservations may remain`);
 }
 
 const createReservation = async (req, res) => {
@@ -259,12 +290,14 @@ const submitPayment = async (req, res) => {
       current.paymentMethod = settings.paymentInstructions.methodName;
       current.paymentProofUrl = '';
       current.paymentProofPublicId = uploadedReceipt.publicId;
+      current.paymentProofFormat = uploadedReceipt.format || 'jpg';
       current.submittedAt = submittedAt;
       current.status = 'Payment Submitted';
       current.rejectionReason = '';
       current.paymentSubmissions.push({
         reference,
         paymentProofPublicId: uploadedReceipt.publicId,
+        format: uploadedReceipt.format || 'jpg',
         submittedAt,
         status: 'Payment Submitted'
       });
@@ -318,23 +351,49 @@ const getCustomerReservation = async (req, res) => {
 };
 
 const cancelCustomerReservation = async (req, res) => {
+  let session;
   try {
     if (!isValidReservationId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid reservation ID.' });
     const reason = req.body?.reason ?? 'Cancelled by customer';
     if (typeof reason !== 'string' || reason.length > 300) return res.status(400).json({ success: false, message: 'Cancellation reason must be 300 characters or fewer.' });
     await expireReservations();
-    const reservation = await Reservation.findOne({ _id: req.params.id, customerId: req.user.userId, code: { $exists: true } });
-    if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found.' });
-    if (!['Pending Down Payment', 'Payment Submitted'].includes(reservation.status)) {
-      return res.status(409).json({ success: false, message: 'Customers can only cancel before the reservation is confirmed.' });
-    }
-    reservation.status = 'Cancelled';
-    reservation.cancelledAt = new Date();
-    reservation.cancelReason = reason.trim() || 'Cancelled by customer';
-    await reservation.save();
+    session = await mongoose.startSession();
+    let reservation;
+    await session.withTransaction(async () => {
+      reservation = await Reservation.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          customerId: req.user.userId,
+          code: { $exists: true },
+          status: 'Pending Down Payment'
+        },
+        {
+          $set: {
+            status: 'Cancelled',
+            cancelledAt: new Date(),
+            cancelReason: reason.trim() || 'Cancelled by customer'
+          }
+        },
+        { new: true, runValidators: true, session }
+      );
+      if (reservation) return;
+
+      const current = await Reservation.findOne({
+        _id: req.params.id,
+        customerId: req.user.userId,
+        code: { $exists: true }
+      }).session(session);
+      if (!current) throw Object.assign(new Error('Reservation not found.'), { status: 404 });
+      if (current.status === 'Payment Submitted') {
+        throw Object.assign(new Error('The shop is reviewing your payment. Contact the shop to cancel.'), { status: 409 });
+      }
+      throw Object.assign(new Error('Customers can only cancel reservations with a pending down payment.'), { status: 409 });
+    });
     res.json({ success: true, reservation: customerReservationPayload(reservation) });
   } catch (error) {
     sendError(res, error);
+  } finally {
+    if (session) await session.endSession();
   }
 };
 
@@ -379,16 +438,44 @@ const getAdminReservations = async (req, res) => {
     });
     res.json({ success: true, reservations: sortedReservations.map((reservation) => {
       const value = reservation.toObject();
-      value.paymentProofUrl = value.paymentProofPublicId
-        ? getAuthorizedReceiptUrl(value.paymentProofPublicId)
-        : value.paymentProofUrl;
-      value.paymentSubmissions = (value.paymentSubmissions || []).map((submission) => ({
-        ...submission.toObject(),
-        receiptUrl: getAuthorizedReceiptUrl(submission.paymentProofPublicId)
-      }));
+      value.paymentSubmissions = (value.paymentSubmissions || []).map((submission) => {
+        const data = submission.toObject();
+        delete data.paymentProofPublicId;
+        return data;
+      });
       delete value.paymentProofPublicId;
+      delete value.paymentProofUrl;
+      delete value.paymentProofFormat;
       return value;
     }) });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+const getAdminReservationReceipts = async (req, res) => {
+  try {
+    if (!isValidReservationId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid reservation ID.' });
+    }
+    const reservation = await Reservation.findOne({
+      _id: req.params.id,
+      code: { $exists: true }
+    }).select('paymentProofPublicId paymentProofFormat submittedAt paymentSubmissions').lean();
+    if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found.' });
+
+    let submissions = (reservation.paymentSubmissions || []).map((submission) => ({
+      ...submission,
+      receiptUrl: getTemporaryReceiptUrl(submission.paymentProofPublicId, submission.format || 'jpg')
+    }));
+    if (!submissions.length && reservation.paymentProofPublicId) {
+      submissions = [{
+        submittedAt: reservation.submittedAt,
+        status: 'Payment Submitted',
+        receiptUrl: getTemporaryReceiptUrl(reservation.paymentProofPublicId, reservation.paymentProofFormat || 'jpg')
+      }];
+    }
+    res.json({ success: true, paymentSubmissions: submissions });
   } catch (error) {
     sendError(res, error);
   }
@@ -777,6 +864,7 @@ module.exports = {
   getCustomerReservation,
   cancelCustomerReservation,
   getAdminReservations,
+  getAdminReservationReceipts,
   confirmReservation,
   rejectReservation,
   completeReservation,

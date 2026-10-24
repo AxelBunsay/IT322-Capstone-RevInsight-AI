@@ -2,12 +2,14 @@ const User = require('../../models/user');
 const PendingUser = require('../../models/pendingUser');
 const Reservation = require('../../models/orderingModels/reservation');
 const ServiceRequest = require('../../models/serviceRequest');
+const BusinessRecord = require('../../models/businessRecord');
 const Notification = require('../../models/notification');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const { removeReceipt } = require('../../utils/paymentReceipt');
 
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE,
@@ -584,7 +586,7 @@ const deleteAccount = async (req, res) => {
       }),
       ServiceRequest.exists({
         $or: [{ user: user._id }, { customerId: user._id }],
-        status: { $in: ['pending', 'assigned', 'in-progress'] }
+        status: { $in: ['pending', 'assigned', 'confirmed', 'accepted', 'in-progress'] }
       })
     ]);
     if (activeReservation || activeBooking) {
@@ -597,6 +599,12 @@ const deleteAccount = async (req, res) => {
       });
     }
 
+    const [customerReservations, customerBookings] = await Promise.all([
+      Reservation.find({ customerId: user._id }).select('_id customerName customerPhone paymentProofPublicId paymentSubmissions').lean(),
+      ServiceRequest.find({ $or: [{ user: user._id }, { customerId: user._id }] })
+        .select('_id paymentProofPublicId paymentSubmissions')
+        .lean()
+    ]);
     const deletedAt = new Date();
     const session = await mongoose.startSession();
     let result;
@@ -625,6 +633,23 @@ const deleteAccount = async (req, res) => {
           { session }
         );
         if (result.modifiedCount === 1) {
+          const reservationIds = customerReservations.map((reservation) => reservation._id);
+          const bookingIds = customerBookings.map((booking) => booking._id);
+          if (reservationIds.length) {
+            await Reservation.updateMany(
+              { _id: { $in: reservationIds } },
+              { $set: { customerName: 'Deleted customer', customerPhone: '' } },
+              { session }
+            );
+          }
+          const sourceIds = [...reservationIds, ...bookingIds];
+          if (sourceIds.length) {
+            await BusinessRecord.updateMany(
+              { sourceId: { $in: sourceIds } },
+              { $set: { customer: 'Deleted customer', customerPhone: '' } },
+              { session }
+            );
+          }
           await Notification.deleteMany({ audience: 'customer', customerId: user._id }, { session });
         }
       });
@@ -633,6 +658,24 @@ const deleteAccount = async (req, res) => {
     }
     if (result.modifiedCount !== 1) {
       return res.status(409).json({ message: 'This customer account has already been deleted.' });
+    }
+
+    const receiptIds = new Set([
+      ...customerReservations.flatMap((reservation) => [
+        reservation.paymentProofPublicId,
+        ...(reservation.paymentSubmissions || []).map((submission) => submission.paymentProofPublicId)
+      ]),
+      ...customerBookings.flatMap((booking) => [
+        booking.paymentProofPublicId,
+        ...(booking.paymentSubmissions || []).map((submission) => submission.paymentProofPublicId)
+      ])
+    ].filter(Boolean));
+    for (const publicId of receiptIds) {
+      try {
+        await removeReceipt(publicId);
+      } catch (receiptError) {
+        console.error(`[deleteAccount] failed to remove receipt ${publicId} from Cloudinary`, receiptError);
+      }
     }
 
     return res.status(200).json({ message: 'Your account was deleted.' });

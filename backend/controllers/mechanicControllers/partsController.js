@@ -155,10 +155,16 @@ const getMechanicStats = async (req, res) => {
 
 const acceptMechanicJob = async (req, res) => {
   try {
+    const currentJob = await ServiceRequest.findById(req.params.jobId);
+    if (!currentJob) return res.status(404).json({ message: 'Service request not found' });
+    const status = currentJob.status === 'pending' && !currentJob.mechanic && !currentJob.mechanicId
+      ? 'assigned'
+      : 'accepted';
     const job = await transitionServiceRequestStatus({
       requestId: req.params.jobId,
       mechanicId: req.user?.userId,
-      status: 'accepted'
+      status,
+      requirePayment: true
     });
     res.status(200).json({ message: 'Job accepted', job: serializeServiceRequest(job) });
   } catch (error) {

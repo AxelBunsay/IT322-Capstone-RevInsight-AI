@@ -33,6 +33,7 @@ router.post('/reservations/settings/gcash-qr', protect, (req, res, next) => {
   });
 }, reservations.uploadGcashQr);
 router.get('/reservations', protect, reservations.getAdminReservations);
+router.get('/reservations/:id/receipts', protect, reservations.getAdminReservationReceipts);
 router.post('/reservations/:id/confirm', protect, reservations.confirmReservation);
 router.post('/reservations/:id/reject', protect, reservations.rejectReservation);
 router.post('/reservations/:id/complete', protect, reservations.completeReservation);
@@ -40,6 +41,7 @@ router.post('/reservations/:id/cancel', protect, reservations.cancelAdminReserva
 router.post('/reservations/:id/refund-decision', protect, reservations.decideExpiredRefund);
 router.post('/service-requests/:id/confirm-payment', protect, serviceRequests.reviewServicePayment);
 router.post('/service-requests/:id/reject-payment', protect, serviceRequests.reviewServicePayment);
+router.post('/service-requests/:id/paid-at-shop', protect, serviceRequests.markServicePaidAtShop);
 
 // Admin: delete mechanic via admin API
 router.delete('/mechanics/:id', protect, mechanicController.deleteMechanic);

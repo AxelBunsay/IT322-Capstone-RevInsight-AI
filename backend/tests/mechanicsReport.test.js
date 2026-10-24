@@ -17,10 +17,11 @@ describe('admin mechanics report aggregation', () => {
     await dashboardController.getMechanicsReport({}, response);
 
     const pipeline = aggregate.mock.calls[0][0];
-    const lookup = pipeline[0].$lookup;
+    expect(pipeline[0]).toEqual({ $match: { isActive: { $ne: false } } });
+    const lookup = pipeline[1].$lookup;
     const match = lookup.pipeline[0].$match;
     const group = lookup.pipeline[1].$group;
-    const project = pipeline[1].$project;
+    const project = pipeline[2].$project;
 
     expect(lookup.from).toBe('servicerequests');
     expect(match.$expr.$or).toEqual([
