@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../services/api';
 import { CustomerAuthShell } from './CustomerLayout';
 import { useCustomerPrototype } from './useCustomerPrototype';
@@ -12,6 +12,8 @@ import '../styles/auth.css';
 
 export function CustomerLogin() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { updateProfile } = useCustomerPrototype();
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,9 +30,13 @@ export function CustomerLogin() {
       localStorage.setItem('customerToken', response.token);
       localStorage.setItem('customerUser', JSON.stringify(response.user || {}));
       updateProfile(response.user || {});
+      const returnTo = searchParams.get('returnTo');
+      const safeReturnTo = returnTo?.startsWith('/') && !returnTo.startsWith('//') ? returnTo : null;
+      const from = location.state?.from;
+      const fromPath = from ? `${from.pathname}${from.search || ''}${from.hash || ''}` : null;
       navigate(pendingAction
         ? customerActionReturnPath(pendingAction)
-        : '/customer/shop', {
+        : fromPath || safeReturnTo || '/customer/shop', {
         replace: true,
         state: pendingAction ? { resumeAction: true } : undefined
       });

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { CustomerPage } from './CustomerLayout';
-import { useCustomerPrototype } from './useCustomerPrototype';
 import ProductImage from './ProductImage';
 import '../styles/customer-flow.css';
 
@@ -61,25 +60,48 @@ function ServiceReservationCard({ reservation }) {
 }
 
 export default function Reservations() {
-  const { reservations } = useCustomerPrototype();
   const [activeTab, setActiveTab] = useState('items');
   const [itemReservations, setItemReservations] = useState([]);
+  const [serviceBookings, setServiceBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
-    api.getCustomerReservations().then((response) => {
-      if (isMounted) setItemReservations(response.reservations || []);
-    }).catch((requestError) => {
-      if (isMounted) setError(requestError.message || 'Reservations could not be loaded.');
-    }).finally(() => {
-      if (isMounted) setIsLoading(false);
-    });
+    Promise.allSettled([api.getCustomerReservations(), api.getCustomerServiceRequests()])
+      .then(([reservationResult, bookingResult]) => {
+        if (!isMounted) return;
+        if (reservationResult.status === 'fulfilled') {
+          setItemReservations(reservationResult.value.reservations || []);
+        } else {
+          setError(reservationResult.reason.message || 'Reservations could not be loaded.');
+        }
+        if (bookingResult.status === 'fulfilled') {
+          setServiceBookings((bookingResult.value.requests || []).map((booking) => ({
+            id: booking._id,
+            name: booking.serviceType || 'Service booking',
+            bookingDate: booking.scheduledDate ? new Date(booking.scheduledDate).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila' }) : 'Date to be confirmed',
+            timeSlot: [booking.startTime, booking.endTime].filter(Boolean).join(' - '),
+            vehicle: booking.vehicle || '',
+            price: booking.estimatedPrice,
+            status: booking.paymentStatus === 'Payment Submitted'
+              ? booking.paymentStatus
+              : booking.paymentStatus === 'Payment Pending' && booking.paymentRejectionReason
+                ? booking.paymentStatus
+                : booking.paymentStatus === 'Confirmed' && booking.status === 'pending'
+                  ? 'Confirmed'
+                  : booking.status
+          })));
+        } else {
+          setError(bookingResult.reason.message || 'Service bookings could not be loaded.');
+        }
+      }).finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
     return () => { isMounted = false; };
   }, []);
 
-  const records = activeTab === 'items' ? itemReservations : reservations;
+  const records = activeTab === 'items' ? itemReservations : serviceBookings;
   return <CustomerPage title="My Purchases" description="Review item reservations and service bookings separately.">
     <div className="customer-flow-page customer-reservations-page">
       {error && <p className="customer-error" role="alert">{error}</p>}
@@ -89,10 +111,10 @@ export default function Reservations() {
       </div>
       <div className="customer-reservation-tabs" role="tablist" aria-label="Purchases and bookings">
         <button type="button" role="tab" aria-selected={activeTab === 'items'} className={activeTab === 'items' ? 'is-active' : ''} onClick={() => setActiveTab('items')}>Reservations <span>{itemReservations.length}</span></button>
-        <button type="button" role="tab" aria-selected={activeTab === 'services'} className={activeTab === 'services' ? 'is-active' : ''} onClick={() => setActiveTab('services')}>My bookings <span>{reservations.length}</span></button>
+        <button type="button" role="tab" aria-selected={activeTab === 'services'} className={activeTab === 'services' ? 'is-active' : ''} onClick={() => setActiveTab('services')}>My bookings <span>{serviceBookings.length}</span></button>
       </div>
-      {isLoading && activeTab === 'items'
-        ? <p className="customer-empty">Loading reservations...</p>
+      {isLoading
+      ? <p className="customer-empty">Loading {activeTab === 'services' ? 'bookings' : 'reservations'}...</p>
         : !records.length
           ? <section className="customer-empty-cart">
             <span aria-hidden="true">{activeTab === 'services' ? '⌁' : '▱'}</span>
@@ -102,7 +124,7 @@ export default function Reservations() {
           </section>
           : <div className="customer-reservation-list">
             {activeTab === 'services'
-              ? reservations.map((reservation) => <ServiceReservationCard key={reservation.id} reservation={reservation} />)
+              ? serviceBookings.map((reservation) => <ServiceReservationCard key={reservation.id} reservation={reservation} />)
               : itemReservations.map((reservation) => <ItemReservationCard key={reservation._id} reservation={reservation} />)}
           </div>}
     </div>

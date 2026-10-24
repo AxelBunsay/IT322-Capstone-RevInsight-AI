@@ -50,13 +50,22 @@ export default function Shop() {
   const resumedActionRef = useRef('');
 
   const loadShopData = useCallback(async () => {
+    const loadAllProducts = async () => {
+      const firstPage = await api.getProducts(1, 50);
+      const pages = Number(firstPage.pagination?.pages || 1);
+      if (pages <= 1) return firstPage.products || [];
+      const remainingPages = await Promise.all(
+        Array.from({ length: pages - 1 }, (_, index) => api.getProducts(index + 2, 50))
+      );
+      return [...(firstPage.products || []), ...remainingPages.flatMap((response) => response.products || [])];
+    };
     const [productsResult, settingsResult] = await Promise.allSettled([
-      api.getProducts(),
+      loadAllProducts(),
       api.getShopSettings()
     ]);
 
     if (productsResult.status === 'fulfilled') {
-      setProducts((productsResult.value.products || []).map((product) => ({
+      setProducts(productsResult.value.map((product) => ({
         ...product,
         quantity: Math.max(0, Number(product.quantity || 0) - Number(product.reservedQty || 0))
       })));

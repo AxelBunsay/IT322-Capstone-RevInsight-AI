@@ -15,7 +15,7 @@ export function CustomerAuthGuard({ children }) {
 
 export function CustomerHeader() {
   const location = useLocation();
-  const { cart } = useCustomerPrototype();
+  const { cart, clearCustomerData } = useCustomerPrototype();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -63,7 +63,7 @@ export function CustomerHeader() {
 
   const logout = () => {
     localStorage.removeItem('customerToken');
-    localStorage.removeItem('customerUser');
+    clearCustomerData();
     window.location.href = '/customer/login';
   };
 

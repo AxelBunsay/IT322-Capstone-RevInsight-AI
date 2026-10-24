@@ -504,10 +504,71 @@ const assignMechanic = async (req, res) => {
 // Get all service requests (admin)
 const getAllServiceRequests = async (req, res) => {
   try {
-    const requests = await ServiceRequest.find()
+    const shouldPaginate = req.query.page !== undefined || req.query.limit !== undefined;
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
+    const filter = {};
+
+    if (req.query.reviewOnly === "true") {
+      filter.$or = [
+        { paymentStatus: "Payment Submitted" },
+        { paymentStatus: "Payment Pending", paymentRejectionReason: { $exists: true, $ne: "" } }
+      ];
+    }
+
+    if (req.query.status) {
+      const status = String(req.query.status);
+      const statusFilter = status === "Payment Submitted"
+        ? { paymentStatus: "Payment Submitted" }
+        : status === "Payment Pending"
+          ? { paymentStatus: "Payment Pending", paymentRejectionReason: { $exists: true, $ne: "" } }
+          : status === "Confirmed"
+            ? { paymentStatus: "Confirmed", status: "pending" }
+            : { status };
+      filter.$and = [...(filter.$and || []), statusFilter];
+    }
+
+    const search = String(req.query.search || "").trim();
+    if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const expression = new RegExp(escapedSearch, "i");
+      const [matchingUsers, matchingMechanics] = await Promise.all([
+        User.find({ $or: [{ firstName: expression }, { lastName: expression }, { email: expression }] }).distinct("_id"),
+        Mechanic.find({ $or: [{ firstName: expression }, { lastName: expression }, { email: expression }] }).distinct("_id")
+      ]);
+      const searchFilter = {
+        $or: [
+          { code: expression },
+          { serviceType: expression },
+          { paymentReference: expression },
+          { vehicle: expression },
+          { user: { $in: matchingUsers } },
+          { mechanic: { $in: matchingMechanics } },
+          ...(mongoose.Types.ObjectId.isValid(search) ? [{ _id: search }] : [])
+        ]
+      };
+      filter.$and = [...(filter.$and || []), searchFilter];
+    }
+
+    const [requests, totalRecords, totalAmountRows, paymentSubmittedCount] = await Promise.all([
+      ServiceRequest.find(filter)
       .populate("user")
-      .populate("mechanic");
-    res.status(200).json({ requests: requests.map((request) => {
+      .populate("mechanic")
+      .sort({ paymentStatus: -1, createdAt: -1 })
+      .skip(shouldPaginate ? (page - 1) * limit : 0)
+      .limit(shouldPaginate ? limit : 0),
+      shouldPaginate ? ServiceRequest.countDocuments(filter) : Promise.resolve(null),
+      shouldPaginate
+        ? ServiceRequest.aggregate([
+          { $match: filter },
+          { $group: { _id: null, total: { $sum: "$estimatedPrice" } } }
+        ])
+        : Promise.resolve([]),
+      shouldPaginate
+        ? ServiceRequest.countDocuments({ paymentStatus: "Payment Submitted" })
+        : Promise.resolve(null)
+    ]);
+    const response = { requests: requests.map((request) => {
       const value = request.toObject();
       value.paymentProofUrl = getAuthorizedReceiptUrl(value.paymentProofPublicId);
       value.paymentSubmissions = (value.paymentSubmissions || []).map((submission) => ({
@@ -516,7 +577,18 @@ const getAllServiceRequests = async (req, res) => {
       }));
       delete value.paymentProofPublicId;
       return value;
-    }) });
+    }) };
+    if (shouldPaginate) {
+      response.pagination = {
+        page,
+        limit,
+        totalRecords,
+        totalPages: Math.max(1, Math.ceil(totalRecords / limit))
+      };
+      response.totalAmount = Number(totalAmountRows[0]?.total || 0);
+      response.paymentSubmittedCount = paymentSubmittedCount;
+    }
+    res.status(200).json(response);
   } catch (error) {
     console.error("[getAllServiceRequests] error", error);
     res

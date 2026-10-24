@@ -85,6 +85,10 @@ function Header({ title = 'MMPS', subtitle = 'Customer Shop', onMenuClick }) {
   const logout = () => {
     localStorage.removeItem('customerToken');
     localStorage.removeItem('customerUser');
+    localStorage.removeItem('revinsightCustomerPrototype');
+    localStorage.removeItem('customerCart');
+    localStorage.removeItem('customerVehicles');
+    localStorage.removeItem('customerProfile');
     window.location.href = '/customer/login';
   };
 

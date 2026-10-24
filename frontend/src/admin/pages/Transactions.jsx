@@ -147,8 +147,8 @@ function Transactions() {
   useEffect(() => {
     let isMounted = true;
 
-    const loadTransactions = async () => {
-      setIsLoading(true);
+    const loadTransactions = async ({ background = false } = {}) => {
+      if (!background) setIsLoading(true);
       try {
         if (activeTab === "items") {
           const [reservationResponse, summaryResponse] = await Promise.all([
@@ -169,14 +169,22 @@ function Transactions() {
           setTotalPages(pages);
           if (page > pages) setPage(pages);
         } else if (activeTab === "services") {
+          const candidateLimit = page * 10;
           const [response, requestResponse] = await Promise.all([
             api.getTransactions({
               page: 1,
-              limit: 100,
+              limit: candidateLimit,
               type: "service",
               search: search.trim(),
+              status: statusFilter === "All" ? "" : statusFilter,
             }),
-            api.getAdminServiceRequests()
+            api.getAdminServiceRequests({
+              page: 1,
+              limit: candidateLimit,
+              reviewOnly: true,
+              search: search.trim(),
+              status: statusFilter === "All" ? "" : statusFilter,
+            })
           ]);
           if (!isMounted) return;
           const businessRecords = (response.data || []).map(formatBusinessRecord);
@@ -196,16 +204,20 @@ function Transactions() {
           combined.sort((left, right) => {
             const leftNeedsReview = left.status === "Payment Submitted" ? 0 : 1;
             const rightNeedsReview = right.status === "Payment Submitted" ? 0 : 1;
-            return leftNeedsReview - rightNeedsReview || new Date(right.createdAt || 0) - new Date(left.createdAt || 0);
+            const leftDate = left.completedAt || left.createdAt || 0;
+            const rightDate = right.completedAt || right.createdAt || 0;
+            return leftNeedsReview - rightNeedsReview || new Date(rightDate) - new Date(leftDate);
           });
+          const totalRecords = Number(response.pagination?.totalRecords || 0)
+            + Number(requestResponse.pagination?.totalRecords || paymentRequests.length);
           setTransactions(combined.slice((page - 1) * 10, page * 10));
           setError("");
-          setRecordCount(combined.length);
-          setTotalAmount(combined.reduce((total, record) => total + Number(record.amount || 0), 0));
-          setPaymentSubmittedCount(submittedPaymentCount);
-          setCounts((current) => ({ ...current, services: combined.length }));
-          setTotalPages(Math.max(1, Math.ceil(combined.length / 10)));
-          if (page > Math.max(1, Math.ceil(combined.length / 10))) setPage(Math.max(1, Math.ceil(combined.length / 10)));
+          setRecordCount(totalRecords);
+          setTotalAmount(Number(response.totalAmount || 0) + Number(requestResponse.totalAmount || 0));
+          setPaymentSubmittedCount(Number(requestResponse.paymentSubmittedCount ?? submittedPaymentCount));
+          setCounts((current) => ({ ...current, services: totalRecords }));
+          setTotalPages(Math.max(1, Math.ceil(totalRecords / 10)));
+          if (page > Math.max(1, Math.ceil(totalRecords / 10))) setPage(Math.max(1, Math.ceil(totalRecords / 10)));
         } else {
           const response = await api.getTransactions({
             page,
@@ -234,12 +246,12 @@ function Transactions() {
           setError(fetchError.message || "Failed to load transactions");
         }
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted && !background) setIsLoading(false);
       }
     };
 
     loadTransactions();
-    const refreshInterval = window.setInterval(loadTransactions, 30000);
+    const refreshInterval = window.setInterval(() => loadTransactions({ background: true }), 30000);
 
     return () => {
       isMounted = false;
@@ -504,8 +516,13 @@ function Transactions() {
         }
         return [transaction.id, transaction.date, transaction.recordLabel, transaction.customer, transaction.items, transaction.amount, transaction.recordType === "product" ? transaction.paid : "", transaction.recordType === "product" ? transaction.balance : "", transaction.status, transaction.mechanic];
       });
+      const csvCell = (value) => {
+        let cell = String(value ?? "");
+        if (/^[=+\-@]/.test(cell)) cell = `'${cell}`;
+        return `"${cell.replaceAll('"', '""')}"`;
+      };
       const csv = [[`${activeTab[0].toUpperCase()}${activeTab.slice(1)} Transactions`], headers, ...exportRows]
-        .map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(","))
+        .map((row) => row.map(csvCell).join(","))
         .join("\r\n");
       const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
       const link = document.createElement("a");

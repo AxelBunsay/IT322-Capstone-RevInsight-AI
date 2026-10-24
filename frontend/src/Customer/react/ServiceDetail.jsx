@@ -95,6 +95,8 @@ export default function ServiceDetail() {
   const [vehicleForm, setVehicleForm] = useState({ make: '', model: '', year: '', plate: '' });
   const resumedActionRef = useRef('');
   const resumeRequestedRef = useRef(Boolean(location.state?.resumeAction));
+  const slotRequestRef = useRef(0);
+  const nextAvailableRequestRef = useRef(0);
   const today = manilaDateKey();
 
   useEffect(() => {
@@ -115,11 +117,22 @@ export default function ServiceDetail() {
   }, [serviceId, serviceRetryKey]);
 
   const loadSlots = useCallback(async (date) => {
+    const requestId = ++slotRequestRef.current;
+    if (!date) {
+      setSchedule(null);
+      setSlots([]);
+      setClosedMessage('');
+      setAvailabilityError('');
+      setTimeSlot('');
+      setIsLoadingSlots(false);
+      return;
+    }
     setIsLoadingSlots(true);
     setAvailabilityError('');
     setTimeSlot('');
     try {
       const response = await api.getServiceSlots(serviceId, date);
+      if (requestId !== slotRequestRef.current) return;
       setSchedule(response);
       setSlots(response.slots || []);
       setClosedMessage(response.open ? '' : response.closedMessage || '');
@@ -149,6 +162,7 @@ export default function ServiceDetail() {
         }
       }
     } catch (error) {
+      if (requestId !== slotRequestRef.current) return;
       setSchedule(error.details || null);
       setSlots([]);
       setClosedMessage('');
@@ -159,7 +173,7 @@ export default function ServiceDetail() {
         navigate(location.pathname, { replace: true, state: null });
       }
     } finally {
-      setIsLoadingSlots(false);
+      if (requestId === slotRequestRef.current) setIsLoadingSlots(false);
     }
   }, [location.pathname, navigate, serviceId]);
 
@@ -189,6 +203,8 @@ export default function ServiceDetail() {
   const durationLabel = formatDuration(service.durationMinutes);
   const handleDateChange = (event) => {
     const nextDate = event.target.value;
+    slotRequestRef.current += 1;
+    nextAvailableRequestRef.current += 1;
     if (!nextDate) {
       setBookingDate('');
       setTimeSlot('');
@@ -208,11 +224,13 @@ export default function ServiceDetail() {
   const handleNextAvailable = async () => {
     setIsFindingNext(true);
     setBookingError('');
+    const requestId = ++nextAvailableRequestRef.current;
     try {
       for (let offset = 1; offset <= nextDateLimit; offset += 1) {
         const date = addDays(bookingDate || today, offset);
         if (date > maximumDate) break;
         const response = await api.getServiceSlots(serviceId, date);
+        if (requestId !== nextAvailableRequestRef.current) return;
         const availableSlot = response.slots?.find((slot) => slot.status === 'available');
         if (availableSlot) {
           setBookingDate(date);
@@ -222,9 +240,11 @@ export default function ServiceDetail() {
       }
       setBookingError('No available booking times were found in the current booking window.');
     } catch (error) {
-      setBookingError(error.message || 'Available booking times could not be found.');
+      if (requestId === nextAvailableRequestRef.current) {
+        setBookingError(error.message || 'Available booking times could not be found.');
+      }
     } finally {
-      setIsFindingNext(false);
+      if (requestId === nextAvailableRequestRef.current) setIsFindingNext(false);
     }
   };
 

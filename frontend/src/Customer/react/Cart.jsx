@@ -40,10 +40,9 @@ export default function Cart() {
           const product = response.product;
           const available = Math.max(0, Number(product.quantity || 0) - Number(product.reservedQty || 0));
           if (isMounted) setCartItemStock(item.key, available, Number(product.price), product.name);
-        } catch (requestError) {
+        } catch {
           if (isMounted) {
-            setCartItemStock(item.key, 0);
-            setError(requestError.message || `${item.name} is no longer available.`);
+            setError('Could not check stock');
           }
         }
       }));

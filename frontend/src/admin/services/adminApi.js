@@ -4,8 +4,8 @@ import inventoryConfig from '../../../../shared/inventory.json';
 
 const confirmedStatuses = new Set(['completed', 'paid']);
 const { LOW_STOCK_THRESHOLD } = inventoryConfig;
-// In dev, VITE_ADMIN_USE_MOCKS=false uses the real API instead of demo data.
-const useDemoData = import.meta.env.DEV && import.meta.env.VITE_ADMIN_USE_MOCKS !== 'false';
+// Set VITE_ADMIN_USE_MOCKS=true to use demo data in development.
+const useDemoData = import.meta.env.DEV && import.meta.env.VITE_ADMIN_USE_MOCKS === 'true';
 
 function unwrapRows(response) {
   return Array.isArray(response?.data) ? response.data : [];
@@ -70,7 +70,7 @@ function makeSeries(orders, period) {
       start.setDate(today.getDate() - offset);
       const end = new Date(start);
       end.setDate(start.getDate() + 1);
-      buckets.push({ start, end, label: start.toLocaleDateString('en-PH', { weekday: 'short' }) });
+      buckets.push({ start, end, label: start.toLocaleDateString('en-PH', { weekday: 'short', timeZone: 'Asia/Manila' }) });
     }
   } else if (period === 'weekly') {
     const thisMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -80,14 +80,14 @@ function makeSeries(orders, period) {
       start.setDate(thisMonday.getDate() - offset * 7);
       const end = new Date(start);
       end.setDate(start.getDate() + 7);
-      buckets.push({ start, end, label: start.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) });
+      buckets.push({ start, end, label: start.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', timeZone: 'Asia/Manila' }) });
     }
   } else {
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     for (let offset = 11; offset >= 0; offset -= 1) {
       const start = new Date(thisMonth.getFullYear(), thisMonth.getMonth() - offset, 1);
       const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
-      buckets.push({ start, end, label: start.toLocaleDateString('en-PH', { month: 'short' }) });
+      buckets.push({ start, end, label: start.toLocaleDateString('en-PH', { month: 'short', timeZone: 'Asia/Manila' }) });
     }
   }
 
@@ -164,7 +164,7 @@ function makeDashboardData(stats, orders, inventory) {
 }
 
 export const adminApi = {
-  loginAdmin: (credentials) => request('/api/admin/login', { method: 'POST', body: JSON.stringify(credentials) }),
+  loginAdmin: (credentials) => request('/api/admin/login', { method: 'POST', body: JSON.stringify(credentials), tokenKey: null }),
   getDashboardStats: () => request('/api/dashboard/dashboard'),
   getSalesReport: (query = {}) => {
     const params = new URLSearchParams();
@@ -229,7 +229,14 @@ export const adminApi = {
   getNotifications: () => request('/api/admin/notifications'),
   markNotificationRead: (id) => request(`/api/admin/notifications/${id}/read`, { method: 'POST' }),
   markAllNotificationsRead: () => request('/api/admin/notifications/read-all', { method: 'POST' }),
-  getAdminServiceRequests: () => request('/api/service-requests'),
+  getAdminServiceRequests: (query = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params.append(key, String(value));
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return request(`/api/service-requests${suffix}`);
+  },
   getServiceLaborRates: () => request('/api/service-requests/labor-rates'),
   updateServiceLaborRate: (id, laborFee) => request(`/api/service-requests/labor-rates/${id}`, { method: 'PUT', body: JSON.stringify({ laborFee }) }),
   getServices: () => request('/api/admin/services', { cache: 'no-store' }),

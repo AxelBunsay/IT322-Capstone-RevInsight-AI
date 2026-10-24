@@ -10,7 +10,6 @@ import Services from './Customer/react/Services';
 import ProductDetail from './Customer/react/ProductDetail';
 import ServiceDetail from './Customer/react/ServiceDetail';
 import Checkout from './Customer/react/Checkout';
-import OrderConfirmation from './Customer/react/OrderConfirmation';
 import Reservations from './Customer/react/Reservations';
 import ReservationDetail from './Customer/react/ReservationDetail';
 import MechanicLogin from './Mechanic/MechanicLogin';
@@ -52,7 +51,6 @@ function App() {
         <Route path="/customer/reservations" element={<CustomerAuthGuard><Reservations /></CustomerAuthGuard>} />
         <Route path="/customer/reservations/:reservationId" element={<CustomerAuthGuard><ReservationDetail /></CustomerAuthGuard>} />
         <Route path="/customer/checkout" element={<CustomerAuthGuard><Checkout /></CustomerAuthGuard>} />
-        <Route path="/customer/order-confirmation" element={<CustomerAuthGuard><OrderConfirmation /></CustomerAuthGuard>} />
         <Route path="/customer/profile" element={<CustomerAuthGuard><CustomerProfile /></CustomerAuthGuard>} />
         <Route path="/mechanic/login" element={<MechanicLogin />} />
         <Route path="/mechanic/dashboard" element={<MechanicAuthGuard><MechanicDashboard /></MechanicAuthGuard>} />
